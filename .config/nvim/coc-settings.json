@@ -1,0 +1,8 @@
+{
+    "diagnostic.enable": false,
+	"diagnostic.enableMessage": "never",
+	"diagnostic.enableSign": false,
+	"diagnostic.messageTarget": "float",
+	"diagnostic.messageDelay": 3500,
+	"rust-analyzer.diagnostics.warningsAsHint": ["unused_imports", "unused_must_use", "unused_variables"]
+}
