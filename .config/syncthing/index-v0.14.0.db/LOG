@@ -119,3 +119,79 @@
 16:00:19.576280 table@compaction committed F-1 S-994B Ke·0 D·33 T·70.480741ms
 16:00:19.576577 table@remove removed @24
 16:00:19.576687 table@remove removed @25
+16:47:13.697740 db@close closing
+16:47:13.699824 db@close done T·2.074878ms
+=============== Jul 26, 2021 (EDT) ===============
+16:47:34.625872 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+16:47:34.626868 version@stat F·[0 2] S·2MiB[0B 2MiB] Sc·[0.00 0.03]
+16:47:34.626904 db@open opening
+16:47:34.626964 journal@recovery F·1
+16:47:34.627737 journal@recovery recovering @27
+16:47:34.634820 memdb@flush created L0@31 N·156 S·3KiB "\x00\x00\x00..txt,v73318":"\x0e\x00\x00..txt,v73252"
+16:47:34.635274 version@stat F·[1 2] S·2MiB[3KiB 2MiB] Sc·[0.25 0.03]
+16:47:34.649523 db@janitor F·6 G·1
+16:47:34.649533 db@janitor removing table-26
+16:47:34.649606 db@open done T·22.696258ms
+16:47:36.023033 table@compaction L0·1 -> L1·2 S·2MiB Q·73401
+16:47:36.063149 table@build created L1@34 N·25164 S·2MiB "\x00\x00\x00..ore,v17438":"\x02\x00\x00..jar,v63668"
+16:47:36.106448 table@build created L1@35 N·16030 S·909KiB "\x02\x00\x00..jar,v65302":"\x0e\x00\x00..ore,v69221"
+16:47:36.106498 version@stat F·[0 2] S·2MiB[0B 2MiB] Sc·[0.00 0.03]
+16:47:36.110962 table@compaction committed F-1 S-3KiB Ke·0 D·150 T·87.89962ms
+16:47:36.111348 table@remove removed @29
+16:47:36.111455 table@remove removed @30
+17:28:33.910697 db@close closing
+17:28:33.911153 db@close done T·452.27µs
+=============== Jul 26, 2021 (EDT) ===============
+22:43:36.281789 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+22:43:36.282388 version@stat F·[0 2] S·2MiB[0B 2MiB] Sc·[0.00 0.03]
+22:43:36.282404 db@open opening
+22:43:36.282447 journal@recovery F·1
+22:43:36.282984 journal@recovery recovering @32
+22:43:36.288342 memdb@flush created L0@36 N·90 S·1KiB "\x03EF..ion,v73491":"\x04Pr..can,v73406"
+22:43:36.288624 version@stat F·[1 2] S·2MiB[1KiB 2MiB] Sc·[0.25 0.03]
+22:43:36.302704 db@janitor F·6 G·1
+22:43:36.302715 db@janitor removing table-31
+22:43:36.302766 db@open done T·20.357953ms
+=============== Jul 27, 2021 (EDT) ===============
+01:28:09.046321 memdb@flush N·321 S·28KiB
+01:28:09.051938 memdb@flush created L0@40 N·321 S·3KiB "\x03EF..een,v73813":"\x04Pr..can,v73497"
+01:28:09.051973 version@stat F·[2 2] S·2MiB[5KiB 2MiB] Sc·[0.50 0.03]
+01:28:09.056679 memdb@flush committed F·1 T·10.296806ms
+01:28:09.056760 journal@remove removed @37
+01:28:09.056773 table@compaction range L-1 "":""
+01:28:09.056785 table@compaction L0·2 -> L1·1 S·914KiB Q·73813
+01:28:09.076487 table@build created L1@41 N·16030 S·909KiB "\x02\x00\x00..jar,v65302":"\x0e\x00\x00..ore,v69221"
+01:28:09.076533 version@stat F·[0 2] S·2MiB[0B 2MiB] Sc·[0.00 0.03]
+01:28:09.081344 table@compaction committed F-2 S-5KiB Ke·0 D·411 T·24.53962ms
+01:28:09.081464 table@remove removed @40
+01:28:09.081587 table@remove removed @35
+02:04:25.590099 db@close closing
+02:04:25.590546 db@close done T·444.517µs
+=============== Jul 27, 2021 (EDT) ===============
+14:15:21.424076 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:15:21.424631 version@stat F·[0 2] S·2MiB[0B 2MiB] Sc·[0.00 0.03]
+14:15:21.424647 db@open opening
+14:15:21.424695 journal@recovery F·1
+14:15:21.425189 journal@recovery recovering @39
+14:15:21.430812 memdb@flush created L0@42 N·70 S·1KiB "\x03EF..ion,v73883":"\nla..ime,v73814"
+14:15:21.431113 version@stat F·[1 2] S·2MiB[1KiB 2MiB] Sc·[0.25 0.03]
+14:15:21.446990 db@janitor F·6 G·1
+14:15:21.447000 db@janitor removing table-36
+14:15:21.447056 db@open done T·22.404685ms
+14:15:22.818697 table@compaction L0·1 -> L1·1 S·910KiB Q·73884
+14:15:22.837628 table@build created L1@45 N·16030 S·909KiB "\x02\x00\x00..jar,v65302":"\x0e\x00\x00..ore,v69221"
+14:15:22.837676 version@stat F·[0 2] S·2MiB[0B 2MiB] Sc·[0.00 0.03]
+14:15:22.846762 table@compaction committed F-1 S-1KiB Ke·0 D·70 T·28.04085ms
+14:15:22.847142 table@remove removed @41
+14:28:09.072865 memdb@flush N·21 S·1KiB
+14:28:09.078558 memdb@flush created L0@47 N·21 S·453B "\x03EF..een,v73905":"\x04Pr..can,v73889"
+14:28:09.078623 version@stat F·[1 2] S·2MiB[453B 2MiB] Sc·[0.25 0.03]
+14:28:09.083929 memdb@flush committed F·1 T·11.001ms
+14:28:09.084017 journal@remove removed @43
+14:28:09.084040 table@compaction range L-1 "":""
+14:28:09.084060 table@compaction L0·1 -> L1·1 S·910KiB Q·73905
+14:28:09.102757 table@build created L1@48 N·16030 S·909KiB "\x02\x00\x00..jar,v65302":"\x0e\x00\x00..ore,v69221"
+14:28:09.102850 version@stat F·[0 2] S·2MiB[0B 2MiB] Sc·[0.00 0.03]
+14:28:09.108024 table@compaction committed F-1 S-473B Ke·0 D·21 T·23.942676ms
+14:28:09.108155 table@remove removed @47
+14:28:09.108277 table@remove removed @45

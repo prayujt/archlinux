@@ -14,8 +14,8 @@ nitrogen --restore
 # picom &
 # systemctl --user start ulauncher.service
 discord --start-minimized &
-polybar monitor &
-polybar computer &
+polybar -c ~/.config/polybar/config.ini monitor &
+polybar -c ~/.config/polybar/config.ini computer &
 
 # Launch applications
 
