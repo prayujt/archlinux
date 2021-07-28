@@ -5,6 +5,7 @@ font pango:monospace 8
 exec --no-startup-id sh ~/.scripts/init_resolution.sh
 exec --no-startup-id xrandr --output eDP-1 --right-of DP-3
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+exec --no-startup-id /usr/bin/wired --no-daemon &
 
 
 # Use pactl to adjust volume in PulseAudio.
@@ -18,8 +19,8 @@ bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOU
 bindsym $mod+Shift+e exec "i3-msg exit"
 
 # custom bindings for pactl PulseAudio adjustments
-bindsym Ctrl+Shift+1 exec --no-startup-id pactl set-default-sink 0
-bindsym Ctrl+Shift+2 exec --no-startup-id pactl set-default-sink 1
+# bindsym Ctrl+Shift+1 exec --no-startup-id pactl set-default-sink 0
+# bindsym Ctrl+Shift+2 exec --no-startup-id pactl set-default-sink 1
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
@@ -31,8 +32,8 @@ bindsym $mod+Return exec --no-startup-id alacritty
 bindsym $mod+q kill
 
 # start rofi dmenu
-# bindsym $mod+d exec --no-startup-id rofi -show drun
 bindsym $mod+d exec --no-startup-id rofi -no-lazy-grab -show drun -theme $HOME/.config/rofi/style.rasi
+bindsym $mod+Shift+D exec --no-startup-id i3-layout
 
 # Multi-screen screenshots with scrot
 bindsym --release Print exec scrot 'screenshot_%Y%m%d_%H%M%S.png' -e 'mkdir -p ~/Pictures/screenshots && mv $f ~/Pictures/screenshots && xclip -selection clipboard -t image/png -i ~/Pictures/screenshots/`ls -1 -t ~/Pictures/screenshots | head -1`' # All screens

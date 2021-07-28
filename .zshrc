@@ -102,6 +102,10 @@ sizeof() {
 	du -h --max-depth=1 "$1"
 }
 
+poly() {
+    polybar -c ~/.config/polybar/config.ini "$1"
+}
+
 export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
 export EDITOR=nvim
