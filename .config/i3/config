@@ -2,11 +2,11 @@ set $mod Mod4
 font pango:monospace 8
 
 # Startup events
-exec --no-startup-id sh ~/.scripts/init_resolution.sh
+exec --no-startup-id sh ~/.scripts/init_resolution.sh &
 exec --no-startup-id xrandr --output eDP-1 --right-of DP-3
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
-exec --no-startup-id /usr/bin/wired --no-daemon &
-
+exec --no-startup-id /usr/bin/wired &
+exec --no-startup-id playerctld daemon
 
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status
