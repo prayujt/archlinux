@@ -1,8 +1,0 @@
-Jul 27 16:51 : exception: Failed to open '/home/prayuj/.config/mpd/state': No such file or directory
-Jul 27 16:51 : exception: Failed to access /home/prayuj/.config/mpd/music: No such file or directory
-Jul 27 16:52 : client: [0] malformed command "GET / HTTP/1.1"
-Jul 27 16:53 : exception: Failed to open '/home/prayuj/.config/mpd/state': No such file or directory
-Jul 27 16:53 : exception: Failed to open '/home/prayuj/.config/mpd/state': No such file or directory
-Jul 27 16:54 : exception: Failed to commit /home/prayuj/.config/mpd/state: File exists
-Jul 27 16:56 : exception: Failed to read mixer for 'default detected output': no such mixer control: PCM
-Jul 27 17:02 : exception: Failed to read mixer for 'default detected output': no such mixer control: PCM

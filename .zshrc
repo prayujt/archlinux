@@ -1,6 +1,8 @@
 export ZSH="/home/prayuj/.oh-my-zsh"
 ZSH_THEME="af-magic"
 
+zstyle ':completion:*' '' matcher-list 'm:{a-z}={A-Z}'
+
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
 
@@ -64,6 +66,7 @@ alias ls='lsd'
 alias graph='git log --all --decorate --oneline --graph'
 alias copy='xclip -selection clipboard'
 alias wallpaper='nitrogen ~/Pictures/wallpapers'
+alias usb='cd /run/media/prayuj'
 
 drop() {
 	cp "$1" ~/Dropbox
@@ -104,6 +107,33 @@ sizeof() {
 
 poly() {
     polybar -c ~/.config/polybar/config.ini "$1"
+}
+
+cd() {
+  builtin cd "$@" 2>/dev/null && return
+  emulate -L zsh
+  setopt local_options extended_glob
+  local matches
+  matches=( (#i)${(P)#}(N/) )
+  case $#matches in
+    0) 
+      if ((#cdpath)) &&
+         [[ ${(P)#} != (|.|..)/* ]] &&
+         matches=( $^cdpath/(#i)${(P)#}(N/) ) &&
+         ((#matches==1))
+      then
+        builtin cd $@[1,-2] $matches[1]
+        return
+      fi
+      # Still nothing. Let cd display the error message.
+      echo "cd: no such file or directory: $@";;
+      # builtin cd "$@";;
+    1)
+      builtin cd $@[1,-2] $matches[1];;
+    *)
+      print -lr -- "Ambiguous case-insensitive directory match:" $matches >&2
+      return 3;;
+  esac
 }
 
 export PATH=$PATH:/home/prayuj/.local/bin

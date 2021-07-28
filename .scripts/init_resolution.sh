@@ -20,5 +20,3 @@ else
 	sleep 2
 	sh ~/.scripts/startup2.sh
 fi
-
-xautolock -time 1 -locker "~/.screensaver" &
