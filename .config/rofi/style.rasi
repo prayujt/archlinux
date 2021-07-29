@@ -8,10 +8,10 @@
  */
 
 configuration {
-	font:							"JetBrains Mono 9";
+	font:							"FontAwesome 9";
     show-icons:                     true;
 	icon-theme: 					"Papirus";
-    display-drun: 					"";
+    display-drun: 					"";
     drun-display-format:            "{name}";
     disable-history:                false;
     fullscreen:                     false;
@@ -39,7 +39,7 @@ prompt {
 	padding: 						0.30% 1% 0% -0.5%;
 	background-color: 				@al;
 	text-color: 					@fg;
-	font:							"FantasqueSansMono Nerd Font 12";
+	font:							"FontAwesome 12";
 }
 
 entry {
