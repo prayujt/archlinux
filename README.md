@@ -1,2 +1,2 @@
-# My Arch Linux Configuration Files
+# Arch Linux Dotfiles
 
