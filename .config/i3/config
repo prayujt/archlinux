@@ -51,6 +51,9 @@ bindsym Ctrl+Shift+A exec --no-startup-id google-chrome-stable
 # open pulse audio mixer
 bindsym $mod+a exec --no-startup-id alacritty -e 'pacmixer'
 
+# switch sound device/sink
+bindsym $mod+Right exec --no-startup-id pulseaudio-control next-sink
+
 # open file explorer
 #bindsym $mod + Shift + F exec --no-startup-id nautilus
 
