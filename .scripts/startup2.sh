@@ -3,3 +3,4 @@
 nitrogen --restore
 discord --start-minimized &
 polybar -c ~/.config/polybar/config2.ini computer &
+python ~/.scripts/pulseaudio-watcher.py | xob -s computer &
