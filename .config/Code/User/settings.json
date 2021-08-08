@@ -1,0 +1,28 @@
+{
+    "workbench.colorTheme": "Default Light+",
+    "http.proxyAuthorization": null,
+    "workbench.iconTheme": "material-icon-theme",
+    "files.exclude": {
+        "**/.classpath": true,
+        "**/.project": true,
+        "**/.settings": true,
+        "**/.factorypath": true
+    },
+    "editor.suggestSelection": "first",
+    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+    "vim.leader": "<space>",
+    "vim.insertModeKeyBindings": [
+        {
+            "before": ["q", "w"],
+            "after": ["<Esc>"]
+        }
+    ],
+    "vim.normalModeKeyBindings": [
+        {
+            "before": ["<leader>", "f", "s"],
+            "commands": [":w"]
+        }
+    ],
+    "git.enableSmartCommit": true,
+    "git.autofetch": true
+}

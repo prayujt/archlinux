@@ -1,5 +1,10 @@
 [user]
-	email = prayujtuli@hotmail.com
+	email = 82406637+prayujt@users.noreply.github.com
 	name = Prayuj Tuli
 [credential]
 	helper = cache
+[filter "lfs"]
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
