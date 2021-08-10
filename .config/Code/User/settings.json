@@ -1,5 +1,5 @@
 {
-    "workbench.colorTheme": "Default Light+",
+    "workbench.colorTheme": "Visual Studio Dark",
     "http.proxyAuthorization": null,
     "workbench.iconTheme": "material-icon-theme",
     "files.exclude": {
@@ -24,5 +24,6 @@
         }
     ],
     "git.enableSmartCommit": true,
-    "git.autofetch": true
+    "git.autofetch": true,
+    "explorer.confirmDelete": false
 }

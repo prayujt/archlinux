@@ -1,5 +1,5 @@
 <configuration version="35">
-    <folder id="Desktop" label="Desktop" path="/home/prayuj/Desktop" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" ignorePerms="false" autoNormalize="true">
+    <folder id="Desktop" label="Desktop" path="/home/prayuj/Desktop" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="3" ignorePerms="false" autoNormalize="true">
         <filesystemType>basic</filesystemType>
         <device id="EBFCB73-JO2ZTRQ-GSVSRGE-YJS4OWN-67WJSIR-TCQQWKX-HXR53PP-HKDZLAJ" introducedBy="">
             <encryptionPassword></encryptionPassword>
@@ -38,7 +38,7 @@
         <caseSensitiveFS>false</caseSensitiveFS>
         <junctionsAsDirs>false</junctionsAsDirs>
     </folder>
-    <folder id="Documents" label="Documents" path="/home/prayuj/Documents" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" ignorePerms="false" autoNormalize="true">
+    <folder id="Documents" label="Documents" path="/home/prayuj/Documents" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="3" ignorePerms="false" autoNormalize="true">
         <filesystemType>basic</filesystemType>
         <device id="EBFCB73-JO2ZTRQ-GSVSRGE-YJS4OWN-67WJSIR-TCQQWKX-HXR53PP-HKDZLAJ" introducedBy="">
             <encryptionPassword></encryptionPassword>
@@ -77,7 +77,7 @@
         <caseSensitiveFS>false</caseSensitiveFS>
         <junctionsAsDirs>false</junctionsAsDirs>
     </folder>
-    <folder id="Downloads" label="Downloads" path="/home/prayuj/Downloads" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" ignorePerms="false" autoNormalize="true">
+    <folder id="Downloads" label="Downloads" path="/home/prayuj/Downloads" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="3" ignorePerms="false" autoNormalize="true">
         <filesystemType>basic</filesystemType>
         <device id="EBFCB73-JO2ZTRQ-GSVSRGE-YJS4OWN-67WJSIR-TCQQWKX-HXR53PP-HKDZLAJ" introducedBy="">
             <encryptionPassword></encryptionPassword>
@@ -116,7 +116,7 @@
         <caseSensitiveFS>false</caseSensitiveFS>
         <junctionsAsDirs>false</junctionsAsDirs>
     </folder>
-    <folder id="Pictures" label="Pictures" path="/home/prayuj/Pictures" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" ignorePerms="false" autoNormalize="true">
+    <folder id="Pictures" label="Pictures" path="/home/prayuj/Pictures" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="3" ignorePerms="false" autoNormalize="true">
         <filesystemType>basic</filesystemType>
         <device id="EBFCB73-JO2ZTRQ-GSVSRGE-YJS4OWN-67WJSIR-TCQQWKX-HXR53PP-HKDZLAJ" introducedBy="">
             <encryptionPassword></encryptionPassword>
@@ -155,7 +155,7 @@
         <caseSensitiveFS>false</caseSensitiveFS>
         <junctionsAsDirs>false</junctionsAsDirs>
     </folder>
-    <folder id="Projects" label="Projects" path="/home/prayuj/Projects" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" ignorePerms="false" autoNormalize="true">
+    <folder id="Projects" label="Projects" path="/home/prayuj/Projects" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="3" ignorePerms="false" autoNormalize="true">
         <filesystemType>basic</filesystemType>
         <device id="EBFCB73-JO2ZTRQ-GSVSRGE-YJS4OWN-67WJSIR-TCQQWKX-HXR53PP-HKDZLAJ" introducedBy="">
             <encryptionPassword></encryptionPassword>
@@ -283,7 +283,7 @@
         <insecureAllowOldTLSVersions>false</insecureAllowOldTLSVersions>
     </options>
     <defaults>
-        <folder id="" label="" path="~" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" ignorePerms="false" autoNormalize="true">
+        <folder id="" label="" path="~" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="3" ignorePerms="false" autoNormalize="true">
             <filesystemType>basic</filesystemType>
             <device id="EBFCB73-JO2ZTRQ-GSVSRGE-YJS4OWN-67WJSIR-TCQQWKX-HXR53PP-HKDZLAJ" introducedBy="">
                 <encryptionPassword></encryptionPassword>

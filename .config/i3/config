@@ -9,7 +9,7 @@ exec --no-startup-id /usr/bin/wired &
 exec --no-startup-id udiskie &
 exec --no-startup-id playerctld daemon
 exec --no-startup-id dbus-launch
-exec --no-startup-id syncthingtray
+exec --no-startup-id syncthingtray --wait
 
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status
@@ -19,7 +19,7 @@ bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ to
 bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status
 
 # custom bindings for logout event
-bindsym $mod+Shift+e exec "i3-msg exit"
+bindsym $mod+Shift+Q exec "i3-msg exit"
 
 # custom bindings for pactl PulseAudio adjustments
 # bindsym Ctrl+Shift+1 exec --no-startup-id pactl set-default-sink 0
@@ -30,6 +30,10 @@ floating_modifier $mod
 
 # start a terminal
 bindsym $mod+Return exec --no-startup-id alacritty
+
+# start file manager
+bindsym $mod+Shift+Return exec --no-startup-id nautilus
+bindsym $mod+Shift+F exec --no-startup-id nautilus
 
 # kill focused window
 bindsym $mod+q kill
@@ -94,11 +98,16 @@ bindsym $mod+Shift+l move right
 bindsym $mod+Shift+Left move workspace to output left
 bindsym $mod+Shift+Right move workspace to output right
 
+# return to previous workspace
+bindsym mod1+Tab workspace back_and_forth
+bindsym $mod+Tab workspace back_and_forth
+# bindsym $mod+Shift+Tab workspace back_and_forth
+
 # switch to next workspace
-bindsym $mod+Tab workspace next
+# bindsym $mod+Tab workspace next
 
 # switch to previous workspace
-bindsym $mod+Shift+Tab workspace prev
+# bindsym $mod+Shift+Tab workspace prev
 
 # split in horizontal orientation
 bindsym $mod+b split h
@@ -200,7 +209,20 @@ bindsym $mod+r mode "resize"
 
 # Remove window titles and add gaps between applications
 for_window [class=".*"] border pixel 0
+
+# Custom Selections
 for_window [class="eDEX-UI"] fullscreen enable
+for_window [class="Org.gnome.Nautilus"] floating enable
+for_window [class="Org.gnome.Nautilus"] resize set 1000 800 
+for_window [class="Eog"] floating enable
+for_window [class="Eog"] resize set 1000 800 
+for_window [class="discord"] floating enable
+for_window [class="okular"] fullscreen enable
+
+# Global Adjustment to match Monitor Height
+floating_maximum_size -1 x 1040
+
+workspace_auto_back_and_forth yes
 
 # Setup color schemes
 # class                 border  backgr. text   
