@@ -5,11 +5,11 @@ font pango:monospace 8
 exec --no-startup-id sh ~/.scripts/init_resolution.sh &
 exec --no-startup-id xrandr --output eDP-1 --right-of DP-3
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
-exec --no-startup-id /usr/bin/wired &
 exec --no-startup-id udiskie &
 exec --no-startup-id playerctld daemon
 exec --no-startup-id dbus-launch
-exec --no-startup-id syncthingtray --wait
+exec --no-startup-id syncthingtray --wait &
+exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
 
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status
@@ -55,7 +55,8 @@ bindsym --release Shift+Print exec scrot -s 'screenshot_%Y%m%d_%H%M%S.png' -e 'm
 bindsym Ctrl+Shift+A exec --no-startup-id google-chrome-stable
 
 # open pulse audio mixer
-bindsym $mod+a exec --no-startup-id alacritty -e 'pacmixer'
+# bindsym $mod+a exec --no-startup-id alacritty -e 'pacmixer'
+bindsym $mod+a exec --no-startup-id sh /home/prayuj/.scripts/audio.sh
 
 # switch sound device/sink
 bindsym $mod+Right exec --no-startup-id pulseaudio-control next-sink
@@ -216,6 +217,8 @@ for_window [class="Org.gnome.Nautilus"] floating enable
 for_window [class="Org.gnome.Nautilus"] resize set 1000 800 
 for_window [class="Eog"] floating enable
 for_window [class="Eog"] resize set 1000 800 
+for_window [class="Syncthing Tray"] floating enable
+for_window [class="Syncthing Tray"] resize set 1000 800 
 for_window [class="discord"] floating enable
 for_window [class="okular"] fullscreen enable
 

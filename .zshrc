@@ -139,6 +139,7 @@ cd() {
 export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
 export EDITOR=nvim
+export VISUAL=nvim
 export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export GOOGLE_APPLICATION_CREDENTIALS='/home/prayuj/.wealth_of_nations_firebase_admin_config.json'
