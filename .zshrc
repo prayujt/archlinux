@@ -138,6 +138,7 @@ cd() {
 
 export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
+export PATH=$PATH:/home/prayuj/.emacs.d/bin
 export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color
