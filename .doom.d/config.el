@@ -20,7 +20,7 @@
   (set (make-local-variable 'compile-command)
        (let ((file (file-name-nondirectory buffer-file-name)))
          (format "%s"
-                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) "make all && ./main")
+                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "make all && ./main")
                        ((equal (file-name-extension file) "js") "npm run start")))))
   (compile compile-command))
 
@@ -29,7 +29,7 @@
   (let (makefile_directory)
     (setq makefile_directory (read-directory-name "Directory:"))
     (message "Generated makefile in %s" makefile_directory)
-    (f-write-text "CC = g++\nCFLAGS  = -g -Wall\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp' -o -name '*.h')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
+    (f-write-text "CC = g++\nCFLAGS  = -g -Wall\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
                   'utf-8 (concat makefile_directory "/Makefile"))
   )
 )
