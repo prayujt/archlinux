@@ -48,9 +48,6 @@ bindsym --release Print exec scrot 'screenshot_%Y%m%d_%H%M%S.png' -e 'mkdir -p ~
 # OSX-like area selection screenshots
 bindsym --release Shift+Print exec scrot -s 'screenshot_%Y%m%d_%H%M%S.png' -e 'mkdir -p ~/Pictures/screenshots && mv $f ~/Pictures/screenshots && xclip -selection clipboard -t image/png -i ~/Pictures/screenshots/`ls -1 -t ~/Pictures/screenshots | head -1`' # Area selection
 
-# join zoom meetings
-#bindsym Ctrl+Shift+Tab exec --no-startup-id python ~/.zoom
-
 # open chrome
 bindsym Ctrl+Shift+A exec --no-startup-id google-chrome-stable
 
@@ -61,8 +58,8 @@ bindsym $mod+a exec --no-startup-id sh /home/prayuj/.scripts/audio.sh
 # switch sound device/sink
 bindsym $mod+Right exec --no-startup-id pulseaudio-control next-sink
 
-# open file explorer
-#bindsym $mod + Shift + F exec --no-startup-id nautilus
+# open calculator
+bindsym $mod+c exec --no-startup-id xdg-open ~/Projects/calculator/simulator.html
 
 # simulate mouse movement
 bindsym $mod+Ctrl+k exec --no-startup-id xdotool mousemove_relative -- 0 -15
