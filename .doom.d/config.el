@@ -20,7 +20,7 @@
   (set (make-local-variable 'compile-command)
        (let ((file (file-name-nondirectory buffer-file-name)))
          (format "%s"
-                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "make all && ./main")
+                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "make all")
                        ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) "npm run start")))))
   (compile compile-command))
 
@@ -36,3 +36,4 @@
 
 (global-set-key (kbd "C-c C-x") 'code-compile-run)
 (global-set-key (kbd "C-c C-g") 'generate-makefile)
+(global-set-key (kbd "C-/") 'comment-line)

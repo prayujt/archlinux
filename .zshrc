@@ -67,6 +67,9 @@ alias graph='git log --all --decorate --oneline --graph'
 alias copy='xclip -selection clipboard'
 alias wallpaper='nitrogen ~/Pictures/wallpapers'
 alias usb='cd /run/media/prayuj'
+alias ubuntu='ssh ubuntu@prayujt.com'
+alias pi='ssh ubuntu@prayujt.com'
+alias files='ssh files@prayujt.com'
 
 drop() {
 	cp "$1" ~/Dropbox
@@ -86,19 +89,19 @@ check() {
 }
 
 download() {
-	scp pi@prayujt.com:~/"$1" "$2" 
+	scp ubuntu@prayujt.com:~/"$1" "$2" 
 }
 
 downloadf() {
-	scp -r pi@prayujt.com:~/"$1" "$2" 
+	scp -r ubuntu@prayujt.com:~/"$1" "$2" 
 }
 
 upload() {
-	scp "$1" pi@prayujt.com:~/"$2"
+	scp "$1" ubuntu@prayujt.com:~/"$2"
 }
 
 uploadf() {
-	scp -r "$1" pi@prayujt.com:~/"$2"
+	scp -r "$1" ubuntu@prayujt.com:~/"$2"
 }
 
 sizeof() {
@@ -143,7 +146,6 @@ export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-export GOOGLE_APPLICATION_CREDENTIALS='/home/prayuj/.wealth_of_nations_firebase_admin_config.json'
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word
