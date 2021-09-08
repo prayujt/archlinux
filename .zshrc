@@ -70,6 +70,7 @@ alias usb='cd /run/media/prayuj'
 alias ubuntu='ssh ubuntu@prayujt.com'
 alias pi='ssh ubuntu@prayujt.com'
 alias files='ssh files@prayujt.com'
+alias wifiscan='nmcli device wifi list'
 
 drop() {
 	cp "$1" ~/Dropbox
@@ -137,6 +138,10 @@ cd() {
       print -lr -- "Ambiguous case-insensitive directory match:" $matches >&2
       return 3;;
   esac
+}
+
+wificonnect() {
+    nmcli device wifi connect "$1" password "$2"
 }
 
 export PATH=$PATH:/home/prayuj/.local/bin
