@@ -10,6 +10,7 @@ exec --no-startup-id playerctld daemon
 exec --no-startup-id dbus-launch
 exec --no-startup-id syncthingtray --wait &
 exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
+exec --no-startup-id picom &
 
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status
