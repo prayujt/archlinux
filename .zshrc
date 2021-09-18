@@ -1,5 +1,5 @@
-export ZSH="/home/prayuj/.oh-my-zsh"
-ZSH_THEME="af-magic"
+export ZSH="/home/prayuj/.config/oh-my-zsh"
+ZSH_THEME="intheloop"
 
 zstyle ':completion:*' '' matcher-list 'm:{a-z}={A-Z}'
 
@@ -142,6 +142,10 @@ cd() {
 
 wificonnect() {
     nmcli device wifi connect "$1" password "$2"
+}
+
+update_finances() {
+    
 }
 
 export PATH=$PATH:/home/prayuj/.local/bin
