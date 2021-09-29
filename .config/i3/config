@@ -10,7 +10,7 @@ exec --no-startup-id playerctld daemon
 exec --no-startup-id dbus-launch
 exec --no-startup-id syncthingtray --wait &
 exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
-exec --no-startup-id picom &
+exec --no-startup-id albert &
 
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status
@@ -40,7 +40,7 @@ bindsym $mod+Shift+F exec --no-startup-id nautilus
 bindsym $mod+q kill
 
 # start rofi dmenu
-bindsym $mod+d exec --no-startup-id rofi -no-lazy-grab -show drun -theme $HOME/.config/rofi/style.rasi
+# bindsym $mod+d exec --no-startup-id rofi -no-lazy-grab -show drun -theme $HOME/.config/rofi/style.rasi
 bindsym $mod+Shift+D exec --no-startup-id i3-layout
 
 # Multi-screen screenshots with scrot
@@ -219,6 +219,7 @@ for_window [class="Syncthing Tray"] floating enable
 for_window [class="Syncthing Tray"] resize set 1000 800 
 for_window [class="discord"] floating enable
 for_window [class="okular"] fullscreen enable
+for_window [class="albert"] border pixel 0
 
 # Global Adjustment to match Monitor Height
 floating_maximum_size -1 x 1040
@@ -232,11 +233,11 @@ client.focused_inactive #333333 #333333 #888888
 client.unfocused        #333333 #333333 #888888
 client.urgent           #900000 #900000 #ffffff
 
-gaps inner 5
-#gaps outer 20
-#gaps horizontal 20
-#gaps bottom 10
-#gaps top 60
+gaps inner 10
+gaps outer 5
+gaps horizontal 5
+gaps top 0
+gaps bottom 0
 
 # Start i3bar to display a workspace bar (plus the system information i3status
 # finds out, if available)

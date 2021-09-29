@@ -71,6 +71,7 @@ alias ubuntu='ssh ubuntu@prayujt.com'
 alias pi='ssh ubuntu@prayujt.com'
 alias files='ssh files@prayujt.com'
 alias wifiscan='nmcli device wifi list'
+alias locate='sudo updatedb && locate'
 
 drop() {
 	cp "$1" ~/Dropbox
@@ -145,7 +146,9 @@ wificonnect() {
 }
 
 update_finances() {
-    
+    scp ~/Downloads/RC* ubuntu@prayujt.com:~/finances/history.xlsx    
+    scp ~/Downloads/UC* ubuntu@prayujt.com:~/finances/current.xlsx    
+    rm ~/Downloads/RC* ~/Downloads/UC*
 }
 
 export PATH=$PATH:/home/prayuj/.local/bin
@@ -155,6 +158,7 @@ export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+export CANVAS_TOKEN="1016~NZHamGMCJf2Hn1HGgrhA2iTKJuhIJowUyEZfjdp7lpx3qYpr7OMyoDXMn6hLXGMC"
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word
