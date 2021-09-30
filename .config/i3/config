@@ -10,6 +10,7 @@ exec --no-startup-id playerctld daemon
 exec --no-startup-id dbus-launch
 exec --no-startup-id syncthingtray --wait &
 exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
+exec --no-startup-id picom &
 exec --no-startup-id albert &
 
 # Use pactl to adjust volume in PulseAudio.
@@ -42,6 +43,9 @@ bindsym $mod+q kill
 # start rofi dmenu
 # bindsym $mod+d exec --no-startup-id rofi -no-lazy-grab -show drun -theme $HOME/.config/rofi/style.rasi
 bindsym $mod+Shift+D exec --no-startup-id i3-layout
+
+# custom show system tray
+bindsym $mod+Shift+E exec --no-startup-id ~/.scripts/toggle_tray.sh
 
 # Multi-screen screenshots with scrot
 bindsym --release Print exec scrot 'screenshot_%Y%m%d_%H%M%S.png' -e 'mkdir -p ~/Pictures/screenshots && mv $f ~/Pictures/screenshots && xclip -selection clipboard -t image/png -i ~/Pictures/screenshots/`ls -1 -t ~/Pictures/screenshots | head -1`' # All screens
