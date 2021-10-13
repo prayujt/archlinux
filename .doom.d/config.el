@@ -15,25 +15,44 @@
   ()
 )
 
-(defun code-compile-run ()
+(defun code-compile ()
   (interactive)
   (set (make-local-variable 'compile-command)
        (let ((file (file-name-nondirectory buffer-file-name)))
          (format "%s"
                  (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "make all")
-                       ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) "npm run start")))))
+                       ((equal (file-name-extension file) "java") (concat "javac " buffer-file-name))
+                       ((equal (file-name-extension file) "python") (concat "python3 " buffer-file-name))))))
   (compile compile-command))
+
+(defun code-run ()
+  (interactive)
+  (set (make-local-variable 'run-command)
+       (let ((file (file-name-nondirectory buffer-file-name)))
+         (format "%s"
+                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "./main")
+                       ((equal (file-name-extension file) "java") (concat "java " buffer-file-name ".class"))
+                       ((equal (file-name-extension file) "python") (concat "python3 " buffer-file-name))
+                       ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) "npm run start")))))
+  (shell-command run-command))
 
 (defun generate-makefile ()
   (interactive)
   (let (makefile_directory)
     (setq makefile_directory (read-directory-name "Directory:"))
     (message "Generated makefile in %s" makefile_directory)
-    (f-write-text "CC = g++\nCFLAGS  = -Wall\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
+    (f-write-text "CC = g++\nCFLAGS  = -w\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
                   'utf-8 (concat makefile_directory "/Makefile"))
   )
 )
 
-(global-set-key (kbd "C-c C-x") 'code-compile-run)
-(global-set-key (kbd "C-c C-g") 'generate-makefile)
-(global-set-key (kbd "C-/") 'comment-line)
+;; Unmap old keybindings
+;; (global-unset-key (kbd "C-c C-c"))
+
+;; New keybindings
+;; (global-set-key (kbd "C-c C-c") 'code-compile)
+(map! :map general-override-mode-map "C-c C-c" 'code-compile)
+(map! :map general-override-mode-map "C-c C-x" 'code-run)
+(map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
+(map! :map general-override-mode-map "C-/" 'comment-line)
+(map! :map general-override-mode-map "M-t" 'shell-command)

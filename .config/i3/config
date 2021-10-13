@@ -37,6 +37,9 @@ bindsym $mod+Return exec --no-startup-id alacritty
 bindsym $mod+Shift+Return exec --no-startup-id nautilus
 bindsym $mod+Shift+F exec --no-startup-id nautilus
 
+# refresh background tasks
+bindsym $mod+Ctrl+R exec --no-startup-id ~/.scripts/refresh.sh
+
 # kill focused window
 bindsym $mod+q kill
 
