@@ -46,13 +46,26 @@
   )
 )
 
-;; Unmap old keybindings
-;; (global-unset-key (kbd "C-c C-c"))
-
-;; New keybindings
-;; (global-set-key (kbd "C-c C-c") 'code-compile)
+;; new keybindings
 (map! :map general-override-mode-map "C-c C-c" 'code-compile)
 (map! :map general-override-mode-map "C-c C-x" 'code-run)
 (map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
 (map! :map general-override-mode-map "C-/" 'comment-line)
-(map! :map general-override-mode-map "M-t" 'shell-command)
+(map! :map general-override-mode-map "M-t" 'shell)
+(map! :map general-override-mode-map "M-T" 'shell-command)
+
+(map! :map general-override-mode-map "M-l" 'evil-window-right)
+(map! :map general-override-mode-map "M-h" 'evil-window-left)
+(map! :map general-override-mode-map "M-j" 'evil-window-down)
+(map! :map general-override-mode-map "M-k" 'evil-window-up)
+(map! :map general-override-mode-map "M-w" 'evil-window-delete)
+
+;; (map! :map general-override-mode-map "M-L" 'move-window-right)
+;; (map! :map general-override-mode-map "M-H" 'move-window-left)
+;; (map! :map general-override-mode-map "M-J" 'move-window-down)
+;; (map! :map general-override-mode-map "M-K" 'move-window-up)
+
+(map! :map general-override-mode-map "M-RET" 'evil-window-vsplit)
+
+;; (add-hook 'c++-mode-hook
+;;           (lambda () (local-set-key (kbd "C-0") #'run-latexmk)))

@@ -105,7 +105,7 @@ bindsym $mod+Shift+Left move workspace to output left
 bindsym $mod+Shift+Right move workspace to output right
 
 # return to previous workspace
-bindsym mod1+Tab workspace back_and_forth
+# bindsym mod1+Tab workspace back_and_forth
 bindsym $mod+Tab workspace back_and_forth
 # bindsym $mod+Shift+Tab workspace back_and_forth
 
