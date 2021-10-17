@@ -21,8 +21,7 @@
        (let ((file (file-name-nondirectory buffer-file-name)))
          (format "%s"
                  (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "make all")
-                       ((equal (file-name-extension file) "java") (concat "javac " buffer-file-name))
-                       ((equal (file-name-extension file) "python") (concat "python3 " buffer-file-name))))))
+                       ((equal (file-name-extension file) "java") (concat "javac " buffer-file-name))))))
   (compile compile-command))
 
 (defun code-run ()
@@ -32,7 +31,7 @@
          (format "%s"
                  (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "./main")
                        ((equal (file-name-extension file) "java") (concat "java " buffer-file-name ".class"))
-                       ((equal (file-name-extension file) "python") (concat "python3 " buffer-file-name))
+                       ((equal (file-name-extension file) "py") (concat "python3 " buffer-file-name))
                        ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) "npm run start")))))
   (shell-command run-command))
 
@@ -46,11 +45,15 @@
   )
 )
 
+(defun insert-current-date () (interactive)
+  (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
+
 ;; new keybindings
 (map! :map general-override-mode-map "C-c C-c" 'code-compile)
 (map! :map general-override-mode-map "C-c C-x" 'code-run)
 (map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
 (map! :map general-override-mode-map "C-/" 'comment-line)
+(map! :map general-override-mode-map "C-c C-d" 'insert-current-date)
 (map! :map general-override-mode-map "M-t" 'shell)
 (map! :map general-override-mode-map "M-T" 'shell-command)
 
