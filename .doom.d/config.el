@@ -20,7 +20,7 @@
   (set (make-local-variable 'compile-command)
        (let ((file (file-name-nondirectory buffer-file-name)))
          (format "%s"
-                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "make all")
+                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "c") (equal (file-name-extension file) "hpp")) "make all")
                        ((equal (file-name-extension file) "java") (concat "javac " buffer-file-name))))))
   (compile compile-command))
 
@@ -30,7 +30,7 @@
        (let ((file (file-name-nondirectory buffer-file-name)))
          (format "%s"
                  (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "./main")
-                       ((equal (file-name-extension file) "java") (concat "java " buffer-file-name ".class"))
+                       ((equal (file-name-extension file) "java") (concat "java " buffer-file-name))
                        ((equal (file-name-extension file) "py") (concat "python3 " buffer-file-name))
                        ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) "npm run start")))))
   (shell-command run-command))
@@ -40,7 +40,7 @@
   (let (makefile_directory)
     (setq makefile_directory (read-directory-name "Directory:"))
     (message "Generated makefile in %s" makefile_directory)
-    (f-write-text "CC = g++\nCFLAGS  = -w\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
+    (f-write-text "CC = g++\nCFLAGS  = -w -g\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
                   'utf-8 (concat makefile_directory "/Makefile"))
   )
 )

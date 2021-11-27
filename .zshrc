@@ -149,6 +149,7 @@ update_finances() {
     scp ~/Downloads/RC* ubuntu@prayujt.com:~/finances/history.xlsx    
     scp ~/Downloads/UC* ubuntu@prayujt.com:~/finances/current.xlsx    
     rm ~/Downloads/RC* ~/Downloads/UC*
+    ssh ubuntu@prayujt.com 'python3 ~/finances/download_ameritrade_data.py'
 }
 
 export PATH=$PATH:/home/prayuj/.local/bin
