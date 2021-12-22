@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PARENT_BAR="monitor"
+PARENT_BAR="base"
 PARENT_BAR_PID=$(pgrep -a "polybar" | grep "$PARENT_BAR" | cut -d" " -f1)
 
 FORMAT="{{ title }} - {{ artist }}"

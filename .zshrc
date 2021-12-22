@@ -111,10 +111,6 @@ sizeof() {
 	du -h --max-depth=1 "$1"
 }
 
-poly() {
-    polybar -c ~/.config/polybar/config.ini "$1"
-}
-
 cd() {
   builtin cd "$@" 2>/dev/null && return
   emulate -L zsh
@@ -156,11 +152,13 @@ update_finances() {
 export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
 export PATH=$PATH:/home/prayuj/.emacs.d/bin
+export PATH=$PATH:/home/prayuj/.scripts
 export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export CANVAS_TOKEN="1016~NZHamGMCJf2Hn1HGgrhA2iTKJuhIJowUyEZfjdp7lpx3qYpr7OMyoDXMn6hLXGMC"
+export TERMINAL="alacritty"
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word

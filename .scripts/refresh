@@ -1,9 +1,14 @@
-#!/bin/sh
+killall polybar
+sleep 0.5
 
-nitrogen --restore
 polybar -c ~/.config/polybar/config.ini monitor &
 sleep 0.5
 polybar -c ~/.config/polybar/config.ini computer &
 sleep 0.5
+udiskie &
+playerctld daemon
+dbus-launch
+/usr/lib/xfce4/notifyd/xfce4-notifyd &
+picom &
+albert &
 python ~/.scripts/pulseaudio-watcher.py | xob -s monitor &
-discord --start-minimized &

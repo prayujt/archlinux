@@ -1,0 +1,32 @@
+#!/bin/bash
+state=$(bspc query -T -n | jq '.client.state' | sed 's/\"//g')
+interval=40
+
+if [[ "$state" == "tiled" ]]; then
+    echo $state
+    dir="$1"
+ #   _query_nodes() {
+ #       bspc query -N -n "$@"
+ #   }
+ #   receptacle="$(_query_nodes 'any.leaf.!window')"
+#
+#    # This regulates the behaviour documented in the description.
+#    if [ -n "$(_query_nodes "${dir}.!floating")" ]; then
+#        bspc node -s "$dir"
+#    elif [ -n "$receptacle" ]; then
+#        bspc node focused -n "$receptacle" --follow
+#    else
+#        bspc node @/ -p "$dir" -i && bspc node -n "$receptacle" --follow
+#    fi
+
+    bspc node -s "$dir.local" --follow || bspc node -m "$dir" --follow
+fi
+
+if [[ "$state" == "floating" ]]; then
+    case $1 in
+        west) bspc node -v $(( 0 - $interval )) 0;;
+        south) bspc node -v 0 $interval;;
+        north) bspc node -v 0 $(( 0 - $interval ));;
+        east) bspc node -v $interval 0
+    esac
+fi

@@ -1,5 +1,7 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
+(elcord-mode)
+
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
 
@@ -12,8 +14,11 @@
 
 (if (string= system-type "darwin")
     (toggle-frame-fullscreen)
-  ()
 )
+
+;; (if (string= system-type ";; gnu/linux")
+;;     (toggle-frame-maximized)
+;; )
 
 (defun code-compile ()
   (interactive)

@@ -1,0 +1,17 @@
+alacritty -e calcurse &
+pid="$!"
+
+# Wait for the window to open and grab its window ID
+winid=''
+while : ; do
+    winid="`wmctrl -lp | awk -vpid=$pid '$3==pid {print $1; exit}'`"
+    [[ -z "${winid}" ]] || break
+done
+
+# Focus the window we found
+wmctrl -ia "${winid}"
+
+bspc node -t floating
+
+# Wait for the application to quit
+wait "${pid}";
