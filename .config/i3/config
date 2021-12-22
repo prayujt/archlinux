@@ -227,6 +227,7 @@ for_window [class="Syncthing Tray"] resize set 1000 800
 for_window [class="discord"] floating enable
 for_window [class="okular"] fullscreen enable
 for_window [class="albert"] border pixel 0
+for_window [class="Minesweeper"] floating enable
 
 # Global Adjustment to match Monitor Height
 floating_maximum_size -1 x 1040

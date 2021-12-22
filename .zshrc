@@ -72,6 +72,7 @@ alias pi='ssh ubuntu@prayujt.com'
 alias files='ssh files@prayujt.com'
 alias wifiscan='nmcli device wifi list'
 alias locate='sudo updatedb && locate'
+alias flood='sudo hping3 -c 10000 -d 128 -S -w 64 -p 8000 --flood --rand-source 192.168.0.1'
 
 drop() {
 	cp "$1" ~/Dropbox
