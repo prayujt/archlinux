@@ -13,10 +13,10 @@ then
 	xrandr --output DP-3 --primary
 	xrandr --output eDP-1 --mode 1920x1080
 	sleep 1
-    startup
+    ~/.scripts/startup
 else
 	xrandr --output eDP-1 --primary
 	xrandr --output eDP-1 --mode 1920x1080
 	sleep 2
-    startup2
+    ~/.scripts/startup2
 fi

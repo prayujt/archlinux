@@ -10,6 +10,18 @@ super + Return
 super + d
     dmenu_run
 
+# calendar
+super + c
+    ~/.scripts/calendar
+alt + c
+    ~/.scripts/calendar
+
+# ranger
+super + r
+    ~/.scripts/rangerstart
+super + F
+    ~/.scripts/rangerstart
+
 # make sxhkd reload its configuration files:
 super + Escape
 	pkill -USR1 -x sxhkd
@@ -60,7 +72,7 @@ super + ctrl + {m,x,y,z}
 
 # focus the node in the given direction
 super + {h,j,k,l}
-	bspc node -f {west,south,north,east}
+    dir={west,south,north,east}; bspc node "$dir" -f || bspc monitor "$dir" -f
 
 # focus or send to the given desktop
 super + {_,shift + }{1-9,0}
@@ -88,11 +100,6 @@ super + ctrl + shift+ space
 # move nodes
 super + shift + {h,j,k,l}
     ~/.config/sxhkd/move {west,south,north,east}
-
-#super + shift + {h,j,k,l}
-#	dir={west,south,north,east}; \
-#	bspc node -s "$dir.local" --follow \
-#	    || bspc node -m "$dir" --follow
 
 # Resize Nodes
 super + control + {h,j,k,l}

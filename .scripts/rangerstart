@@ -1,0 +1,28 @@
+#!/bin/bash
+
+alacritty -t Ranger --class Ranger -e ranger &
+pid="$!"
+
+# Wait for the window to open and grab its window ID
+winid=''
+while : ; do
+    winid="`wmctrl -lp | awk -vpid=$pid '$3==pid {print $1; exit}'`"
+    [[ -z "${winid}" ]] || break
+done
+
+# Focus the window we found
+wmctrl -ia "${winid}"
+
+# echo $(wmctrl -lG | grep "${winid}" | awk '{print $3}') #x-offset
+# echo $(wmctrl -lG | grep "${winid}" | awk '{print $4}') #y-offset
+# echo $(wmctrl -lG | grep "${winid}" | awk '{print $5}') #width
+# echo $(wmctrl -lG | grep "${winid}" | awk '{print $6}') #height
+
+bspc node -t floating
+bspc node -z left -100 0
+bspc node -z top 0 -30
+bspc node -z right 100 0
+bspc node -z bottom 0 -15
+
+# Wait for the application to quit
+wait "${pid}";

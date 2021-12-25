@@ -1,0 +1,7 @@
+cp ~/.config/colorer/out/alacritty.yml ~/.config/alacritty/alacritty.yml
+cp  ~/.config/colorer/out/zathurarc ~/.config/zathura/zathurarc
+cp  ~/.config/colorer/out/userChrome.css ~/.mozilla/firefox/l02byq2p.default-release/chrome/userChrome.css
+cp ~/.config/colorer/out/colors.ini ~/.config/polybar/colors.ini
+cp ~/.config/colorer/out/discord.css ~/.config/BetterDiscord/data/stable/custom.css
+killall /opt/discord/Discord && discord > /dev/null
+xrdb -merge ~/.config/colorer/out/Xresources

@@ -1,11 +1,13 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
+(load-theme 'nord t)
 (elcord-mode)
 
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
 
-(setq doom-theme 'doom-one)
+;; (setq doom-font (font-spec :family "Source Code Pro" :size 12))
+;(setq doom-theme 'doom-one)
 
 (setq org-directory "~/iCloud/org/")
 

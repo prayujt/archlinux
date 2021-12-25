@@ -1,6 +1,6 @@
 #!/bin/sh
 
 nitrogen --restore
-poly
+~/.scripts/polybarstart
 python ~/.scripts/pulseaudio-watcher.py | xob -s monitor &
-discord --start-minimized &
+discord --start-minimized & > /dev/null

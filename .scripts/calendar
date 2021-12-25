@@ -1,4 +1,5 @@
-alacritty -e calcurse &
+#!/bin/bash
+alacritty -t Calendar --class Calendar -e calcurse &
 pid="$!"
 
 # Wait for the window to open and grab its window ID
