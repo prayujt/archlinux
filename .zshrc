@@ -73,6 +73,7 @@ alias files='ssh files@prayujt.com'
 alias wifiscan='nmcli device wifi list'
 alias locate='sudo updatedb && locate'
 alias flood='sudo hping3 -c 10000 -d 128 -S -w 64 -p 8000 --flood --rand-source 192.168.0.1'
+alias mine='nbminer -a beamv3 -o stratum+tcp://beamv3.usa.nicehash.com:3387 -u 3PADFCSgPDjZ3FodkwWm7mZzjgkCJ7kM5b.archOS'
 
 drop() {
 	cp "$1" ~/Dropbox
@@ -153,6 +154,7 @@ export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
 export PATH=$PATH:/home/prayuj/.emacs.d/bin
 export PATH=$PATH:/home/prayuj/.scripts
+export PATH=$PATH:/home/prayuj/.miner
 export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color

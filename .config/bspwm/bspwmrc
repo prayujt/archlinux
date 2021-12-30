@@ -4,6 +4,7 @@ pgrep -x sxhkd > /dev/null || sxhkd &
 ~/.scripts/init-resolution
 xsetroot -cursor_name left_ptr &
 udiskie &
+eww daemon
 playerctld daemon
 dbus-launch
 syncthingtray --wait &
