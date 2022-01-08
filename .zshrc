@@ -67,13 +67,13 @@ alias graph='git log --all --decorate --oneline --graph'
 alias copy='xclip -selection clipboard'
 alias wallpaper='nitrogen ~/Pictures/wallpapers'
 alias usb='cd /run/media/prayuj'
-alias ubuntu='ssh ubuntu@prayujt.com'
-alias pi='ssh ubuntu@prayujt.com'
 alias files='ssh files@prayujt.com'
 alias wifiscan='nmcli device wifi list'
 alias locate='sudo updatedb && locate'
 alias flood='sudo hping3 -c 10000 -d 128 -S -w 64 -p 8000 --flood --rand-source 192.168.0.1'
 alias mine='nbminer -a beamv3 -o stratum+tcp://beamv3.usa.nicehash.com:3387 -u 3PADFCSgPDjZ3FodkwWm7mZzjgkCJ7kM5b.archOS'
+alias wake='wakeonlan -i prayujt.com 18:c0:4d:af:be:c1'
+alias server='ssh prayuj@prayujt.com'
 
 drop() {
 	cp "$1" ~/Dropbox
@@ -101,11 +101,11 @@ downloadf() {
 }
 
 upload() {
-	scp "$1" ubuntu@prayujt.com:~/"$2"
+	scp "$1" prayuj@prayujt.com:~/"$2"
 }
 
 uploadf() {
-	scp -r "$1" ubuntu@prayujt.com:~/"$2"
+	scp -r "$1" prayuj@prayujt.com:~/"$2"
 }
 
 sizeof() {

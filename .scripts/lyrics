@@ -1,5 +1,6 @@
 #!/bin/bash
-alacritty -e swaglyrics -c &
+
+alacritty -t Lyrics --class Lyrics -e lyrics &
 pid="$!"
 
 # Wait for the window to open and grab its window ID
@@ -12,11 +13,16 @@ done
 # Focus the window we found
 wmctrl -ia "${winid}"
 
-# Make it float
-i3-msg floating enable > /dev/null;
+# echo $(wmctrl -lG | grep "${winid}" | awk '{print $3}') #x-offset
+# echo $(wmctrl -lG | grep "${winid}" | awk '{print $4}') #y-offset
+# echo $(wmctrl -lG | grep "${winid}" | awk '{print $5}') #width
+# echo $(wmctrl -lG | grep "${winid}" | awk '{print $6}') #height
 
-# Move it to the center for good measure
-i3-msg move position center > /dev/null;
+bspc node -t floating
+bspc node -z left -100 0
+bspc node -z top 0 -30
+bspc node -z right 100 0
+bspc node -z bottom 0 -15
 
 # Wait for the application to quit
 wait "${pid}";
