@@ -2,16 +2,29 @@ set $mod Mod4
 font pango:monospace 8
 
 # Startup events
-exec --no-startup-id sh ~/.scripts/init_resolution.sh &
-exec --no-startup-id xrandr --output eDP-1 --right-of DP-3
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+#exec --no-startup-id sh ~/.scripts/init_resolution.sh &
+#exec --no-startup-id xrandr --output eDP-1 --right-of DP-3
+#exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+#exec --no-startup-id udiskie &
+#exec --no-startup-id playerctld daemon
+#exec --no-startup-id dbus-launch
+#exec --no-startup-id syncthingtray --wait &
+#exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
+#exec --no-startup-id picom &
+#exec --no-startup-id albert &
+
+exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
+exec --no-startup-id dbus-launch
+exec --no-startup-id pgrep -x sxhkd > /dev/null || sxhkd &
+exec --no-startup-id ~/.scripts/init-resolution &
+exec --no-startup-id xsetroot -cursor_name left_ptr &
 exec --no-startup-id udiskie &
+# exec --no-startup-id eww daemon
 exec --no-startup-id playerctld daemon
 exec --no-startup-id dbus-launch
 exec --no-startup-id syncthingtray --wait &
-exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
 exec --no-startup-id picom &
-exec --no-startup-id albert &
+
 
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status

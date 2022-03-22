@@ -12,13 +12,15 @@ super + Return
 
 # program launcher
 super + d
-    dmenu_run
+    rofi -show run
 
-# calendar
+# window selector
+super + w
+    rofi -show window
+
+# calculator
 super + c
-    ~/.scripts/calendar
-alt + c
-    ~/.scripts/calendar
+    rofi -show calc -modi calc -no-config -no-history -no-show-match -no-sort
 
 # ranger
 super + r
@@ -33,6 +35,10 @@ super + Escape
 #
 # bspwm hotkeys
 #
+
+# open powermenu
+super + p
+    ~/.config/rofi/applets/menu/powermenu.sh
 
 # quit/restart bspwm
 super + shift + {q,r}
@@ -94,8 +100,20 @@ super + ctrl + shift + {h,j,k,l}
 	# bspc node -o 0.{1-9}
 
 # cancel the preselection for the focused node
-super + ctrl + shift+ space
+super + ctrl + shift + space
 	bspc node -p cancel
+super + ctrl + shift + Escape
+	bspc node -p cancel
+
+super + Tab
+    bspc wm -h off; \
+	bspc node older -f; \
+	bspc wm -h on
+
+super + shift + Tab
+    bspc wm -h off; \
+	bspc node newer -f; \
+	bspc wm -h on
 
 #
 # move/resize

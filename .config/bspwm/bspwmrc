@@ -8,20 +8,22 @@ eww daemon
 playerctld daemon
 dbus-launch
 syncthingtray --wait &
-picom &
+picom --experimental-backend &
 
 bspc monitor DP-3 -d I II III IV V VI VII VIII IX
 bspc monitor eDP-1 -d X
 
-# bspc config focus_follows_pointer true
-
+bspc config border_radius                5
 bspc config border_width                 2
 bspc config window_gap                  12
 bspc config -m DP-3 bottom_padding      64
+bspc config focus_follows_pointer       true
+bspc config pointer_follows_monitor     true
+bspc config pointer_follows_focus       true
 
-bspc config split_ratio          0.52
-bspc config borderless_monocle   true
-bspc config gapless_monocle      true
+bspc config split_ratio                 0.52
+bspc config borderless_monocle          true
+bspc config gapless_monocle             true
 
 bspc rule -a discord state=floating rectangle=1660x925+100+50
 bspc rule -a ranger state=floating rectangle=1660x925+100+50

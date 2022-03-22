@@ -1,47 +1,47 @@
 /* variables {{{ */
 :root {
   /* Minimal Functional Fox variables*/
-  --mff-bg: #2d3545;
-  --foreground: #d8dee9;
-  --foreground-lighter: #eceff4;
-  --mff-icon-color: #d8dee9;
+  --mff-bg: #282828;
+  --foreground: #ebdbb2;
+  --foreground-lighter: #ebdbb2;
+  --mff-icon-color: #ebdbb2;
   --mff-nav-toolbar-padding: 0px;
   --mff-sidebar-bg: var(--mff-bg);
-  --mff-sidebar-color: #d8dee9;
+  --mff-sidebar-color: #ebdbb2;
   --mff-tab-border-radius: 0px;
-  --mff-tab-color: #d8dee9;
+  --mff-tab-color: #ebdbb2;
   /*--mff-tab-font-family: "terminus (ttf)";*/
   --mff-tab-font-family: "JetBrains Mono";
   --mff-tab-font-size: 9pt;
   --mff-tab-font-weight: 400;
-  --mff-tab-height: 40px;
-  --mff-tab-pinned-bg: #8fbcbb;
-  --mff-tab-selected-bg: #a3be8c;
-  --mff-tab-soundplaying-bg: #b48ead;
-  --mff-urlbar-color: #d8dee9;
-  --mff-urlbar-focused-color: #d8dee9;
+  --mff-tab-height: 30px;
+  --mff-tab-pinned-bg: #8ec07c;
+  --mff-tab-selected-bg: #98971a;
+  --mff-tab-soundplaying-bg: #d3869b;
+  --mff-urlbar-color: #ebdbb2;
+  --mff-urlbar-focused-color: #ebdbb2;
   --mff-urlbar-font-family: "JetBrains Mono";
   --mff-urlbar-font-size: 9pt;
   --mff-urlbar-font-weight: normal;
-  --mff-urlbar-results-color: #d8dee9;
+  --mff-urlbar-results-color: #ebdbb2;
   --mff-urlbar-results-font-family: "JetBrains Mono";
   --mff-urlbar-results-font-size: 9pt;
   --mff-urlbar-results-font-weight: normal; /*700;*/
-  --mff-urlbar-results-url-color: #8fbcbb;
+  --mff-urlbar-results-url-color: #8ec07c;
   /*   --mff-tab-selected-bg: linear-gradient(90deg, rgba(232,74,95,1) 0%, rgba(255,132,124,1) 50%, rgba(254,206,168,1) 100%); */
   /*   --mff-urlbar-font-weight: 600; */
 
   /* Overriden Firefox variables*/
   --autocomplete-popup-background: var(--mff-bg) !important;
   --default-arrowpanel-background: var(--mff-bg) !important;
-  --default-arrowpanel-color: #d8dee9 !important;
+  --default-arrowpanel-color: #ebdbb2 !important;
   --lwt-toolbarbutton-icon-fill: var(--mff-icon-color) !important;
-  --panel-disabled-color: #d8dee9280;
+  --panel-disabled-color: #ebdbb2280;
   --toolbar-bgcolor: var(--mff-bg) !important;
   --urlbar-separator-color: transparent !important;
 
-  --autocomplete-popup-highlight-color: #3b4252 !important;
-  --autocomplete-popup-highlight-background: #a3be8c !important;
+  --autocomplete-popup-highlight-color: #282828 !important;
+  --autocomplete-popup-highlight-background: #98971a !important;
 
   --arrowpanel-background: var(--mff-bg) !important;
   --arrowpanel-color: var(--foreground) !important;
@@ -117,7 +117,7 @@ hbox.tab-content[pinned="true"] .tab-text {
 }
 
 #tabbrowser-tabs {
-  --tab-loading-fill: #2d3545 !important;
+  --tab-loading-fill: #282828 !important;
 }
 
 .tab-label-container:not([textoverflow]) {
@@ -167,8 +167,8 @@ hbox.tab-content[pinned="true"] .tab-text {
 /* Toolbar {{{ */
 
 ::selection {
-  background-color: #8fbcbb !important;
-  color: #2d3545 !important;
+  background-color: #8ec07c !important;
+  color: #282828 !important;
 }
 
 .urlbar-icon > image {
@@ -212,11 +212,11 @@ hbox.tab-content[pinned="true"] .tab-text {
 }
 
 .urlbarView-row[type="bookmark"] > span {
-  color: #a3be8c !important;
+  color: #b8bb26 !important;
 }
 
 .urlbarView-row[type="switchtab"] > span {
-  color: #a3be8c !important;
+  color: #98971a !important;
 }
 
 .urlbarView-url,
@@ -373,7 +373,7 @@ toolbarseparator {
 /* something */
 .toolbarbutton-icon,
 .toolbarbutton-icon::after {
-  fill: #d8dee9 !important;
+  fill: #ebdbb2 !important;
 }
 
 .urlbarView-row[selected="true"] {

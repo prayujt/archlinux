@@ -1,5 +1,6 @@
 #!/bin/sh
 
+bspc monitor DP-3 -f
 nitrogen --restore
 ~/.scripts/polybarstart
 python ~/.scripts/pulseaudio-watcher.py | xob -s monitor &

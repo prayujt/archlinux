@@ -1,7 +1,7 @@
-$bgDarker: mix(#2d3545, #000000, 90%);
+$bgDarker: mix(#282828, #000000, 90%);
 
 .messages-3amgkR {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 
 *{
@@ -13,22 +13,22 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 .scrollableContainer-2NUZem,
 .scroller-2TZvBN,
 .searchBar-3dMhjb {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 
 .theme-dark {
-  --background-color: #2d3545 !important;
-  --background-primary: #2d3545 !important;
-  --background-secondary: #2d3545 !important;
+  --background-color: #282828 !important;
+  --background-primary: #282828 !important;
+  --background-secondary: #282828 !important;
   --background-secondary-alt: $bgDarker !important;
   --background-tertiary: $bgDarker !important;
-  --background-accent: #bf616a !important;
+  --background-accent: #cc241d !important;
   --background-floating: $bgDarker !important;
-  --text-link: #bf616a !important;
-  --focus-primary: #88c0d0 !important;
-  --channeltextarea-background: #2d3545 !important;
-  --activity-card-background: #2d3545 !important;
-  --depreciated-store-bg: #2d3545 !important;
+  --text-link: #cc241d !important;
+  --focus-primary: #689d6a !important;
+  --channeltextarea-background: #282828 !important;
+  --activity-card-background: #282828 !important;
+  --depreciated-store-bg: #282828 !important;
   --deprecated-quickswitcher-input-background: $bgDarker !important;
   --deprecated-text-input-border-hover: $bgDarker !important;
   --deprecated-text-input-border-disabled: $bgDarker !important;
@@ -44,24 +44,24 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 
 //  login screen
 .theme-dark.authBox-hW6HRx {
-  background: #2d3545 !important;
+  background: #282828 !important;
 }
 .appMount-3lHmkl 
 .lookFilled-1Gx00P.colorBrand-3pXr91 {
-  background-color: #bf616a !important;
+  background-color: #cc241d !important;
 }
 .lookLink-9FtZy-.colorBrand-3pXr91 {
-  color: #bf616a !important;
+  color: #cc241d !important;
 }
 .input-cIJ7To.focused-1mmYsC, .input-cIJ7To:focus {
-  border-color: #bf616a !important;
+  border-color: #cc241d !important;
 }
 //  private call
 .wrapper-2qzCYF.minimum-28Z35l {
-  background-color: rgba(#2d3545, 0.8) !important;
+  background-color: rgba(#282828, 0.8) !important;
 }
 .centerButton-3CaNcJ {
-  background: rgba(#2d3545, 0.6);
+  background: rgba(#282828, 0.6);
 }
 
 //  channel list 
@@ -70,24 +70,24 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 }
   //  discord icon
 .wrapper-1BJsBx.selected-bZ3Lue .childWrapper-anI2G9, .wrapper-1BJsBx:hover .childWrapper-anI2G9 {
-  background-color: #bf616a !important;
+  background-color: #cc241d !important;
 }
 .item-2hkk8m {
-  background-color: #bf616a !important;
+  background-color: #cc241d !important;
 }
 
 //  make '#' in front of channels match text color 
 .foreground-2W-aJk {
-  fill: #88c0d0 !important;
+  fill: #689d6a !important;
 }
 
 //  channels with unread messages 
 .nameUnreadText-DfkrI4,
 .nameUnreadVoice-EVo-wI {
-  color: #88c0d0 !important;
+  color: #689d6a !important;
 }
 .numberBadge-2s8kKX {
- background-color: #88c0d0 !important;
+ background-color: #689d6a !important;
 }
 
 //  default channel style 
@@ -95,7 +95,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 .nameDefaultVoice-3WUH7s,
 .nameLockedText-3pqQcL,
 .nameLockedVoice-26MhB1 {
-  color: rgba(#d8dee9, 0.5) !important;
+  color: rgba(#ebdbb2, 0.5) !important;
 }
 
 //  channel group name 
@@ -103,36 +103,36 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 .iconDefault-3Gr8d2,
 .nameCollapsed-34uFWo,
 .nameDefault-2DI02H {
-  color: rgba(#d8dee9, 0.7) !important;
+  color: rgba(#ebdbb2, 0.7) !important;
 }
 
 //  muted channels 
 .nameMutedText-3Vj4bM,
 .nameMutedVoice-3oxyQZ {
-  color: rgba(#d8dee9, 0.2) !important;
+  color: rgba(#ebdbb2, 0.2) !important;
 }
 
 //  unread channels left dot 
 .unread-1Dp-OI {
-  background: #88c0d0 !important;
+  background: #689d6a !important;
 }
 
 //  box around select channel 
 .contentSelectedText-3wUhMi {
-  background: rgba(#bf616a, 0.2) !important;
+  background: rgba(#cc241d, 0.2) !important;
 }
 
 //  box on channel hover 
 .contentHoveredText-2D9B-x,
 .contentHoveredVoice-3p_NEO:active,
 .contentSelectedVoice-1WDIBM:active {
-  background: rgba(#bf616a, 0.1) !important;
+  background: rgba(#cc241d, 0.1) !important;
 }
 
 //  voice connected 
 .container-1UB9sr {
   background-color: $bgDarker !important;
-  border-bottom: 1px solid rgba(#bf616a, 0.1) !important;
+  border-bottom: 1px solid rgba(#cc241d, 0.1) !important;
 }
 
 //  avatar container 
@@ -140,33 +140,33 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   background-color: $bgDarker !important;
   //  buttons 
   .horizontal-1ae9ci button {
-    fill: #bf616a !important;
+    fill: #cc241d !important;
   }
 }
 
 //  "New Unreads" 
 .unread-1xRYoj {
-  background-color: rgba(#88c0d0, 0.75) !important;
+  background-color: rgba(#689d6a, 0.75) !important;
 }
 
 //  textbox margins 
 .content, .content-yTz4x3 {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 
 //  input form background
 .inner-zqa7da {
-  background-color: rgba(#bf616a, 0.1) !important;
+  background-color: rgba(#cc241d, 0.1) !important;
 }
 
 //  attachment button color 
 .attachButtonPlus-rUdX-B {
-  fill: #bf616a !important;
+  fill: #cc241d !important;
 }
 //  nitro
   //  nitro page
 .scroller-9moviB {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
   //  nitro gift button color
 .theme-dark .lookFilled-1Gx00P.colorPrimary-3b3xI6 {
@@ -174,129 +174,129 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 }
   //  nitro gift popup
 .theme-dark .root-1gCeng {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 .theme-dark .footer-3rDWdC {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 .lookOutlined-3sRXeN.colorBrand-3pXr91 {
-  color: rgba(#bf616a, 0.8) !important;
-  border-color: rgba(#bf616a, 0.2) !important;
+  color: rgba(#cc241d, 0.8) !important;
+  border-color: rgba(#cc241d, 0.2) !important;
 }
 
 //  messages - form separator 
 .chat form,
 .chat-3bRxxu form {
-  background-color: #2d3545 !important;
-  box-shadow: 0 -1px 0 rgba(#88c0d0, 0.1) !important;
+  background-color: #282828 !important;
+  box-shadow: 0 -1px 0 rgba(#689d6a, 0.1) !important;
 }
 
 //  "Load More Messages" button 
 .has-more button,
 .hasMore-3e72_v button {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
   border-color: transparent !important;
 }
 
 .jump-to-present-bar {
-  background-color: rgba(#bf616a, 0.6) !important;
+  background-color: rgba(#cc241d, 0.6) !important;
 }
 
 //  edit message box 
 .inner-zqa7da {
-  background-color: rgba(#bf616a, 0.1) !important;
+  background-color: rgba(#cc241d, 0.1) !important;
 }
 
 //  divider is what displays the date for older messages 
 .messages .divider,
 .divider-3gKybi {
   & > span {
-    background-color: #2d3545 !important;
+    background-color: #282828 !important;
   }
   &:not(.red) div {
-    background: rgba(#bf616a, 0.3) !important;
+    background: rgba(#cc241d, 0.3) !important;
   }
   &:not(.red) span {
-    color: rgba(#bf616a, 0.6) !important;
+    color: rgba(#cc241d, 0.6) !important;
   }
   &.divider-red {
     & > span {
-      color: #88c0d0 !important;
+      color: #689d6a !important;
     }    
     & > div {
-      background: #88c0d0 !important;
+      background: #689d6a !important;
     }
   }  
 }
 .isUnread-3Ef-o9 {
-  border-color: #88c0d0 !important;
+  border-color: #689d6a !important;
 }
 .unreadPill-2HyYtt {
-  background-color: #88c0d0 !important;
+  background-color: #689d6a !important;
 }
 .unreadPillCapStroke-7rkHbg {
-  color: #88c0d0 !important;
-  fill: #88c0d0 !important;
+  color: #689d6a !important;
+  fill: #689d6a !important;
 }
   //  reaction menu
 .wrapper-2aW0bm {
-  background-color: rgba(#2d3545, 0.8) !important;
+  background-color: rgba(#282828, 0.8) !important;
 }
 
 //  bar displayed at the top of the messages when there are unread ones 
 .new-messages-bar,
 .newMessagesBar-mujexs {
-  background-color: rgba(#88c0d0, 0.9) !important;
+  background-color: rgba(#689d6a, 0.9) !important;
 }
 
 //  message container 
 .messages-wrapper,
 .messagesWrapper-3lZDfY {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 
 .message-group {
   // message text
   .markup,
   .markup-2BOw-j {
-    color: #d8dee9 !important;
+    color: #ebdbb2 !important;
     //  for code within single backquotes 
     code.inline {
-      background-color: mix(#2d3545, #bf616a, 85%) !important;
+      background-color: mix(#282828, #cc241d, 85%) !important;
     }
     //  for codeblocks (triple backquotes)
     pre {
       code {
-        background-color: mix(#2d3545, #bf616a, 90%) !important;
+        background-color: mix(#282828, #cc241d, 90%) !important;
       }
-      border-color: #2d3545 !important;
+      border-color: #282828 !important;
     }
   }
 
   //  embed cards 
   .embedInner-1-fpTo {
-    background-color: mix(#2d3545, #bf616a, 90%) !important;
+    background-color: mix(#282828, #cc241d, 90%) !important;
   }
 
   //  message with user mention 
   .mentioned .message-text {
-    background-color: rgba(#88c0d0, 0.1) !important;
+    background-color: rgba(#689d6a, 0.1) !important;
     &:after {
       background: transparent !important;
-      border-left-color: #88c0d0 !important;
+      border-left-color: #689d6a !important;
     }
   }
 }
     //  user mention fix
 .wrapper-3WhCwL {
-  color: rgba(#88c0d0, 0.8) !important;
+  color: rgba(#689d6a, 0.8) !important;
 }
    //  mentioned background
 .mentioned-xhSam7 {
-  background-color: rgba(#88c0d0, 0.1) !important;
+  background-color: rgba(#689d6a, 0.1) !important;
 }
 .mentioned-xhSam7:before {
-  background-color: #88c0d0 !important;
+  background-color: #689d6a !important;
 }
 
 //  users list  
@@ -304,39 +304,39 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   background-color: $bgDarker !important;
 }
 .sidebar-2K8pFh {
-  background: #2d3545 !important;
+  background: #282828 !important;
 }
 .selected-aXhQR6 .layout-2DM8Md {
-  background-color: rgba(#bf616a, 0.2) !important; 
+  background-color: rgba(#cc241d, 0.2) !important; 
 }
 
 //  user typing message 
 .typing-2GQL18 {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 
 //  title bar 
 .title-3qD0b- {
   background-color: $bgDarker !important;
   .search-bar {
-    background-color: rgba(#bf616a, 0.2) !important;
+    background-color: rgba(#cc241d, 0.2) !important;
   }
 }
 .container-1r6BKw.themed-ANHk51 {
-  background: #2d3545 !important;
+  background: #282828 !important;
 }
 
 //  server list 
 .guilds-wrapper,
 .guildsWrapper-5TJh6A,
 .wrapper-1Rf91z {
-  background-color: #d8dee9 !important;
+  background-color: #ebdbb2 !important;
 }
 .guilds-add,
 .circleIconButton-jET_ig {
-  border: 1px dashed rgba(#bf616a, 0.3) !important;
+  border: 1px dashed rgba(#cc241d, 0.3) !important;
   background: inherit !important;
-  color: rgba(#bf616a, 0.4) !important;
+  color: rgba(#cc241d, 0.4) !important;
 }
 .guild .guild-inner,
 .guild-1EfMGQ .guild-inner,
@@ -346,21 +346,21 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 .guild.unread:before,
 .guild-1EfMGQ.unread-qLkInr:before,
 .wrapper-232cHJ {
-  background: rgba(#88c0d0, 0.65) !important;
+  background: rgba(#689d6a, 0.65) !important;
 }
 
 //  n friends online 
 .friends-online,
 .friendsOnline-_wi_fM,
 .friendsOnline-2JkivW {
-  color: #bf616a !important;
+  color: #cc241d !important;
 }
 
 //  server menu 
 .menu-Sp6bN1 {
-  background: #2d3545 !important;
+  background: #282828 !important;
   .separator-2zcjq8 {
-    background: rgba(#bf616a, 0.4) !important;
+    background: rgba(#cc241d, 0.4) !important;
   }
 }
 
@@ -369,30 +369,30 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   background-color: $bgDarker !important;
   //  header 
   .header-ykumBX {
-    background: #2d3545 !important;
+    background: #282828 !important;
   }
   //  footer 
   .footer-1kmXd4 {
-    background: #2d3545 !important;
+    background: #282828 !important;
   }
   //  pinned message view 
   .messagesPopout-24nkyi .message-group {
     @extend .message-group;
-    background-color: #2d3545 !important;
+    background-color: #282828 !important;
     //  jump 
     .actionButtons-1sUUug .jumpButton-3DTcS_ {
-      background-color: rgba(#bf616a, 0.6) !important;
+      background-color: rgba(#cc241d, 0.6) !important;
     }
   }
 }
   //  notification
 .iconBadge-qZ4Ksk {
-  background-color: #88c0d0 !important;
+  background-color: #689d6a !important;
 }
 
 //  spinners 
 .spinner-wandering-cubes .spinner-item {
-  background-color: #bf616a !important;
+  background-color: #cc241d !important;
 }
 
 //  app scrollbars 
@@ -401,13 +401,13 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 .scrollerThemed-2oenus.themedWithTrack-q8E3vB .scroller-2FKFPG {
   &::-webkit-scrollbar-thumb,
   &::-webkit-scrollbar-track-piece {
-    border-color: #2d3545 !important;
+    border-color: #282828 !important;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: mix(#2d3545, #bf616a, 75%) !important;
+    background-color: mix(#282828, #cc241d, 75%) !important;
   }
   &::-webkit-scrollbar-track-piece {
-    background-color: #2d3545 !important;
+    background-color: #282828 !important;
   }
 }
 
@@ -421,7 +421,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
     background-color: $bgDarker !important;
   }
   .thumb-2JwNFC {
-    background-color: rgba(#bf616a, 0.1) !important;
+    background-color: rgba(#cc241d, 0.1) !important;
   }
 }
 
@@ -429,69 +429,69 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   //  box around selected chat 
 .channel.selected a,
 .channel-2QD9_O.selected-1HYmZZ a {
-  background: rgba(#bf616a, 0.2) !important;
+  background: rgba(#cc241d, 0.2) !important;
 }
   //  box on hover 
 .channel:hover a,
 .channel-2QD9_O:hover a {
-  background: rgba(#bf616a, 0.1) !important;
+  background: rgba(#cc241d, 0.1) !important;
 }
   // create dm popup
 .theme-dark .modal-yWgWj- {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 
 //}  friends tab 
 #friends,
 .container-3gCOGc {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
   //  title bar 
   .headerBar-UHpsPw {
     background: $bgDarker !important;
   }
   .friends-table,
   .friendsTable-133bsv {
-    background-color: #2d3545 !important;
+    background-color: #282828 !important;
     .friends-row:hover,
     .friendsRow-2yicud:hover {
-      background-color: rgba(#bf616a, 0.1) !important;
+      background-color: rgba(#cc241d, 0.1) !important;
     }
     .friends-row,
     .friendsRow-2yicud {
       .friends-column-actions .friends-action {
-        background-color: rgba(#bf616a, 0.1) !important;
+        background-color: rgba(#cc241d, 0.1) !important;
       }
     }
     .friends-row,
     .friendsRow-2yicud {
       .friends-column-actions .friends-action:hover {
-        background-color: rgba(#bf616a, 0.2) !important;
+        background-color: rgba(#cc241d, 0.2) !important;
       }
     }
   }
 }
 
 .scrollerThemed-2oenus.themeDark-2cjlUp .scroller-2FKFPG, .theme-dark .scrollerWrap-2lJEkd .scroller-2FKFPG, .theme-light .scrollerThemed-2oenus.themeDark-2cjlUp .scroller-2FKFPG {
-  background: #2d3545 !important;
+  background: #282828 !important;
 }
 .theme-dark .container-1D34oG {
-  background-color: rgba(#2d3545, 0.8) !important;
+  background-color: rgba(#282828, 0.8) !important;
 }
 
 //  quick switcher (ctrl + k) 
 .quickswitcher-3JagVE {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
   //  input 
   .input-2VB9rf {
-    background-color: rgba(#bf616a, 0.1) !important;
+    background-color: rgba(#cc241d, 0.1) !important;
   }
   //  focused search result 
   .resultFocused-3aIoYe {
-    background-color: rgba(#bf616a, 0.2) !important;
+    background-color: rgba(#cc241d, 0.2) !important;
   }
   .keybindShortcut-1BD6Z1 span {
-    background-color: #88c0d0 !important;
-    box-shadow: inset 0 -4px 0 rgba(#bf616a, 0.6) !important;
+    background-color: #689d6a !important;
+    box-shadow: inset 0 -4px 0 rgba(#cc241d, 0.6) !important;
   }
 }
 
@@ -500,23 +500,23 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   background-color: $bgDarker !important;
   //  background on hover 
   .option-96V44q.selected-rZcOL- {
-    background-color: rgba(#bf616a, 0.1) !important;
+    background-color: rgba(#cc241d, 0.1) !important;
   }
 }
 .theme-dark .container-3ayLPN {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 .theme-dark .focused-2bY0OD {
   background-color: $bgDarker !important;
 }
 .theme-dark .dim-1l4L4y span {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 .theme-dark .option-96V44q.selected-rZcOL- {
   background-color: $bgDarker
 }
 .theme-dark .option-96V44q:after {
-  background: linear-gradient(90deg,rgba(54,57,63,0),#2d3545 80%)
+  background: linear-gradient(90deg,rgba(54,57,63,0),#282828 80%)
 }
 .theme-dark .option-96V44q.selected-rZcOL-:after {
   background: linear-gradient(90deg,rgba(54,57,63,0),$bgDarker 80%)
@@ -530,7 +530,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   background-color: $bgDarker !important;
   //  on hover 
   .selectorSelected-1_M1WV {
-    background-color: rgba(#bf616a, 0.1) !important;
+    background-color: rgba(#cc241d, 0.1) !important;
   }
 }
 
@@ -538,7 +538,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   //  header 
 .headerPlaying-j0WQBV,
 .headerNormal-T_seeN {
-  background-color: #bf616a !important;
+  background-color: #cc241d !important;
 }
 .body-3iLsc4,
 .footer-1fjuF6 {
@@ -546,7 +546,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 }
   //  send dm from popout 
 .quickMessage-1yeL4E {
-  background-color: rgba(#bf616a, 0.1) !important;
+  background-color: rgba(#cc241d, 0.1) !important;
 }
 
 //  right-click 
@@ -558,13 +558,13 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   }
   //  divider 
   .itemGroup-1tL0uz {
-    border-color: rgba(#bf616a, 0.05) !important;
+    border-color: rgba(#cc241d, 0.05) !important;
   }
   //  volume slider in user popup 
   .bar-2Qqk5Z {
-    background-color: #2d3545 !important;
+    background-color: #282828 !important;
     .barFill-23-gu- {
-      background-color: #bf616a !important;
+      background-color: #cc241d !important;
     }
   }
 }
@@ -580,7 +580,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
       background-color: $bgDarker !important;
     }
     &:before {
-      border-color: rgba(#bf616a, 0.2) !important;
+      border-color: rgba(#cc241d, 0.2) !important;
     }
   }
   .search-result {
@@ -588,7 +588,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
     &:after {
       background-image: linear-gradient(
         0deg,
-        rgba(#bf616a, 0),
+        rgba(#cc241d, 0),
         $bgDarker
       ) !important;
     }
@@ -606,7 +606,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
     }
   }
   .action-buttons .jump-button {
-    background-color: rgba(#bf616a, 0.8) !important;
+    background-color: rgba(#cc241d, 0.8) !important;
   }
 }
 
@@ -615,10 +615,10 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   background-color: rgba($bgDarker, 0.6) !important;
 }
 .itemGroup-1tL0uz {
-  border-color: rgba(#2d3545, 0.2) !important;
+  border-color: rgba(#282828, 0.2) !important;
 }
 .colorDefault-2K3EoJ.focused-3afm-j, .colorDefault-2K3EoJ:hover:not(.hideInteraction-1iHO1O) {
-  background-color: #bf616a !important;
+  background-color: #cc241d !important;
 }
 
 //  new server menu
@@ -632,51 +632,51 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   color: #DCDDDE !important;
 }
 .sampleLink-KPFu3I {
-  color: #88c0d0 !important;
+  color: #689d6a !important;
 }
 
 //  upload menu
 .theme-dark .uploadModal-2ifh8j {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 .theme-dark .footer-3mqk7D {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 
   // display of uploaded items
 .anchor-3Z-8Bb {
-  color: #88c0d0 !important;
+  color: #689d6a !important;
 }
 
 //  gif menu
 .contentWrapper-2txmjs {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
   //  favourite tint
 .theme-dark .categoryFadeBlurple-1j72_A, .theme-light .categoryFadeBlurple-1j72_A {
-  background-color: rgba(#bf616a, 0.8) !important;
+  background-color: rgba(#cc241d, 0.8) !important;
 }
 
 //  toolbar
 .toolbar-2bjZV7 {
-  background-color: rgba(#2d3545, 0.4) !important;
+  background-color: rgba(#282828, 0.4) !important;
 }
 
 //  tooltips
 .theme-dark .tooltipBrand-g03Nz8, .theme-light .tooltipBrand-g03Nz8 {
-  background-color: rgba(#bf616a, 0.8) !important;
+  background-color: rgba(#cc241d, 0.8) !important;
 }
 .introductionAction-M1r6AX {
-  color: rgba(#bf616a, 0.8) !important;
+  color: rgba(#cc241d, 0.8) !important;
 }
 .content-3O0wBS {
-  background: rgba(#2d3545, 0.8) !important;
+  background: rgba(#282828, 0.8) !important;
 }
 .content-3O0wBS .button-3zdF3z {
-  color: rgba(#2d3545, 0.8) !important;
+  color: rgba(#282828, 0.8) !important;
 }
 .theme-dark .tooltipBrand-g03Nz8 .tooltipPointer-3ZfirK, .theme-light .tooltipBrand-g03Nz8 .tooltipPointer-3ZfirK {
-  border-top-color: rgba(#bf616a, 0.8) !important;
+  border-top-color: rgba(#cc241d, 0.8) !important;
 }
 
 //  settings menu
@@ -687,29 +687,29 @@ $bgDarker: mix(#2d3545, #000000, 90%);
   background: rgba($bgDarker, 0.8) !important;
 }
 .cardPrimary-1Hv-to, .cardPrimaryEditable-3KtE4g {
-  border-color: rgba(#2d3545, 0.4) !important;
+  border-color: rgba(#282828, 0.4) !important;
 }
 .themeDefault-24hCdX.valueChecked-m-4IJZ {
-  background-color: #bf616a !important;
+  background-color: #cc241d !important;
 }
 .theme-dark .codeRedemptionRedirect-1wVR4b {
   background-color: rgba($bgDarker, 0.8) !important;
   border-color: rgba($bgDarker, 0.4) !important;
 }
 .theme-dark .footer-3rDWdC {
-  background-color: #2d3545 !important;
+  background-color: #282828 !important;
 }
 
 //  public server browser
   //  highlight
 .categoryPill-34fszg.selected-1dONk0 {
-  background-color: rgba(#bf616a, 0.6) !important;
+  background-color: rgba(#cc241d, 0.6) !important;
 }   //  search panel
 .searchPage-3GKAdT .search-1iTphC {
   background-color: rgba($bgDarker, 0.4) !important;
 }
 .searchPage-3GKAdT .search-1iTphC .searchBox-2_mAlO:focus, .searchPage-3GKAdT .search-1iTphC .searchBox-2_mAlO:focus-within {
-  border-color: rgba(#bf616a, 0.6) !important;
+  border-color: rgba(#cc241d, 0.6) !important;
 }
   //  language panel
 .css-1b86x2o-control {
@@ -723,7 +723,7 @@ $bgDarker: mix(#2d3545, #000000, 90%);
 }
   //  verified icon
 .verified-1eC5dy {
-  color: #88c0d0 !important;
+  color: #689d6a !important;
 }
 
 .userPopout-xaxa6l {
