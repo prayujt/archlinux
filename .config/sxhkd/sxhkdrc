@@ -20,13 +20,13 @@ super + w
 
 # calculator
 super + c
-    rofi -show calc -modi calc -no-config -no-history -no-show-match -no-sort
+    rofi -show calc -modi calc -window-title calc -no-history -no-show-match -no-sort
 
 # ranger
 super + r
-    ~/.scripts/rangerstart
+    alacritty -t Ranger --class Ranger -e ranger &
 super + F
-    ~/.scripts/rangerstart
+    alacritty -t Ranger --class Ranger -e ranger &
 
 # make sxhkd reload its configuration files:
 super + Escape

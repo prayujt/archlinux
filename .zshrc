@@ -155,7 +155,6 @@ export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-export CANVAS_TOKEN="1016~NZHamGMCJf2Hn1HGgrhA2iTKJuhIJowUyEZfjdp7lpx3qYpr7OMyoDXMn6hLXGMC"
 export TERMINAL="alacritty"
 
 #bindkey '^\t' autosuggest-accept
