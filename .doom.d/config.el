@@ -38,6 +38,7 @@
     (toggle-frame-fullscreen)
 )
 
+
 ;; (if (string= system-type ";; gnu/linux")
 ;;     (toggle-frame-maximized)
 ;; )

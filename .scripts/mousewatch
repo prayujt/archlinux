@@ -1,0 +1,28 @@
+#!/bin/bash
+
+minimal=true
+last_x=$(xdotool getmouselocation | awk {'print $1'} | cut -d':' -f2)
+last_y=$(xdotool getmouselocation | awk {'print $2'} | cut -d':' -f2)
+while true
+do
+    x=$(xdotool getmouselocation | awk {'print $1'} | cut -d':' -f2)
+    y=$(xdotool getmouselocation | awk {'print $2'} | cut -d':' -f2)
+    if ! [[ $last_x -eq $x && $last_y -eq $y ]];
+    then
+        if [[ $y -gt 1050 && $minimal = true ]];
+        then
+            killall polybar
+            bspc config -m DP-3 bottom_padding 60
+            ~/.config/polybar/launch_old.sh
+            minimal=false
+        elif [[ $y -lt 1010 && $minimal = false ]];
+        then
+            killall polybar
+            bspc config -m DP-3 bottom_padding 30
+            ~/.config/polybar/launch.sh
+            minimal=true
+        fi
+        last_x=$x
+        last_y=$y
+    fi
+done

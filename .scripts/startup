@@ -2,6 +2,7 @@
 
 bspc monitor DP-3 -f
 nitrogen --restore
-~/.scripts/polybarstart
-python ~/.scripts/pulseaudio-watcher.py | xob -s monitor &
+~/.scripts/polybarstart &
+~/.scripts/mousewatch &
+~/.scripts/pulseaudio-watcher | xob -s monitor &
 discord --start-minimized & > /dev/null
