@@ -1,2 +1,2 @@
 # Screenshots #
-![Screenshots](/home/prayuj/.screenshots/screenshot.png)
+![Screenshots](.screenshots/screenshot.png)
