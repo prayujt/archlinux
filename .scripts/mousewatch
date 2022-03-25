@@ -12,7 +12,7 @@ do
         if [[ $y -gt 1050 && $minimal = true ]];
         then
             killall polybar
-            bspc config -m DP-3 bottom_padding 60
+            bspc config -m DP-3 bottom_padding 55
             ~/.config/polybar/launch_old.sh
             minimal=false
         elif [[ $y -lt 1010 && $minimal = false ]];
