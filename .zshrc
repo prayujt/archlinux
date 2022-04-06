@@ -146,6 +146,14 @@ wificonnect() {
     nmcli device wifi connect "$1" password "$2"
 }
 
+send() {
+	cp "$1" ~/sync/Kaniel/
+}
+
+sendf() {
+	cp -r "$1" ~/sync/Kaniel/
+}
+
 export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
 export PATH=$PATH:/home/prayuj/.emacs.d/bin

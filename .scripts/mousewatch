@@ -9,7 +9,7 @@ do
     y=$(xdotool getmouselocation | awk {'print $2'} | cut -d':' -f2)
     if ! [[ $last_x -eq $x && $last_y -eq $y ]];
     then
-        if [[ $y -gt 1050 && $minimal = true ]];
+        if [[ $y -gt 1070 && $x -gt 1880 && $minimal = true ]];
         then
             killall polybar
             bspc config -m DP-3 bottom_padding 55

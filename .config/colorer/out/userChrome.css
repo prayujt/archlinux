@@ -1,29 +1,29 @@
 /* variables {{{ */
 :root {
   /* Minimal Functional Fox variables*/
-  --mff-bg: #000000;
-  --foreground: #000000;
-  --foreground-lighter: #000000;
-  --mff-icon-color: #000000;
+  --mff-bg: #282828;
+  --foreground: #ebdbb2;
+  --foreground-lighter: #ebdbb2;
+  --mff-icon-color: #ebdbb2;
   --mff-nav-toolbar-padding: 0px;
   --mff-sidebar-bg: var(--mff-bg);
-  --mff-sidebar-color: #000000;
+  --mff-sidebar-color: #ebdbb2;
   --mff-tab-border-radius: 0px;
-  --mff-tab-color: #000000;
+  --mff-tab-color: #ebdbb2;
   /*--mff-tab-font-family: "terminus (ttf)";*/
   --mff-tab-font-family: "JetBrains Mono";
   --mff-tab-font-size: 9pt;
   --mff-tab-font-weight: 400;
   --mff-tab-height: 30px;
-  --mff-tab-pinned-bg: #000000;
-  --mff-tab-selected-bg: #000000;
-  --mff-tab-soundplaying-bg: #000000;
-  --mff-urlbar-color: #000000;
-  --mff-urlbar-focused-color: #000000;
+  --mff-tab-pinned-bg: #8ec07c;
+  --mff-tab-selected-bg: #98971a;
+  --mff-tab-soundplaying-bg: #d3869b;
+  --mff-urlbar-color: #ebdbb2;
+  --mff-urlbar-focused-color: #ebdbb2;
   --mff-urlbar-font-family: "JetBrains Mono";
   --mff-urlbar-font-size: 9pt;
   --mff-urlbar-font-weight: normal;
-  --mff-urlbar-results-color: #000000;
+  --mff-urlbar-results-color: #ebdbb2;
   --mff-urlbar-results-font-family: "JetBrains Mono";
   --mff-urlbar-results-font-size: 9pt;
   --mff-urlbar-results-font-weight: normal; /*700;*/

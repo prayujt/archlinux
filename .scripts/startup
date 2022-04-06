@@ -5,4 +5,5 @@ nitrogen --restore
 ~/.scripts/polybarstart &
 ~/.scripts/mousewatch &
 ~/.scripts/pulseaudio-watcher | xob -s monitor &
+blueman-applet & > /dev/null
 discord --start-minimized & > /dev/null
