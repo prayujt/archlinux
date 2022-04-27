@@ -4,6 +4,6 @@ bspc monitor DP-3 -f
 nitrogen --restore
 ~/.scripts/polybarstart &
 ~/.scripts/mousewatch &
-~/.scripts/pulseaudio-watcher | xob -s monitor &
+~/.scripts/pulseaudio-watcher | xob -s monitor2 &
 blueman-applet & > /dev/null
 discord --start-minimized & > /dev/null

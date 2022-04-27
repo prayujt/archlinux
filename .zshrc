@@ -57,7 +57,7 @@ zstyle ':completion:*' '' matcher-list 'm:{a-z}={A-Z}'
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(git dotenv)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -78,14 +78,6 @@ alias wifioff=nmcli radio wifi off
 alias wifion=nmcli radio wifi on
 alias wifistatus=nmcli device
 
-drop() {
-	cp "$1" ~/Dropbox
-}
-
-dropf() {
-	cp -r "$1" ~/Dropbox
-}
-
 open() {
 	xdg-open "$1" &
 	disown
@@ -96,19 +88,39 @@ check() {
 }
 
 download() {
-	scp prayuj@prayujt.com:~/"$1" "$2" 
+	scp -P 1024 prayuj@prayujt.com:~/"$1" "$2" 
 }
 
 downloadf() {
-	scp -r prayuj@prayujt.com:~/"$1" "$2" 
+	scp -r -P 1024 prayuj@prayujt.com:~/"$1" "$2" 
+}
+
+downloadfiles() {
+	scp -P 1024 files@prayujt.com:~/"$1" "$2" 
+}
+
+downloadfilesf() {
+	scp -r -P 1024 prayuj@prayujt.com:~/"$1" "$2" 
 }
 
 upload() {
-	scp "$1" prayuj@prayujt.com:~/"$2"
+	scp -P 1024 "$1" prayuj@prayujt.com:~/"$2"
 }
 
 uploadf() {
-	scp -r "$1" prayuj@prayujt.com:~/"$2"
+	scp -P 1024 -r "$1" prayuj@prayujt.com:~/"$2"
+}
+
+uploadm() {
+    scp -P 1024 "$1" files@prayujt.com:~/Music/"$2"
+}
+
+drop() {
+	scp -P 1024 "$1" prayuj@prayujt.com:~/Dropbox/"$2"
+}
+
+dropf() {
+	scp -P 1024 -r "$1" prayuj@prayujt.com:~/Dropbox/"$2"
 }
 
 sizeof() {
@@ -158,12 +170,14 @@ export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
 export PATH=$PATH:/home/prayuj/.emacs.d/bin
 export PATH=$PATH:/home/prayuj/.scripts
+export PATH=$PATH:/home/prayuj/.scripts/bin
 export PATH=$PATH:/home/prayuj/.miner
 export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export TERMINAL="alacritty"
+export MONGODB_URL="mongodb://admin:gskuhE<3343*WL{@prayujt.com:27017/?authSource=admin&readPreference=primary&directConnection=true&ssl=false"
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word

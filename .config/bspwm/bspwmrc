@@ -27,6 +27,7 @@ bspc config gapless_monocle             true
 
 bspc rule -a discord state=floating rectangle=1660x925+100+50
 bspc rule -a Emacs state=tiled
+bspc rule -a Minesweeper state=floating
 
 bspc subscribe node_add | while read line
 do

@@ -7,6 +7,7 @@ isHDMIConnected() {
 }
 
 xrandr --output eDP-1 --right-of DP-3
+xrandr --output DP-3 --right-of DP-1
 
 if isHDMIConnected
 then
