@@ -175,7 +175,6 @@ export VISUAL=nvim
 export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export TERMINAL="alacritty"
-export MONGODB_URL="mongodb://admin:gskuhE<3343*WL{@prayujt.com:27017/?authSource=admin&readPreference=primary&directConnection=true&ssl=false"
 source .keys
 
 #bindkey '^\t' autosuggest-accept
