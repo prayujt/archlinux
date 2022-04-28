@@ -70,8 +70,6 @@ alias usb='cd /run/media/prayuj'
 alias wifiscan='nmcli device wifi list'
 alias locate='sudo updatedb && locate'
 alias flood='sudo hping3 -c 10000 -d 128 -S -w 64 -p 8000 --flood --rand-source 192.168.0.1'
-alias mine='nbminer -a beamv3 -o stratum+tcp://beamv3.usa.nicehash.com:3387 -u 3PADFCSgPDjZ3FodkwWm7mZzjgkCJ7kM5b.archOS'
-alias wake='wakeonlan -i prayujt.com 18:c0:4d:af:be:c1'
 alias server='ssh prayuj@prayujt.com -p 1024'
 alias files='ssh files@prayujt.com -p 1024'
 alias wifioff=nmcli radio wifi off
@@ -178,6 +176,7 @@ export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export TERMINAL="alacritty"
 export MONGODB_URL="mongodb://admin:gskuhE<3343*WL{@prayujt.com:27017/?authSource=admin&readPreference=primary&directConnection=true&ssl=false"
+source .keys
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word
