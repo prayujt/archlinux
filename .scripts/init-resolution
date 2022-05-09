@@ -1,23 +1,43 @@
 #!/bin/sh
 
-isHDMIConnected() { 
+isHDMI1Connected() { 
 	local xRandr=$(xrandr -q)
 	[ "$xRandr" == "${xRandr#*DP-3 con}" ] || return 0
 	return 1
 }
 
-xrandr --output eDP-1 --right-of DP-3
-xrandr --output DP-3 --right-of DP-1
+isHDMI2Connected() { 
+	local xRandr=$(xrandr -q)
+	[ "$xRandr" == "${xRandr#*DP-1 con}" ] || return 0
+	return 1
+}
 
-if isHDMIConnected
+if isHDMI1Connected && isHDMI2Connected
 then
 	xrandr --output DP-3 --primary
+    xrandr --output eDP-1 --right-of DP-3
+    xrandr --output DP-3 --right-of DP-1
 	xrandr --output eDP-1 --mode 1920x1080
-	sleep 1
-    ~/.scripts/startup
+    sleep 1
+    ~/.scripts/startup 1
+elif isHDMI1Connected
+then
+	xrandr --output DP-3 --primary
+    xrandr --output eDP-1 --right-of DP-3
+	xrandr --output eDP-1 --mode 1920x1080
+    sleep 1
+    ~/.scripts/startup 2
+elif isHDMI2Connected
+then
+	xrandr --output DP-1 --primary
+    xrandr --output eDP-1 --right-of DP-1
+	xrandr --output eDP-1 --mode 1920x1080
+    sleep 1
+    ~/.scripts/startup 3
 else
 	xrandr --output eDP-1 --primary
 	xrandr --output eDP-1 --mode 1920x1080
-	sleep 2
-    ~/.scripts/startup2
+    sleep 1
+    ~/.scripts/startup 4
 fi
+

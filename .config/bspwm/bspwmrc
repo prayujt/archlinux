@@ -10,14 +10,9 @@ dbus-launch
 syncthingtray --wait &
 picom --experimental-backend &
 
-bspc monitor DP-3 -d I II III IV V VI VII VIII
-bspc monitor DP-1 -d IX
-bspc monitor eDP-1 -d X
-
 bspc config border_radius                5
 bspc config border_width                 2
 bspc config window_gap                  12
-bspc config -m DP-3 bottom_padding      30
 bspc config focus_follows_pointer       true
 bspc config pointer_follows_monitor     true
 bspc config pointer_follows_focus       true

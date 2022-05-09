@@ -1,9 +1,37 @@
 #!/bin/sh
 
-bspc monitor DP-3 -f
+option=$1
+
 nitrogen --restore
-~/.scripts/polybarstart &
 ~/.scripts/mousewatch &
-~/.scripts/pulseaudio-watcher | xob -s monitor2 &
 blueman-applet & > /dev/null
 discord --start-minimized & > /dev/null
+bspc monitor eDP-1 -d X
+
+if [[ $option == 1 ]]
+then
+    bspc monitor DP-3 -f
+    bspc monitor DP-3 -d I II III IV V VI VII VIII
+    bspc monitor DP-1 -d IX
+    bspc config -m DP-3 bottom_padding 30
+    ~/.scripts/pulseaudio-watcher | xob -s monitor2 &
+elif [[ $option == 2 ]]
+then
+    bspc monitor DP-3 -f
+    bspc monitor DP-3 -d I II III IV V VI VII VIII IX
+    bspc config -m DP-3 bottom_padding 30
+    ~/.scripts/pulseaudio-watcher | xob -s monitor1 &
+elif [[ $option == 3 ]]
+then
+    bspc monitor DP-1 -f
+    bspc monitor DP-1 -d I II III IV V VI VII VIII IX
+    bspc config -m DP-1 bottom_padding 30
+    ~/.scripts/pulseaudio-watcher | xob -s monitor1 &
+elif [[ $option == 4 ]]
+then
+    bspc monitor eDP-1 -d I II III IV V VI VII VIII IX X
+    bspc config -m eDP-1 bottom_padding 30
+    ~/.scripts/pulseaudio-watcher | xob -s computer &
+fi
+
+~/.scripts/polybarstart $1 &
