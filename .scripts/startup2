@@ -1,7 +1,0 @@
-#!/bin/sh
-
-nitrogen --restore
-~/.config/polybar/launch.sh &
-~/.scripts/mousewatch &
-~/.scripts/pulseaudio-watcher | xob -s computer &
-discord --start-minimized &

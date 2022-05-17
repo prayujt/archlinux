@@ -165,6 +165,8 @@ sendf() {
 }
 
 export PATH=$PATH:/home/prayuj/.local/bin
+export PATH=$PATH:/opt/cuda
+export PATH=$PATH:/opt/cuda/bin
 export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
 export PATH=$PATH:/home/prayuj/.emacs.d/bin
 export PATH=$PATH:/home/prayuj/.scripts
@@ -175,6 +177,7 @@ export VISUAL=nvim
 export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export TERMINAL="alacritty"
+export LD_LIBRARY_PATH=/usr/local/lib
 source .keys
 
 #bindkey '^\t' autosuggest-accept

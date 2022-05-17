@@ -48,3 +48,11 @@ colors:
     magenta: '#d3869b'
     cyan: '#8ec07c'
     white: '#ebdbb2'
+
+key_bindings:
+  - {key: K, mods: Control, action: ScrollLineUp}
+  - {key: J, mods: Control, action: ScrollLineDown}
+  - {key: F, mods: Control, action: SearchBackward}
+  - {mode: Search, key: N, mods: Control, action: SearchFocusPrevious}
+  - {mode: Search, key: N, mods: Control|Shift, action: SearchFocusNext}
+  - {mode: Search, key: Escape, action: SearchConfirm}
