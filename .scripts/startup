@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 option=$1
 
@@ -35,3 +35,6 @@ then
 fi
 
 ~/.scripts/polybarstart $1 &
+xset s off -dpms
+xautolock -time 1 -corners ---- -locker 'sudo slock' &
+#xidlehook --not-when-fullscreen --not-when-audio --timer 30 'sudo slock' '' &

@@ -3,6 +3,8 @@
 (load-theme 'doom-gruvbox t)
 (elcord-mode)
 
+(setq default-tab-width 2)
+
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
 
