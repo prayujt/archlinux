@@ -178,7 +178,7 @@ export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export TERMINAL="alacritty"
 export LD_LIBRARY_PATH=/usr/local/lib
-source .keys
+source ~/.keys
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word

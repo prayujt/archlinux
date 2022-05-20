@@ -14,6 +14,10 @@ shift + Print
 super + Return
 	alacritty
 
+# lock the screen
+super + shift + Escape
+    sudo /usr/local/bin/slock
+
 # program launcher
 super + d
     rofi -show run
@@ -34,7 +38,27 @@ super + F
 
 # make sxhkd reload its configuration files:
 super + Escape
-	pkill -USR1 -x sxhkd
+    pkill -USR1 -x sxhkd
+
+# control mouse via keyboard
+super + alt + {h, l}
+    xdotool mousemove_relative -- {-10, 10} 0 
+super + alt + {j, k}
+    xdotool mousemove_relative -- 0 {10, -10}
+super + alt + space
+    xdotool click 1
+super + alt + shift + space
+    xdotool click 2
+
+# volume controls
+XF86AudioRaiseVolume
+    pactl set-sink-volume @DEFAULT_SINK@ +5%
+XF86AudioLowerVolume
+    pactl set-sink-volume @DEFAULT_SINK@ -5%
+XF86AudioMute
+    pactl set-sink-mute @DEFAULT_SINK@ toggle
+XF86AudioMicMute
+    pactl set-source-mute @DEFAULT_SOURCE@ toggle
 
 #
 # bspwm hotkeys
@@ -46,19 +70,19 @@ super + p
 
 # quit/restart bspwm
 super + shift + {q,r}
-	bspc {quit,wm -r}
+    bspc {quit,wm -r}
 
 # close
 super + q
-	bspc node -c
+    bspc node -c
 
 # send the newest marked node to the newest preselected node
-super + y
-	bspc node newest.marked.local -n newest.!automatic.local
+#super + y
+#    bspc node newest.marked.local -n newest.!automatic.local
 
 # swap the current node and the biggest window
-super + g
-	bspc node -s biggest.window
+#super + g
+#    bspc node -s biggest.window
 
 #
 # state/flags
@@ -66,11 +90,11 @@ super + g
 
 # set the window state
 super + f
-	bspc node -t tiled || bspc node -t fullscreen
+    bspc node -t tiled || bspc node -t fullscreen
 
 # Toggle floating
 super + space
-     bspc node -t tiled || bspc node -t floating
+    bspc node -t tiled || bspc node -t floating
 
 # Toggle horizontal/vertical
 super + e
@@ -78,7 +102,7 @@ super + e
 
 # set the node flags
 super + ctrl + {m,x,y,z}
-	bspc node -g {marked,locked,sticky,private}
+    bspc node -g {marked,locked,sticky,private}
 
 #
 # focus/swap
@@ -90,29 +114,29 @@ super + {h,j,k,l}
 
 # focus or send to the given desktop
 super + {_,shift + }{1-9,0}
-	bspc {desktop -f,node -d} '^{1-9,10}'
+    bspc {desktop -f,node -d} '^{1-9,10}'
 
 # preselect
 #
 
 # preselect the direction
 super + ctrl + shift + {h,j,k,l}
-	bspc node -p {west,south,north,east}
+    bspc node -p {west,south,north,east}
 
 # preselect the ratio
 # super + ctrl + {1-9}
-	# bspc node -o 0.{1-9}
+    # bspc node -o 0.{1-9}
 
 # cancel the preselection for the focused node
 super + ctrl + shift + space
-	bspc node -p cancel
+    bspc node -p cancel
 super + ctrl + shift + Escape
-	bspc node -p cancel
+    bspc node -p cancel
 
 super + Tab
     bspc wm -h off; \
-	bspc node older -f; \
-	bspc wm -h on
+        bspc node older -f; \
+        bspc wm -h on
 
 super + shift + Tab
     bspc wm -h off; \
@@ -128,14 +152,5 @@ super + shift + {h,j,k,l}
     ~/.config/sxhkd/move {west,south,north,east}
 
 # Resize Nodes
-super + control + {h,j,k,l}
+super + ctrl + {h,j,k,l}
     ~/.config/sxhkd/resize {west,south,north,east} 40
-
-XF86AudioRaiseVolume
-    pactl set-sink-volume @DEFAULT_SINK@ +5%
-XF86AudioLowerVolume
-    pactl set-sink-volume @DEFAULT_SINK@ -5%
-XF86AudioMute
-    pactl set-sink-mute @DEFAULT_SINK@ toggle
-XF86AudioMicMute
-    pactl set-source-mute @DEFAULT_SOURCE@ toggle
