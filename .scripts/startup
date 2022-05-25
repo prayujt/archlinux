@@ -36,5 +36,5 @@ fi
 
 ~/.scripts/polybarstart $1 &
 xset s off -dpms
-xautolock -time 2 -corners ---- -locker 'sudo slock' &
+#xautolock -time 2 -corners ---- -locker 'sudo slock' &
 #xidlehook --not-when-fullscreen --not-when-audio --timer 30 'sudo slock' '' &
