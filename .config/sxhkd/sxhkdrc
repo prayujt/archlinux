@@ -18,6 +18,10 @@ super + Return
 super + shift + Escape
     sudo /usr/local/bin/slock
 
+# turn off the display via lock
+super + shift + control + Escape
+    xsecurelock
+
 # program launcher
 super + d
     rofi -show run

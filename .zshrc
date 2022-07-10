@@ -7,6 +7,7 @@ plugins=(git dotenv)
 
 source $ZSH/oh-my-zsh.sh
 
+alias obs="flatpak run com.obsproject.Studio"
 alias vim=nvim
 alias ls=lsd
 alias graph='git log --all --decorate --oneline --graph'
@@ -47,8 +48,8 @@ upload() {
 uploadf() {
   scp -P 1024 -r "$1" prayuj@prayujt.com:~/"$2"
 }
-uploadm() {
-  scp -P 1024 "$1" files@prayujt.com:~/Music/"$2"
+uploadfiles() {
+  scp -P 1024 "$1" files@prayujt.com:~/"$2"
 }
 drop() {
   scp -P 1024 "$1" prayuj@prayujt.com:~/Dropbox/"$2"
@@ -95,7 +96,17 @@ sendf() {
   cp -r "$1" ~/sync/Kaniel/
 }
 replace() {
-  ssh files@prayujt.com -p 1024 "python3 /home/files/.scripts/music/replace.py $1 $2"
+  # $1: spotify song URL
+  # $2: youtube song URL
+  ssh files@prayujt.com -p 1024 "python3 /home/files/.scripts/music/replace.py $1 $2 &; disown"
+}
+download_playlist() {
+  # $1: spotify playlist URL
+  # $2: ampache playlist name
+  ssh files@prayujt.com -p 1024 "python3 /home/files/.scripts/music/playlist.py $1 $2"
+}
+update() {
+  ssh files@prayujt.com -p 1024 "python3 /home/files/.scripts/music/cronjob.py&"&
 }
 
 export PATH=$PATH:/home/prayuj/.local/bin

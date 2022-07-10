@@ -2,8 +2,9 @@
 
 option=$1
 
+# swaync-client -t
 nitrogen --restore
-~/.scripts/mousewatch &
+#~/.scripts/mousewatch &
 blueman-applet & > /dev/null
 discord --start-minimized & > /dev/null
 bspc monitor eDP-1 -d X
@@ -34,7 +35,7 @@ then
     ~/.scripts/pulseaudio-watcher | xob -s computer &
 fi
 
-~/.scripts/polybarstart $1 &
+~/.scripts/polybarstart $1 & > /dev/null
 xset s off -dpms
 #xautolock -time 2 -corners ---- -locker 'sudo slock' &
 #xidlehook --not-when-fullscreen --not-when-audio --timer 30 'sudo slock' '' &

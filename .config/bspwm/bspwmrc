@@ -27,7 +27,7 @@ bspc rule -a Minesweeper state=floating
 
 bspc subscribe node_add | while read line
 do
-    windowid= $(echo "$line" | awk '{print $5}')
+    windowid=$(echo "$line" | awk '{print $5}')
     title=$(xtitle $windowid)
     class=$(xdotool getwindowclassname $windowid)
 
