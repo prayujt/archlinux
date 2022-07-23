@@ -2,7 +2,6 @@
 
 option=$1
 
-# swaync-client -t
 nitrogen --restore
 #~/.scripts/mousewatch &
 blueman-applet & > /dev/null

@@ -41,3 +41,4 @@ exec xterm -geometry 80x66+0+0 -name login
 # startx /usr/bin/i3
 startx /usr/bin/bspwm
 # startx /usr/bin/awesome
+# startx /usr/bin/dwm
