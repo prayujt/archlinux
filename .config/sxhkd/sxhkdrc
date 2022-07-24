@@ -22,6 +22,10 @@ super + shift + Escape
 super + shift + control + Escape
     xsecurelock
 
+# open notification center
+super + shift + space
+    kill -s USR1 $(pidof notification-center)
+
 # program launcher
 super + d
     rofi -show run

@@ -8,6 +8,7 @@ udiskie &
 playerctld daemon
 dbus-launch
 syncthingtray --wait &
+notification-center &
 picom --experimental-backend &
 
 bspc config border_radius                5
