@@ -18,13 +18,12 @@ bspc config focus_follows_pointer       true
 bspc config pointer_follows_monitor     true
 bspc config pointer_follows_focus       true
 
-bspc config split_ratio                 0.52
+bspc config split_ratio                 0.50
 bspc config borderless_monocle          true
 bspc config gapless_monocle             true
 
 bspc rule -a discord state=floating rectangle=1660x925+100+50
 bspc rule -a Emacs state=tiled
-bspc rule -a Minesweeper state=floating
 
 bspc subscribe node_add | while read line
 do

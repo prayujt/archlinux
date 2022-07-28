@@ -3,16 +3,17 @@
 option=$1
 
 nitrogen --restore
-#~/.scripts/mousewatch &
+# ~/.scripts/mousewatch &
 blueman-applet & > /dev/null
 discord --start-minimized & > /dev/null
 bspc monitor eDP-1 -d X
+mail &
 
 if [[ $option == 1 ]]
 then
-    bspc monitor DP-3 -f
     bspc monitor DP-3 -d I II III IV V VI VII VIII
     bspc monitor DP-1 -d IX
+    bspc monitor DP-3 -f
     bspc config -m DP-3 bottom_padding 30
     ~/.scripts/pulseaudio-watcher | xob -s monitor2 &
 elif [[ $option == 2 ]]
