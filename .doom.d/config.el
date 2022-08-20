@@ -2,31 +2,14 @@
 
 (load-theme 'doom-gruvbox t)
 (elcord-mode)
+(add-hook 'prog-mode-hook 'copilot-mode)
 
+(setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
 (setq default-tab-width 2)
+(setq projectile-enable-caching nil)
 
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
-
-(setq
- ;; The mail URL, specifying a remote mail account
- ;; (Omit this to read from /var/mail/user)
- rmail-primary-inbox-list
-  '("pop://prayujtuli%40gmail.com:J528s406@mail.gmail.com")
-
- send-mail-function 'smtpmail-send-it       ; Send mail via SMTP
- rmail-preserve-inbox 1                     ; Don't delete mail from server
- rmail-mail-new-frame 1                     ; Compose in a full frame
- rmail-delete-after-output 1                ; Delete original mail after copying
- rmail-mime-prefer-html nil                 ; Prefer plaintext when possible
- rmail-file-name   "~/.mail/gmail"           ; The path to our inbox file
- rmail-secondary-file-directory "~/.mail"    ; The path to our other mbox files
- message-default-headers "Fcc: ~/.mail/sent" ; Copy sent mail to the "sent" file
- user-full-name    "Prayuj"                  ; Our full name
- user-mail-address "prayujtuli@gmail.com"         ; Our return address
- ;smtpmail-default-smtp-server "smtp.gmail.com"
- message-signature "Prayuj Tuli")              ; A signature
-
 
 ;; (setq doom-font (font-spec :family "Source Code Pro" :size 12))
 ;(setq doom-theme 'doom-one)
@@ -40,20 +23,27 @@
     (toggle-frame-fullscreen)
 )
 
-
 ;; (if (string= system-type ";; gnu/linux")
 ;;     (toggle-frame-maximized)
 ;; )
 
 (defun code-compile ()
   (interactive)
-  (set (make-local-variable 'compile-command)
-       (let ((file (file-name-nondirectory buffer-file-name)))
-         (format "%s"
-                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "c") (equal (file-name-extension file) "hpp")) "make all")
-                       ((equal (file-name-extension file) "tex") (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))
-                       ((equal (file-name-extension file) "java") (concat "javac " buffer-file-name))))))
-  (compile compile-command))
+  (let ((file (file-name-nondirectory buffer-file-name)))
+  (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
+        ((equal (file-name-extension file) "java") (compile (concat "javac " buffer-file-name)))
+        ((equal (file-name-extension file) "tex") (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))))))
+
+  ;; (if (or (equal (file-name-extension (file-name-nondirectory buffer-file-name)) "cpp") (file-name-extension (file-name-nondirectory buffer-file-name)) "h")
+  ;;     (+make/run))
+  ;; (cond (or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
+  ;; (set (make-local-variable 'compile-command)
+  ;;      (let ((file (file-name-nondirectory buffer-file-name)))
+  ;;        (format "%s"
+  ;;                (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "c") (equal (file-name-extension file) "hpp")) "make all")
+  ;;                      ((equal (file-name-extension file) "tex") (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))
+  ;;                      ((equal (file-name-extension file) "java") (concat "javac " buffer-file-name))))))
+  ;; (compile compile-command))
 
 (defun code-run ()
   (interactive)
@@ -104,3 +94,12 @@
 
 ;; (add-hook 'c++-mode-hook
 ;;           (lambda () (local-set-key (kbd "C-0") #'run-latexmk)))
+
+;; accept completion from copilot and fallback to company
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (("C-TAB" . 'copilot-accept-completion-by-word)
+         ("C-<tab>" . 'copilot-accept-completion-by-word)
+         :map copilot-completion-map
+         ("<tab>" . 'copilot-accept-completion)
+         ("TAB" . 'copilot-accept-completion)))

@@ -7,8 +7,8 @@ plugins=(git dotenv)
 
 source $ZSH/oh-my-zsh.sh
 
-alias obs="flatpak run com.obsproject.Studio"
 alias vim=nvim
+alias path=realpath
 alias ls=lsd
 alias graph='git log --all --decorate --oneline --graph'
 alias copy='xclip -selection clipboard'
@@ -123,6 +123,7 @@ export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export TERMINAL="alacritty"
 export LD_LIBRARY_PATH=/usr/local/lib
+export NVM_DIR="$HOME/.nvm"
 source ~/.keys
 
 #bindkey '^\t' autosuggest-accept

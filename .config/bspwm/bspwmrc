@@ -23,7 +23,9 @@ bspc config borderless_monocle          true
 bspc config gapless_monocle             true
 
 bspc rule -a discord state=floating rectangle=1660x925+100+50
+bspc rule -a BlueMail state=floating rectangle=1660x925+100+50
 bspc rule -a Emacs state=tiled
+bspc rule -a "You Owe Me" state=floating
 
 bspc subscribe node_add | while read line
 do
