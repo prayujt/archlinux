@@ -9,7 +9,8 @@ playerctld daemon
 dbus-launch
 syncthingtray --wait &
 notification-center &
-picom --experimental-backend &
+picom &
+#xborders -c ~/.config/xborder/config.json &
 
 bspc config border_radius                5
 bspc config border_width                 2
@@ -25,7 +26,6 @@ bspc config gapless_monocle             true
 bspc rule -a discord state=floating rectangle=1660x925+100+50
 bspc rule -a BlueMail state=floating rectangle=1660x925+100+50
 bspc rule -a Emacs state=tiled
-bspc rule -a "You Owe Me" state=floating
 
 bspc subscribe node_add | while read line
 do

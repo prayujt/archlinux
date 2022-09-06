@@ -26,6 +26,7 @@ with Pulse() as pulse:
     last_value, last_mute = current_status(sinks[sink_index])
 
     while True:
+      pulse = Pulse()
       pulse.event_listen()
       default_sink_name = pulse.server_info().default_sink_name
       try:

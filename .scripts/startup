@@ -5,6 +5,7 @@ option=$1
 nitrogen --restore
 # ~/.scripts/mousewatch &
 blueman-applet & > /dev/null
+/home/prayuj/.config/bspwm/border &
 discord --start-minimized & > /dev/null
 bspc monitor eDP-1 -d X
 mail &

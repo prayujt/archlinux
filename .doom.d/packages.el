@@ -5,17 +5,21 @@
 ;; on the command line, then restart Emacs for the changes to take effect -- or
 ;; use 'M-x doom/reload'.
 
-
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
 ;(package! some-package)
 (package! nord-theme)
 (package! elcord)
+
+;; (package! gradle-mode)
+
+(package! copilot
+  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
 ;(package! gitconfig-mode
-;	  :recipe (:host github :repo "magit/git-modes"
-;			 :files ("gitconfig-mode.el")))
+;:recipe (:host github :repo "magit/git-modes"
+;:files ("gitconfig-mode.el")))
 ;(package! gitignore-mode
-;	  :recipe (:host github :repo "magit/git-modes"
-;			 :files ("gitignore-mode.el")))
+;:recipe (:host github :repo "magit/git-modes"
+;:files ("gitignore-mode.el")))
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:
@@ -56,6 +60,3 @@
 ;(unpin! pinned-package another-pinned-package)
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;(unpin! t)
-
-(package! copilot
-  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))

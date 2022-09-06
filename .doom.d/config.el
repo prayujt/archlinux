@@ -1,18 +1,22 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-(load-theme 'doom-gruvbox t)
-(elcord-mode)
-(add-hook 'prog-mode-hook 'copilot-mode)
+(require 's)
+(require 'compile)
 
-(setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
+(load-theme 'doom-gruvbox t)
+;; (setq doom-font (font-spec :family "Source Code Pro" :size 12))
+;; (setq doom-theme 'doom-one)
+
+(elcord-mode)
+
+;; (add-hook 'prog-mode-hook 'copilot-mode)
+
 (setq default-tab-width 2)
 (setq projectile-enable-caching nil)
+;; (setq flycheck-disabled-checkers t)
 
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
-
-;; (setq doom-font (font-spec :family "Source Code Pro" :size 12))
-;(setq doom-theme 'doom-one)
 
 (setq org-directory "~/iCloud/org/")
 
@@ -21,41 +25,101 @@
 
 (if (string= system-type "darwin")
     (toggle-frame-fullscreen)
+  (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
 )
 
 ;; (if (string= system-type ";; gnu/linux")
-;;     (toggle-frame-maximized)
+    ;; (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
+    ;; (toggle-frame-maximized)
 ;; )
+
+
+;; ---- compilation and run commands ----
 
 (defun code-compile ()
   (interactive)
   (let ((file (file-name-nondirectory buffer-file-name)))
-  (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
-        ((equal (file-name-extension file) "java") (compile (concat "javac " buffer-file-name)))
-        ((equal (file-name-extension file) "tex") (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))))))
-
-  ;; (if (or (equal (file-name-extension (file-name-nondirectory buffer-file-name)) "cpp") (file-name-extension (file-name-nondirectory buffer-file-name)) "h")
-  ;;     (+make/run))
-  ;; (cond (or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
-  ;; (set (make-local-variable 'compile-command)
-  ;;      (let ((file (file-name-nondirectory buffer-file-name)))
-  ;;        (format "%s"
-  ;;                (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "c") (equal (file-name-extension file) "hpp")) "make all")
-  ;;                      ((equal (file-name-extension file) "tex") (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))
-  ;;                      ((equal (file-name-extension file) "java") (concat "javac " buffer-file-name))))))
-  ;; (compile compile-command))
+        (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
+              ((or (equal (file-name-extension file) "java") (equal (file-name-extension file) "gradle")) (gradle-build))
+              ((equal (file-name-extension file) "tex") (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))))))
 
 (defun code-run ()
   (interactive)
-  (set (make-local-variable 'run-command)
-       (let ((file (file-name-nondirectory buffer-file-name)))
-         (format "%s"
-                 (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) "./main")
-                       ((equal (file-name-extension file) "tex") (code-compile) (if (string= system-type "darwin") (concat "open " (file-name-sans-extension buffer-file-name) ".pdf") (TeX-view)))
-                       ((equal (file-name-extension file) "java") (concat "java " buffer-file-name))
-                       ((equal (file-name-extension file) "py") (concat "python3 " buffer-file-name))
-                       ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) "npm run start")))))
-  (shell-command run-command))
+  (let ((file (file-name-nondirectory buffer-file-name)))
+        (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) (shell-command "./main"))
+                ((or (equal (file-name-extension file) "java") (equal (file-name-extension file) "gradle")) (gradle-test (read-string "Enter Test Names: ")))
+                ((equal (file-name-extension file) "tex") (code-compile) (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
+                ((equal (file-name-extension file) "py") (shell-command (concat "python3 " buffer-file-name)))
+                ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) (shell-command "npm run start")))))
+
+
+;; ---- gradle variables and commands ----
+
+(defcustom gradle-executable-path (executable-find "gradle")
+  "String representation of the Gradle executable location."
+  :group 'gradle
+  :type 'string)
+
+(defcustom gradle-gradlew-executable "./gradlew"
+  "String representation of the gradlew executable."
+  :group 'gradle
+  :type 'string)
+
+(defcustom gradle-use-gradlew t
+  "Use gradlew or `gradle-executable-path'."
+  :group 'gradle
+  :type 'boolean)
+
+(defun gradle-is-project-dir (dir)
+  (let ((dirname (file-name-nondirectory
+        (directory-file-name (expand-file-name dir)))))
+    (or (file-exists-p (expand-file-name "build.gradle" dir))
+        (file-exists-p (expand-file-name
+                (concat dirname ".gradle") dir)))))
+
+(defun gradle-is-gradlew-dir (dir)
+  (file-exists-p (expand-file-name "gradlew" dir)))
+
+(defun gradle-kill-compilation-buffer ()
+  (progn
+    (if (get-buffer "*compilation*")
+        (progn
+                (delete-windows-on (get-buffer "*compilation*"))
+                (kill-buffer "*compilation*")))))
+
+(defun gradle-run-from-dir (is-dir)
+  (locate-dominating-file default-directory is-dir))
+
+(defun gradle-run (gradle-tasks)
+  (gradle-kill-compilation-buffer)
+  (let ((default-directory
+        (gradle-run-from-dir (if gradle-use-gradlew
+                'gradle-is-gradlew-dir
+                'gradle-is-project-dir))))
+    (compile (gradle-make-command gradle-tasks))))
+
+(defun gradle-make-command (gradle-tasks)
+  (let ((gradle-executable (if gradle-use-gradlew
+        gradle-gradlew-executable
+        gradle-executable-path)))
+    (s-join " " (list gradle-executable gradle-tasks))))
+
+(defun gradle-execute (tasks)
+  (interactive "sType tasks to run: ")
+  (gradle-run
+   (s-concat tasks " --daemon")))
+
+(defun gradle-build ()
+  (interactive)
+  (gradle-run "build --daemon"))
+
+(defun gradle-test (test-name)
+  (interactive)
+  (gradle-run
+   (s-concat "test --tests " test-name " --daemon")))
+
+
+;; ---- miscellanious ----
 
 (defun generate-makefile ()
   (interactive)
@@ -69,6 +133,7 @@
 
 (defun insert-current-date () (interactive)
   (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
+
 
 ;; new keybindings
 (map! :map general-override-mode-map "C-c C-c" 'code-compile)
@@ -85,17 +150,8 @@
 (map! :map general-override-mode-map "M-k" 'evil-window-up)
 (map! :map general-override-mode-map "M-w" 'evil-window-delete)
 
-;; (map! :map general-override-mode-map "M-L" 'move-window-right)
-;; (map! :map general-override-mode-map "M-H" 'move-window-left)
-;; (map! :map general-override-mode-map "M-J" 'move-window-down)
-;; (map! :map general-override-mode-map "M-K" 'move-window-up)
-
 (map! :map general-override-mode-map "M-RET" 'evil-window-vsplit)
 
-;; (add-hook 'c++-mode-hook
-;;           (lambda () (local-set-key (kbd "C-0") #'run-latexmk)))
-
-;; accept completion from copilot and fallback to company
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
   :bind (("C-TAB" . 'copilot-accept-completion-by-word)
@@ -103,3 +159,13 @@
          :map copilot-completion-map
          ("<tab>" . 'copilot-accept-completion)
          ("TAB" . 'copilot-accept-completion)))
+
+(use-package! lsp-mode
+  ;; Need to repeat this line from the Doom lsp module
+  ;; declaration to keep it from eager-loading:
+  :commands lsp-install-server
+
+  :config
+  (setq lsp-diagnostics-provider :none
+        lsp-ui-sideline-enable nil
+        lsp-modeline-diagnostics-enable nil))
