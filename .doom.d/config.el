@@ -2,6 +2,7 @@
 
 (require 's)
 (require 'compile)
+(require 'lsp-java)
 
 (load-theme 'doom-gruvbox t)
 ;; (setq doom-font (font-spec :family "Source Code Pro" :size 12))
@@ -10,6 +11,7 @@
 (elcord-mode)
 
 ;; (add-hook 'prog-mode-hook 'copilot-mode)
+(add-hook 'java-mode-hook #'lsp)
 
 (setq default-tab-width 2)
 (setq projectile-enable-caching nil)
@@ -41,6 +43,7 @@
   (let ((file (file-name-nondirectory buffer-file-name)))
         (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
               ((or (equal (file-name-extension file) "java") (equal (file-name-extension file) "gradle")) (gradle-build))
+              ((or (equal (file-name-extension file) "org")) (insert-current-date))
               ((equal (file-name-extension file) "tex") (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))))))
 
 (defun code-run ()
@@ -140,7 +143,7 @@
 (map! :map general-override-mode-map "C-c C-x" 'code-run)
 (map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
 (map! :map general-override-mode-map "C-/" 'comment-line)
-(map! :map general-override-mode-map "C-c C-d" 'insert-current-date)
+;; (map! :map general-override-mode-map "C-c C-d" 'insert-current-date)
 (map! :map general-override-mode-map "M-t" 'shell)
 (map! :map general-override-mode-map "M-T" 'shell-command)
 
@@ -151,6 +154,9 @@
 (map! :map general-override-mode-map "M-w" 'evil-window-delete)
 
 (map! :map general-override-mode-map "M-RET" 'evil-window-vsplit)
+
+(global-set-key (kbd "C-c o")
+        (lambda () (interactive) (find-file "~/iCloud/org/todo.org")))
 
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
@@ -166,6 +172,8 @@
   :commands lsp-install-server
 
   :config
-  (setq lsp-diagnostics-provider :none
+  (setq
+        lsp-diagnostics-provider :none
         lsp-ui-sideline-enable nil
         lsp-modeline-diagnostics-enable nil))
+

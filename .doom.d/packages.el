@@ -9,6 +9,7 @@
 ;(package! some-package)
 (package! nord-theme)
 (package! elcord)
+(package! lsp-java)
 
 ;; (package! gradle-mode)
 

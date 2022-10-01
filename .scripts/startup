@@ -5,10 +5,10 @@ option=$1
 nitrogen --restore
 # ~/.scripts/mousewatch &
 blueman-applet & > /dev/null
-/home/prayuj/.config/bspwm/border &
+~/.scripts/tilt &
 discord --start-minimized & > /dev/null
 bspc monitor eDP-1 -d X
-mail &
+mailspring -b &
 
 if [[ $option == 1 ]]
 then

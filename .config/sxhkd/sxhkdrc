@@ -36,7 +36,8 @@ super + w
 
 # calculator
 super + c
-    rofi -show calc -modi calc -window-title calc -no-history -no-show-match -no-sort
+    python /home/prayuj/Projects/Rofi-Calculator/main.py
+    # rofi -show calc -modi calc -window-title calc -no-history -no-show-match -no-sort
 
 # ranger
 super + r
@@ -166,5 +167,5 @@ super + shift + {h,j,k,l}
     ~/.config/sxhkd/move {west,south,north,east}
 
 # Resize Nodes
-super + ctrl + {h,j,k,l}
+super + ctrl + {h,j,k,}
     ~/.config/sxhkd/resize {west,south,north,east} 40
