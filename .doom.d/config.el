@@ -4,11 +4,11 @@
 (require 'compile)
 (require 'lsp-java)
 
-(load-theme 'doom-gruvbox t)
+(load-theme 'doom-henna t)
 ;; (setq doom-font (font-spec :family "Source Code Pro" :size 12))
-;; (setq doom-theme 'doom-one)
-
-(elcord-mode)
+;; (global-hl-line-mode 1)
+;; (set-face-background 'hl-line "#3e4446")
+;; (set-face-foreground 'highlight nil)
 
 ;; (add-hook 'prog-mode-hook 'copilot-mode)
 (add-hook 'java-mode-hook #'lsp)
@@ -35,6 +35,11 @@
     ;; (toggle-frame-maximized)
 ;; )
 
+;; Org Agenda Configuration
+
+(setq org-agenda-span 'week)
+(setq org-agenda-start-day "-0d")
+(elcord-mode)
 
 ;; ---- compilation and run commands ----
 
@@ -43,7 +48,7 @@
   (let ((file (file-name-nondirectory buffer-file-name)))
         (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
               ((or (equal (file-name-extension file) "java") (equal (file-name-extension file) "gradle")) (gradle-build))
-              ((or (equal (file-name-extension file) "org")) (insert-current-date))
+              ;; ((or (equal (file-name-extension file) "org")) (insert-current-date))
               ((equal (file-name-extension file) "tex") (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))))))
 
 (defun code-run ()
@@ -139,7 +144,12 @@
 
 
 ;; new keybindings
-(map! :map general-override-mode-map "C-c C-c" 'code-compile)
+(define-key java-mode-map (kbd "C-c C-c") 'code-compile)
+(define-key cpp-mode-map (kbd "C-c C-c") 'code-compile)
+;; (define-key tex-mode-map (kbd "C-c C-c") 'code-compile)
+;; (define-key python-mode-map (kbd "C-c C-c") 'code-compile)
+;; (map! :map general-override-mode-map "C-c C-c" 'code-compile)
+
 (map! :map general-override-mode-map "C-c C-x" 'code-run)
 (map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
 (map! :map general-override-mode-map "C-/" 'comment-line)
@@ -176,4 +186,3 @@
         lsp-diagnostics-provider :none
         lsp-ui-sideline-enable nil
         lsp-modeline-diagnostics-enable nil))
-

@@ -10,6 +10,7 @@ dbus-launch
 syncthingtray --wait &
 notification-center &
 picom &
+emacs &
 #xborders -c ~/.config/xborder/config.json &
 
 bspc config border_radius                5

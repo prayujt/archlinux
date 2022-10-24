@@ -167,5 +167,5 @@ super + shift + {h,j,k,l}
     ~/.config/sxhkd/move {west,south,north,east}
 
 # Resize Nodes
-super + ctrl + {h,j,k,}
+super + ctrl + {h,j,k,l}
     ~/.config/sxhkd/resize {west,south,north,east} 40
