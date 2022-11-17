@@ -1,0 +1,21 @@
+#!/bin/bash
+
+focused=$(bspc query -M --names -m 'focused')
+desktop=$2
+
+if [ $focused == "DP-3" ]
+then
+    desktop=$(($desktop + 10))
+elif [ $focused == "eDP-1" ]
+then
+    desktop=$(($desktop + 20))
+fi
+
+if [ $1 == "focus" ]
+then
+    # bspc desktop -f ^"$2"
+    bspc desktop -f ^"$desktop"
+elif [[ $1 == "move" ]]
+then
+    bspc node -d ^"$desktop"
+fi

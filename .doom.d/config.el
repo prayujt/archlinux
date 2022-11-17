@@ -5,6 +5,7 @@
 (require 'lsp-java)
 
 (load-theme 'doom-henna t)
+
 ;; (setq doom-font (font-spec :family "Source Code Pro" :size 12))
 ;; (global-hl-line-mode 1)
 ;; (set-face-background 'hl-line "#3e4446")
@@ -13,9 +14,11 @@
 ;; (add-hook 'prog-mode-hook 'copilot-mode)
 (add-hook 'java-mode-hook #'lsp)
 
+;; (setq org-roam-database-connector 'sqlite-builtin)
 (setq default-tab-width 2)
 (setq projectile-enable-caching nil)
-;; (setq flycheck-disabled-checkers t)
+(setq flycheck-disabled-checkers t)
+(setq lsp-enable-links nil)
 
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
@@ -39,6 +42,7 @@
 
 (setq org-agenda-span 'week)
 (setq org-agenda-start-day "-0d")
+
 (elcord-mode)
 
 ;; ---- compilation and run commands ----
@@ -144,11 +148,12 @@
 
 
 ;; new keybindings
-(define-key java-mode-map (kbd "C-c C-c") 'code-compile)
-(define-key cpp-mode-map (kbd "C-c C-c") 'code-compile)
+;; (define-key java-mode-map (kbd "C-c C-c") 'code-compile)
+;; (define-key cpp-mode-map (kbd "C-c C-c") 'code-compile)
 ;; (define-key tex-mode-map (kbd "C-c C-c") 'code-compile)
 ;; (define-key python-mode-map (kbd "C-c C-c") 'code-compile)
-;; (map! :map general-override-mode-map "C-c C-c" 'code-compile)
+
+(map! :map general-override-mode-map "C-c C-c" 'code-compile)
 
 (map! :map general-override-mode-map "C-c C-x" 'code-run)
 (map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
@@ -168,21 +173,21 @@
 (global-set-key (kbd "C-c o")
         (lambda () (interactive) (find-file "~/iCloud/org/todo.org")))
 
-(use-package! copilot
-  :hook (prog-mode . copilot-mode)
-  :bind (("C-TAB" . 'copilot-accept-completion-by-word)
-         ("C-<tab>" . 'copilot-accept-completion-by-word)
-         :map copilot-completion-map
-         ("<tab>" . 'copilot-accept-completion)
-         ("TAB" . 'copilot-accept-completion)))
+;; (use-package! copilot
+;;   :hook (prog-mode . copilot-mode)
+;;   :bind (("C-TAB" . 'copilot-accept-completion-by-word)
+;;          ("C-<tab>" . 'copilot-accept-completion-by-word)
+;;          :map copilot-completion-map
+;;          ("<tab>" . 'copilot-accept-completion)
+;;          ("TAB" . 'copilot-accept-completion)))
 
-(use-package! lsp-mode
-  ;; Need to repeat this line from the Doom lsp module
-  ;; declaration to keep it from eager-loading:
-  :commands lsp-install-server
+;; (use-package! lsp-mode
+;;   ;; Need to repeat this line from the Doom lsp module
+;;   ;; declaration to keep it from eager-loading:
+;;   :commands lsp-install-server
 
-  :config
-  (setq
-        lsp-diagnostics-provider :none
-        lsp-ui-sideline-enable nil
-        lsp-modeline-diagnostics-enable nil))
+;;   :config
+;;   (setq
+;;         lsp-diagnostics-provider :none
+;;         lsp-ui-sideline-enable nil
+;;         lsp-modeline-diagnostics-enable nil))

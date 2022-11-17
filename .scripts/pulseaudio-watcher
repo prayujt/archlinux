@@ -31,6 +31,7 @@ with Pulse() as pulse:
       default_sink_name = pulse.server_info().default_sink_name
       try:
           sink_index = next(index for index, sink in sinks.items() if sink.name == default_sink_name)
+          print(sink_index)
       except StopIteration: raise StopIteration("No default sink was found.")
       sinks = {s.index:s for s in pulse.sink_list()}
       value, mute = current_status(sinks[sink_index])

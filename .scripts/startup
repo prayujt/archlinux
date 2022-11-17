@@ -5,7 +5,8 @@ option=$1
 nitrogen --restore
 # ~/.scripts/mousewatch &
 blueman-applet & > /dev/null
-~/.scripts/tilt &
+# ~/.scripts/tilt &
+~/.scripts/firefox_start &
 discord --start-minimized & > /dev/null
 bspc monitor eDP-1 -d X
 mailspring -b &
@@ -16,24 +17,24 @@ then
     bspc monitor DP-1 -d IX
     bspc monitor DP-3 -f
     bspc config -m DP-3 bottom_padding 30
-    ~/.scripts/pulseaudio-watcher | xob -s monitor2 &
+    ~/.scripts/pulseaudio | xob -s monitor2 &
 elif [[ $option == 2 ]]
 then
     bspc monitor DP-3 -f
     bspc monitor DP-3 -d I II III IV V VI VII VIII IX
     bspc config -m DP-3 bottom_padding 30
-    ~/.scripts/pulseaudio-watcher | xob -s monitor1 &
+    ~/.scripts/pulseaudio | xob -s monitor1 &
 elif [[ $option == 3 ]]
 then
     bspc monitor DP-1 -f
     bspc monitor DP-1 -d I II III IV V VI VII VIII IX
     bspc config -m DP-1 bottom_padding 30
-    ~/.scripts/pulseaudio-watcher | xob -s monitor1 &
+    ~/.scripts/pulseaudio | xob -s monitor1 &
 elif [[ $option == 4 ]]
 then
     bspc monitor eDP-1 -d I II III IV V VI VII VIII IX X
     bspc config -m eDP-1 bottom_padding 30
-    ~/.scripts/pulseaudio-watcher | xob -s computer &
+    ~/.scripts/pulseaudio | xob -s computer &
 fi
 
 ~/.scripts/polybarstart $1 & > /dev/null

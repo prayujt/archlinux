@@ -117,6 +117,7 @@ export PATH=$PATH:/home/prayuj/.emacs.d/bin
 export PATH=$PATH:/home/prayuj/.scripts
 export PATH=$PATH:/home/prayuj/.scripts/bin
 export PATH=$PATH:/home/prayuj/.miner
+export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin
 export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color
@@ -140,3 +141,5 @@ export ZSH_AUTOSUGGEST_STRATEGY=(
 # Load zsh plugins
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+neofetch
