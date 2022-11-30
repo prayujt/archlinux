@@ -15,11 +15,11 @@ super + Return
     alacritty
 
 # lock the screen
-super + shift + Escape
-    sudo /usr/local/bin/slock
+#super + shift + Escape
+#    sudo /usr/local/bin/slock
 
 # turn off the display via lock
-super + shift + control + Escape
+super + shift + Escape
     xsecurelock
 
 # open notification center
@@ -145,8 +145,6 @@ super + ctrl + shift + {h,j,k,l}
 
 # cancel the preselection for the focused node
 super + ctrl + shift + space
-    bspc node -p cancel
-super + ctrl + shift + Escape
     bspc node -p cancel
 
 super + Tab

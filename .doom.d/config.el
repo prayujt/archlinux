@@ -23,8 +23,6 @@
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
 
-(setq org-directory "~/iCloud/org/")
-
 (setq display-line-numbers-type t)
 (setq evil-escape-key-sequence "qw")
 
@@ -33,6 +31,8 @@
   (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
 )
 
+(elcord-mode)
+
 ;; (if (string= system-type ";; gnu/linux")
     ;; (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
     ;; (toggle-frame-maximized)
@@ -40,10 +40,21 @@
 
 ;; Org Agenda Configuration
 
-(setq org-agenda-span 'week)
-(setq org-agenda-start-day "-0d")
+(setq org-directory "~/iCloud/org/")
+(setq org-agenda-sorting-strategy
+       '((agenda timestamp-up time-up priority-down category-keep habit-down)
+       (todo time-up priority-down category-keep)
+       (tags time-up priority-down category-keep)
+       (search category-keep))
+)
+;; (setq org-priority-default 10)
+;; (setq org-priority-lowest 64)
+;; (setq org-priority-highest 1)
 
-(elcord-mode)
+;; (defun emacs-startup-org ()
+;;   "Display the weekly org-agenda and all todos."
+;;   (org-agenda nil "n"))
+;; (add-hook 'emacs-startup-hook #'emacs-startup-org)
 
 ;; ---- compilation and run commands ----
 

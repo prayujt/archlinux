@@ -6,38 +6,42 @@ nitrogen --restore
 # ~/.scripts/mousewatch &
 blueman-applet & > /dev/null
 # ~/.scripts/tilt &
-~/.scripts/firefox_start &
+~/.scripts/firefox_background &
 discord --start-minimized & > /dev/null
 bspc monitor eDP-1 -d X
 mailspring -b &
 
 if [[ $option == 1 ]]
 then
-    bspc monitor DP-3 -d I II III IV V VI VII VIII
-    bspc monitor DP-1 -d IX
+    bspc monitor DP-1 -d 1 2 3 4 5 6 7 8 9 10
+    bspc monitor DP-3 -d 11 12 13 14 15 16 17 18 19 20
+    bspc monitor eDP-1 -d 21 22 23 24 25 26 27 28 29 30
     bspc monitor DP-3 -f
     bspc config -m DP-3 bottom_padding 30
     ~/.scripts/pulseaudio | xob -s monitor2 &
 elif [[ $option == 2 ]]
 then
     bspc monitor DP-3 -f
-    bspc monitor DP-3 -d I II III IV V VI VII VIII IX
+    bspc monitor DP-3 -d 11 12 13 14 15 16 17 18 19 20
+    bspc monitor eDP-1 -d 21 22 23 24 25 26 27 28 29 30
     bspc config -m DP-3 bottom_padding 30
     ~/.scripts/pulseaudio | xob -s monitor1 &
 elif [[ $option == 3 ]]
 then
     bspc monitor DP-1 -f
-    bspc monitor DP-1 -d I II III IV V VI VII VIII IX
+    bspc monitor DP-1 -d 1 2 3 4 5 6 7 8 9 10
+    bspc monitor eDP-1 -d 21 22 23 24 25 26 27 28 29 30
     bspc config -m DP-1 bottom_padding 30
     ~/.scripts/pulseaudio | xob -s monitor1 &
 elif [[ $option == 4 ]]
 then
-    bspc monitor eDP-1 -d I II III IV V VI VII VIII IX X
+    bspc monitor eDP-1 -d 21 22 23 24 25 26 27 28 29 30
     bspc config -m eDP-1 bottom_padding 30
     ~/.scripts/pulseaudio | xob -s computer &
 fi
 
-~/.scripts/polybarstart $1 & > /dev/null
+~/.scripts/barstart & > /dev/null
+~/.scripts/mousewatch & > /dev/null
 xset s off -dpms
 #xautolock -time 2 -corners ---- -locker 'sudo slock' &
 #xidlehook --not-when-fullscreen --not-when-audio --timer 30 'sudo slock' '' &
