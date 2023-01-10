@@ -1,8 +1,6 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-(require 's)
 (require 'compile)
-(require 'lsp-java)
 
 (load-theme 'doom-henna t)
 
@@ -12,13 +10,8 @@
 ;; (set-face-foreground 'highlight nil)
 
 ;; (add-hook 'prog-mode-hook 'copilot-mode)
-(add-hook 'java-mode-hook #'lsp)
 
-;; (setq org-roam-database-connector 'sqlite-builtin)
 (setq default-tab-width 2)
-(setq projectile-enable-caching nil)
-(setq flycheck-disabled-checkers t)
-(setq lsp-enable-links nil)
 
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
@@ -47,34 +40,124 @@
        (tags time-up priority-down category-keep)
        (search category-keep))
 )
-;; (setq org-priority-default 10)
-;; (setq org-priority-lowest 64)
-;; (setq org-priority-highest 1)
 
-;; (defun emacs-startup-org ()
-;;   "Display the weekly org-agenda and all todos."
-;;   (org-agenda nil "n"))
-;; (add-hook 'emacs-startup-hook #'emacs-startup-org)
+
+;; ---- lsp setup ----
+
+(setq lsp-pylsp-plugins-flake8-ignore ["E501"])
+
 
 ;; ---- compilation and run commands ----
 
-(defun code-compile ()
+(defun latex-compile ()
   (interactive)
-  (let ((file (file-name-nondirectory buffer-file-name)))
-        (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
-              ((or (equal (file-name-extension file) "java") (equal (file-name-extension file) "gradle")) (gradle-build))
-              ;; ((or (equal (file-name-extension file) "org")) (insert-current-date))
-              ((equal (file-name-extension file) "tex") (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))))))
+  (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;")))
 
-(defun code-run ()
+;; (defun code-compile ()
+;;   (interactive)
+;;   (let ((file (file-name-nondirectory buffer-file-name)))
+;;         (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h")) (+make/run))
+;;               ((or (equal (file-name-extension file) "java") (equal (file-name-extension file) "gradle")) (gradle-build))
+;;               ;; ((or (equal (file-name-extension file) "org")) (org-babel-execute-src-block))
+;;               ((equal (file-name-extension file) "tex") (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;"))))))
+
+;; (defun code-run ()
+;;   (interactive)
+;;   (let ((file (file-name-nondirectory buffer-file-name)))
+;;         (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) (shell-command "./main"))
+;;                 ((or (equal (file-name-extension file) "java") (equal (file-name-extension file) "gradle")) (gradle-test (read-string "Enter Test Names: ")))
+;;                 ((equal (file-name-extension file) "tex") (code-compile) (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
+;;                 ((equal (file-name-extension file) "py") (shell-command (concat "python3 " buffer-file-name)))
+;;                 ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) (shell-command "npm run start")))))
+
+
+
+;; ---- projectile ----
+(after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
+          projectile-project-root-files-bottom-up)))
+
+
+;; ---- miscellanious ----
+
+(defun generate-makefile ()
   (interactive)
-  (let ((file (file-name-nondirectory buffer-file-name)))
-        (cond ((or (equal (file-name-extension file) "cpp") (equal (file-name-extension file) "h") (equal (file-name-extension file) "hpp")) (shell-command "./main"))
-                ((or (equal (file-name-extension file) "java") (equal (file-name-extension file) "gradle")) (gradle-test (read-string "Enter Test Names: ")))
-                ((equal (file-name-extension file) "tex") (code-compile) (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
-                ((equal (file-name-extension file) "py") (shell-command (concat "python3 " buffer-file-name)))
-                ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) (shell-command "npm run start")))))
+  (let (makefile_directory)
+    (setq makefile_directory (read-directory-name "Directory:"))
+    (message "Generated makefile in %s" makefile_directory)
+    (f-write-text "CC = g++\nCFLAGS  = -w -g\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
+                  'utf-8 (concat makefile_directory "/Makefile"))
+  )
+)
 
+(defun insert-current-date () (interactive)
+  (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
+
+
+;; compilation keybindings
+
+(add-hook 'java-mode-hook
+  (lambda ()
+    (define-key java-mode-map (kbd "C-c C-c") 'gradle-build)
+    (flycheck-mode nil)))
+
+(add-hook 'c-mode-hook
+  (lambda ()
+    (define-key c-mode-map (kbd "C-c C-c") '+make/run)))
+
+(add-hook 'c++-mode-hook
+  (lambda ()
+    (define-key c++-mode-map (kbd "C-c C-c") '+make/run)))
+
+(add-hook 'latex-mode-hook
+  (lambda ()
+    (define-key latex-mode-map (kbd "C-c C-c") 'latex-compile)))
+
+(add-hook 'LaTeX-mode-hook
+  (lambda ()
+    (define-key LaTeX-mode-map (kbd "C-c C-c") 'latex-compile)))
+
+(add-hook 'tex-mode-hook
+  (lambda ()
+    (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)))
+
+(add-hook 'ein:notebook-mode-hook
+  (lambda ()
+    (define-key ein:notebook-mode-map (kbd "C-c j") 'ein:worksheet-goto-next-input)
+    (define-key ein:notebook-mode-map (kbd "C-c k") 'ein:worksheet-goto-prev-input)
+    (define-key ein:notebook-mode-map (kbd "C-c C-j") 'ein:worksheet-insert-cell-below)
+    (define-key ein:notebook-mode-map (kbd "C-c C-k") 'ein:worksheet-insert-cell-above)
+    (define-key ein:notebook-mode-map (kbd "C-c C-d") 'ein:worksheet-delete-cell)
+    (define-key ein:notebook-mode-map (kbd "C-c C-r") 'ein:notebook-restart-session-command)
+    (define-key ein:notebook-mode-map (kbd "C-c C-<backspace>") 'ein:worksheet-clear-output)))
+
+;; (map! :map general-override-mode-map "C-c C-c" 'code-compile)
+;; (map! :map general-override-mode-map "C-c C-x" 'code-run)
+
+(map! :map general-override-mode-map "C-c e l" 'flycheck-list-errors)
+(map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
+(map! :map general-override-mode-map "C-/" 'comment-line)
+;; (map! :map general-override-mode-map "C-c C-d" 'insert-current-date)
+(map! :map general-override-mode-map "M-t" 'shell)
+(map! :map general-override-mode-map "M-T" 'shell-command)
+
+(map! :map general-override-mode-map "M-l" 'evil-window-right)
+(map! :map general-override-mode-map "M-h" 'evil-window-left)
+(map! :map general-override-mode-map "M-j" 'evil-window-down)
+(map! :map general-override-mode-map "M-k" 'evil-window-up)
+(map! :map general-override-mode-map "M-w" 'evil-window-delete)
+
+(map! :map general-override-mode-map "M-RET" 'evil-window-vsplit)
+
+(global-set-key (kbd "C-c o")
+        (lambda () (interactive) (find-file "~/iCloud/org/todo.org")))
+
+;; (use-package! copilot
+;;   :hook (prog-mode . copilot-mode)
+;;   :bind (("C-TAB" . 'copilot-accept-completion-by-word)
+;;          ("C-<tab>" . 'copilot-accept-completion-by-word)
+;;          :map copilot-completion-map
+;;          ("<tab>" . 'copilot-accept-completion)
+;;          ("TAB" . 'copilot-accept-completion)))
 
 ;; ---- gradle variables and commands ----
 
@@ -141,64 +224,6 @@
   (gradle-run
    (s-concat "test --tests " test-name " --daemon")))
 
+;; ---- ein configuration ---
 
-;; ---- miscellanious ----
-
-(defun generate-makefile ()
-  (interactive)
-  (let (makefile_directory)
-    (setq makefile_directory (read-directory-name "Directory:"))
-    (message "Generated makefile in %s" makefile_directory)
-    (f-write-text "CC = g++\nCFLAGS  = -w -g\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
-                  'utf-8 (concat makefile_directory "/Makefile"))
-  )
-)
-
-(defun insert-current-date () (interactive)
-  (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
-
-
-;; new keybindings
-;; (define-key java-mode-map (kbd "C-c C-c") 'code-compile)
-;; (define-key cpp-mode-map (kbd "C-c C-c") 'code-compile)
-;; (define-key tex-mode-map (kbd "C-c C-c") 'code-compile)
-;; (define-key python-mode-map (kbd "C-c C-c") 'code-compile)
-
-(map! :map general-override-mode-map "C-c C-c" 'code-compile)
-
-(map! :map general-override-mode-map "C-c C-x" 'code-run)
-(map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
-(map! :map general-override-mode-map "C-/" 'comment-line)
-;; (map! :map general-override-mode-map "C-c C-d" 'insert-current-date)
-(map! :map general-override-mode-map "M-t" 'shell)
-(map! :map general-override-mode-map "M-T" 'shell-command)
-
-(map! :map general-override-mode-map "M-l" 'evil-window-right)
-(map! :map general-override-mode-map "M-h" 'evil-window-left)
-(map! :map general-override-mode-map "M-j" 'evil-window-down)
-(map! :map general-override-mode-map "M-k" 'evil-window-up)
-(map! :map general-override-mode-map "M-w" 'evil-window-delete)
-
-(map! :map general-override-mode-map "M-RET" 'evil-window-vsplit)
-
-(global-set-key (kbd "C-c o")
-        (lambda () (interactive) (find-file "~/iCloud/org/todo.org")))
-
-;; (use-package! copilot
-;;   :hook (prog-mode . copilot-mode)
-;;   :bind (("C-TAB" . 'copilot-accept-completion-by-word)
-;;          ("C-<tab>" . 'copilot-accept-completion-by-word)
-;;          :map copilot-completion-map
-;;          ("<tab>" . 'copilot-accept-completion)
-;;          ("TAB" . 'copilot-accept-completion)))
-
-;; (use-package! lsp-mode
-;;   ;; Need to repeat this line from the Doom lsp module
-;;   ;; declaration to keep it from eager-loading:
-;;   :commands lsp-install-server
-
-;;   :config
-;;   (setq
-;;         lsp-diagnostics-provider :none
-;;         lsp-ui-sideline-enable nil
-;;         lsp-modeline-diagnostics-enable nil))
+(setq ein:jupyter-server-args '("--ip" "127.0.0.1"))

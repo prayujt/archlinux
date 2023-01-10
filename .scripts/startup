@@ -10,6 +10,7 @@ blueman-applet & > /dev/null
 discord --start-minimized & > /dev/null
 bspc monitor eDP-1 -d X
 mailspring -b &
+emacs --daemon &
 
 if [[ $option == 1 ]]
 then
@@ -40,8 +41,9 @@ then
     ~/.scripts/pulseaudio | xob -s computer &
 fi
 
-~/.scripts/barstart & > /dev/null
-~/.scripts/mousewatch & > /dev/null
+~/.config/polybar/launch.sh & > /dev/null
+# ~/.scripts/barstart & > /dev/null
+# ~/.scripts/mousewatch & > /dev/null
 xset s off -dpms
 #xautolock -time 2 -corners ---- -locker 'sudo slock' &
 #xidlehook --not-when-fullscreen --not-when-audio --timer 30 'sudo slock' '' &

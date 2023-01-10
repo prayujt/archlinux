@@ -14,6 +14,10 @@ shift + Print
 super + Return
     alacritty
 
+# emacs text launch
+super + shift + Return
+    emacsclient --eval "(emacs-everywhere)"
+
 # lock the screen
 #super + shift + Escape
 #    sudo /usr/local/bin/slock

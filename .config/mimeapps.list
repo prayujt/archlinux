@@ -92,4 +92,4 @@ application/xhtml+xml=firefox.desktop
 application/x-extension-xhtml=firefox.desktop
 application/x-extension-xht=firefox.desktop
 x-scheme-handler/mailspring=Mailspring.desktop
-application/pdf=okular.desktop
+application/pdf=zathura.desktop

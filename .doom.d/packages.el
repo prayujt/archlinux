@@ -10,8 +10,8 @@
 (package! nord-theme)
 (package! elcord)
 (package! lsp-java)
-
-;; (package! gradle-mode)
+(package! jupyter)
+(package! ein)
 
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
@@ -37,7 +37,12 @@
 
 ;; If you'd like to disable a package included with Doom, you can do so here
 ;; with the `:disable' property:
-;(package! builtin-package :disable t)
+(package! emacsql-sqlite-builtin :disable t)
+(package! helm-gitignore :disable t)
+(package! sql-cassandra :disable t)
+(package! vera-mode :disable t)
+(package! ps-mode :disable t)
+(package! ps-script :disable t)
 
 ;; You can override the recipe of a built in package without having to specify
 ;; all the properties for `:recipe'. These will inherit the rest of its recipe
