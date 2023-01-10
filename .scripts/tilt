@@ -1,0 +1,7 @@
+#!/usr/bin/python3
+import freenect
+
+ctx = freenect.init()
+device = freenect.open_device(ctx, 0)
+freenect.set_tilt_degs(device, 0)
+freenect.close_device(device)

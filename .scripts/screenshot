@@ -1,0 +1,13 @@
+#!/bin/bash
+
+option=$1
+
+if [[ $option == 1 ]]
+then
+    grim "/home/prayuj/Pictures/screenshots"/"$(date +%Y%m%d-%H%M%S)".png
+elif [[ $option == 2 ]]
+then
+    grim -g "$(slurp)" "/home/prayuj/Pictures/screenshots"/"$(date +%Y%m%d-%H%M%S)".png
+else
+    grim -g "$(slurp)" "/home/prayuj/Pictures/screenshots"/"$(date +%Y%m%d-%H%M%S)".png
+fi

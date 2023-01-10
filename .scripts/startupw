@@ -1,0 +1,6 @@
+#!/bin/bash
+
+hyprpaper &
+swaync &
+discord --start-minimized & > /dev/null
+~/.scripts/pulseaudio-watcher | wob &

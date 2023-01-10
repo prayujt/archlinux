@@ -1,0 +1,7 @@
+#!/bin/bash
+
+monitor=$(xrandr -q | grep primary | awk '{print $1;}')
+
+bspc config -m $monitor bottom_padding 0
+#bspc config -m DP-1 bottom_padding 0
+killall polybar

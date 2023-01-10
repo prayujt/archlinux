@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+import subprocess
+import os
+import signal
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('AppIndicator3', '0.1')
+from gi.repository import Gtk, AppIndicator3
+import time
+
+app = "firefox"
+winsdir = os.path.join(os.environ["HOME"], ".config/hidden_windows")
+
+try:
+    os.mkdir(winsdir)
+except FileExistsError:
+    pass
+
+def checkruns(app):
+    try:
+        return subprocess.check_output(["pgrep", app]).decode("utf-8").strip()
+    except subprocess.CalledProcessError:
+        for w in os.listdir(winsdir):
+            if w.startswith(app):
+                os.remove(os.path.join(winsdir, w))
+
+def get_currentwins(pid):
+    wins = subprocess.check_output(["wmctrl", "-lp"]).decode("utf-8").splitlines()
+    return [l.split()[0] for l in wins if pid in l]
+
+def hide_currentwins(matches):
+    # open(os.path.join(winsdir, "windowlist"), "wt").write("\n".join(matches))
+    for w in matches:
+        open(os.path.join(winsdir, app+"_"+w), "wt")
+        subprocess.Popen(["xdotool", "windowunmap", w])
+
+def run_app(app):
+    subprocess.Popen(app)
+    while True:
+        time.sleep(1)
+        pid = checkruns(app)
+        matches = get_currentwins(pid) if pid else None
+        if matches:
+            hide_currentwins(matches)
+            break
+
+def restore_wins():
+    for w in [w for w in os.listdir(winsdir) if w.startswith(app)]:
+        wid = w.split("_")[-1]
+        subprocess.Popen(["xdotool", "windowmap", wid])
+        os.remove(os.path.join(winsdir, w))
+
+def toggle_app(*args):
+    pid = checkruns(app)
+    if pid:
+        matches = get_currentwins(pid)
+        if matches:
+            hide_currentwins(matches)
+        else:
+            restore_wins()
+    else:
+        subprocess.Popen(app)
+
+run_app(app)
+
+class Indicator():
+    def __init__(self):
+        self.app = 'toggle_app'
+        self.indicator = AppIndicator3.Indicator.new(
+            self.app, app,
+            AppIndicator3.IndicatorCategory.OTHER)
+        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)       
+        self.indicator.set_menu(self.create_menu())
+
+    def create_menu(self):
+        self.menu = Gtk.Menu()
+        item_toggle = Gtk.MenuItem('Toggle '+app)
+        item_toggle.connect("activate", toggle_app)
+        self.menu.append(item_toggle)
+        sep1 = Gtk.SeparatorMenuItem()
+        self.menu.append(sep1)
+        item_quit = Gtk.MenuItem('Quit')
+        item_quit.connect('activate', self.stop)
+        self.menu.append(item_quit)
+        self.menu.show_all()
+        return self.menu
+
+    def stop(self, source):
+        Gtk.main_quit()
+
+Indicator()
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+Gtk.main()
