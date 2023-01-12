@@ -22,6 +22,7 @@ alias files='ssh files@prayujt.com -p 1024'
 alias wifioff=nmcli radio wifi off
 alias wifion=nmcli radio wifi on
 alias wifistatus=nmcli device
+alias news='cat ~/.config/polybar/scripts/news/current_news.txt | sed -r "s/[\[]+/\n\[/g"'
 
 open() {
   xdg-open "$1" &

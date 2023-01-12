@@ -1,7 +1,3 @@
 #!/bin/bash
 
-monitor=$(xrandr -q | grep primary | awk '{print $1;}')
-
-bspc config -m $monitor bottom_padding 54
-#bspc config -m DP-1 bottom_padding 54
-~/.config/polybar/launch_old.sh 2> /dev/null
+~/.config/polybar/launch.sh

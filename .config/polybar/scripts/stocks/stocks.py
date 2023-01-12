@@ -25,16 +25,16 @@ positions = tda_client.get_account(ACCOUNT_ID, fields=Client.Account.Fields.POSI
 value = positions['securitiesAccount']['currentBalances']['liquidationValue']
 
 total_change = 0
-data_file = open('{0}/polybar/scripts/stocks/data.json'.format(config['XDG_CONFIG_HOME']), 'w')
-data = {}
+data_file = open('{0}/eww/data.json'.format(config['XDG_CONFIG_HOME']), 'w')
+data = []
 for position in positions['securitiesAccount']['positions']:
-    symbol = position['instrument']['symbol']
-    data[symbol] = {
-        'change': position['currentDayProfitLoss'],
-        'percent_change': position['currentDayProfitLossPercentage'],
+    data.append({
+        'symbol': position['instrument']['symbol'],
+        'change': round(position['currentDayProfitLoss'], 2),
+        'percent_change': round(position['currentDayProfitLossPercentage'], 2),
         'num_shares': position['longQuantity'],
-        'value': position['marketValue']
-    }
+        'value': round(position['marketValue'], 2)
+    })
     total_change += position['currentDayProfitLoss']
 
 data_file.write(json.dumps(data))

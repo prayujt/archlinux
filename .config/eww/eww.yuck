@@ -1,0 +1,29 @@
+(defwidget positions_widget []
+  (box :class "positions_widget" :orientation "v" :space-evenly true
+    (for position in positions
+         (box :class "body"
+            (box :class "symbol"
+                "${position['symbol']}:"
+            )
+            (box :class "${position['change'] <= 0 ? 'negative' : 'positive'}"
+                "${position['change'] < 0 ? '-' : '+'}$${position['change'] < 0 ? 0 - position['change'] : position['change']}"
+            )
+            (box :class "${position['percent_change'] <= 0 ? 'negative' : 'positive'}"
+                "${position['percent_change'] > 0 ? '+' : ''}${position['percent_change']}%"
+            )
+            (box :class "value"
+                 "$${position['value']}"
+            )
+         )
+    )))
+
+(deflisten positions :initial "Loading..."
+  `cat /home/prayuj/.config/eww/data.json`)
+
+(defwindow stocks
+  :monitor 0
+  :geometry (geometry :x "1460px"
+                      :y "40px"
+                      :width "250px"
+                      :height "200px")
+  (positions_widget))
