@@ -2,6 +2,7 @@
 # ~/.bashrc
 #
 
+export GOPATH=/home/prayuj/.go
 zsh
 
 # If not running interactively, don't do anything

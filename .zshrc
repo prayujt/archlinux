@@ -18,6 +18,7 @@ alias wifiscan=nmcli device wifi list
 alias locate='sudo updatedb && locate'
 alias flood='sudo hping3 -c 10000 -d 128 -S -w 64 -p 8000 --flood --rand-source 192.168.0.1'
 alias server='ssh prayuj@prayujt.com -p 1024'
+alias rootserver='ssh root@prayujt.com -p 1024'
 alias files='ssh files@prayujt.com -p 1024'
 alias wifioff=nmcli radio wifi off
 alias wifion=nmcli radio wifi on
@@ -110,17 +111,8 @@ update() {
   ssh files@prayujt.com -p 1024 "python3 /home/files/.scripts/music/cronjob.py&"&
 }
 
-export PATH=$PATH:/home/prayuj/.local/bin
-export PATH=$PATH:/opt/cuda
-export PATH=$PATH:/opt/cuda/bin
-export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
-export PATH=$PATH:/home/prayuj/.emacs.d/bin
-export PATH=$PATH:/home/prayuj/.scripts
-export PATH=$PATH:/home/prayuj/.scripts/bin
-export PATH=$PATH:/home/prayuj/.miner
-export PATH=$PATH:/home/prayuj/.thinkorswim
-
 export GOPATH=/home/prayuj/.go
+export GOBIN=$GOPATH/bin
 export XDG_CONFIG_HOME=/home/prayuj/.config
 export EDITOR=nvim
 export VISUAL=nvim
@@ -130,6 +122,17 @@ export TERMINAL="alacritty"
 export LD_LIBRARY_PATH=/usr/local/lib
 export NVM_DIR="$HOME/.nvm"
 source ~/.keys
+
+export PATH=$PATH:/home/prayuj/.local/bin
+export PATH=$PATH:/opt/cuda
+export PATH=$PATH:/opt/cuda/bin
+export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
+export PATH=$PATH:/home/prayuj/.emacs.d/bin
+export PATH=$PATH:/home/prayuj/.scripts
+export PATH=$PATH:/home/prayuj/.scripts/bin
+export PATH=$PATH:/home/prayuj/.miner
+export PATH=$PATH:/home/prayuj/.thinkorswim
+export PATH=$PATH:$GOPATH/bin
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word

@@ -53,6 +53,14 @@
   (interactive)
   (compile (concat "pdflatex " buffer-file-name "; rm *.log *.aux *.out;")))
 
+(defun latex-open ()
+  (interactive)
+        (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
+
+(defun go-compile ()
+  (interactive)
+  (compile "go get; go build; sudo rm -rf ~/go"))
+
 ;; (defun code-compile ()
 ;;   (interactive)
 ;;   (let ((file (file-name-nondirectory buffer-file-name)))
@@ -110,15 +118,18 @@
 
 (add-hook 'latex-mode-hook
   (lambda ()
-    (define-key latex-mode-map (kbd "C-c C-c") 'latex-compile)))
+    (define-key latex-mode-map (kbd "C-c C-c") 'latex-compile)
+    (define-key latex-mode-map (kbd "C-c C-x") 'latex-open)))
 
 (add-hook 'LaTeX-mode-hook
   (lambda ()
-    (define-key LaTeX-mode-map (kbd "C-c C-c") 'latex-compile)))
+    (define-key LaTeX-mode-map (kbd "C-c C-c") 'latex-compile)
+    (define-key LaTeX-mode-map (kbd "C-c C-x") 'latex-open)))
 
 (add-hook 'tex-mode-hook
   (lambda ()
-    (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)))
+    (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)
+    (define-key tex-mode-map (kbd "C-c C-x") 'latex-open)))
 
 (add-hook 'ein:notebook-mode-hook
   (lambda ()
@@ -129,6 +140,10 @@
     (define-key ein:notebook-mode-map (kbd "C-c C-d") 'ein:worksheet-delete-cell)
     (define-key ein:notebook-mode-map (kbd "C-c C-r") 'ein:notebook-restart-session-command)
     (define-key ein:notebook-mode-map (kbd "C-c C-<backspace>") 'ein:worksheet-clear-output)))
+
+(add-hook 'go-mode-hook
+  (lambda ()
+    (define-key go-mode-map (kbd "C-c C-c") 'go-compile)))
 
 ;; (map! :map general-override-mode-map "C-c C-c" 'code-compile)
 ;; (map! :map general-override-mode-map "C-c C-x" 'code-run)
