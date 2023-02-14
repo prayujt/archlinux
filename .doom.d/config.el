@@ -59,7 +59,15 @@
 
 (defun go-compile ()
   (interactive)
+
+  (cd (file-name-directory (find-file-in-heirarchy "./" "go.mod")))
+
+  ;; (if (-non-nil (string-match "_test.go" (file-name-nondirectory buffer-file-name)))
+  (if (string-match "_test.go" (file-name-nondirectory buffer-file-name))
+      (compile "go test -v ./...")
   (compile "go get; go build; sudo rm -rf ~/go"))
+
+  (cd (file-name-directory buffer-file-name)))
 
 ;; (defun code-compile ()
 ;;   (interactive)
@@ -77,7 +85,6 @@
 ;;                 ((equal (file-name-extension file) "tex") (code-compile) (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
 ;;                 ((equal (file-name-extension file) "py") (shell-command (concat "python3 " buffer-file-name)))
 ;;                 ((or (equal (file-name-extension file) "js") (equal (file-name-extension file) "svelte")) (shell-command "npm run start")))))
-
 
 
 ;; ---- projectile ----
@@ -99,6 +106,18 @@
 
 (defun insert-current-date () (interactive)
   (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
+
+(defun parent-directory (dir)
+  (unless (equal "/" dir)
+    (file-name-directory (directory-file-name dir))))
+
+(defun find-file-in-heirarchy (current-dir fname)
+  (let ((file (concat current-dir fname))
+        (parent (parent-directory (expand-file-name current-dir))))
+    (if (file-exists-p file)
+        file
+      (when parent
+        (find-file-in-heirarchy parent fname)))))
 
 
 ;; compilation keybindings
