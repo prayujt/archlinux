@@ -69,6 +69,13 @@
 
   (cd (file-name-directory buffer-file-name)))
 
+(defun python-compile ()
+  (interactive)
+
+  (cd (file-name-directory (find-file-in-heirarchy "./" "setup.py")))
+  (compile "pip install .")
+  (cd (file-name-directory buffer-file-name)))
+
 ;; (defun code-compile ()
 ;;   (interactive)
 ;;   (let ((file (file-name-nondirectory buffer-file-name)))
@@ -163,6 +170,10 @@
 (add-hook 'go-mode-hook
   (lambda ()
     (define-key go-mode-map (kbd "C-c C-c") 'go-compile)))
+
+(add-hook 'python-mode-hook
+  (lambda ()
+    (define-key python-mode-map (kbd "C-c C-c") 'python-compile)))
 
 ;; (map! :map general-override-mode-map "C-c C-c" 'code-compile)
 ;; (map! :map general-override-mode-map "C-c C-x" 'code-run)
