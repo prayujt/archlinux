@@ -12,6 +12,7 @@
 (package! lsp-java)
 (package! jupyter)
 (package! ein)
+(package! org-super-agenda)
 
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
