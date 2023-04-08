@@ -13,6 +13,8 @@
 (package! jupyter)
 (package! ein)
 (package! org-super-agenda)
+(package! org-ql)
+(package! helm-org-ql)
 
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))

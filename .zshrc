@@ -19,6 +19,7 @@ alias locate='sudo updatedb && locate'
 alias flood='sudo hping3 -c 10000 -d 128 -S -w 64 -p 8000 --flood --rand-source 192.168.0.1'
 alias server='ssh root@prayujt.com -p 1024'
 alias files='ssh files@prayujt.com -p 1024'
+alias edugator='ssh root@edugator.cise.ufl.edu'
 alias wifioff=nmcli radio wifi off
 alias wifion=nmcli radio wifi on
 alias wifistatus=nmcli device

@@ -25,7 +25,7 @@ positions = tda_client.get_account(ACCOUNT_ID, fields=Client.Account.Fields.POSI
 value = positions['securitiesAccount']['currentBalances']['liquidationValue']
 
 total_change = 0
-data_file = open('{0}/eww/data.json'.format(config['XDG_CONFIG_HOME']), 'w')
+data_file = open('{0}/eww/stock_data.json'.format(config['XDG_CONFIG_HOME']), 'w')
 data = []
 for position in positions['securitiesAccount']['positions']:
     data.append({

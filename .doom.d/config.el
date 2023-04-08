@@ -34,6 +34,15 @@
 ;; Org Agenda Configuration
 
 (setq org-directory "~/iCloud/org/")
+
+(setq org-agenda-custom-commands
+        '(("n" "Agenda for Today"
+           ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "-0d")))))))
+                ;; ((org-ql-block '(or
+                ;;         (tags "classes")
+                ;;         (planning 'today))
+                ;; ((org-ql-block-header "Agenda for Today")))))))
+
 (setq org-agenda-sorting-strategy
        '((agenda timestamp-up time-up priority-down category-keep habit-down)
        (todo time-up priority-down category-keep)
@@ -41,48 +50,74 @@
        (search category-keep))
 )
 
+(setq org-todo-keywords
+      '(
+        (sequence "TODO(t)" "PROJ(p)" "WAITING(w)" "HOLD(h)" "IDEA(i)" "|" "DONE(d)" "SOMEDAY(s)")
+        (sequence "[ ](T)" "[-](S)" "[?](W)" "|" "[X](D)")))
+
+(setq org-deadline-warning-days 7)
+;; (setq org-agenda-skip-scheduled-if-done t)
+
 (setq org-super-agenda-groups
-       '(;; Each group has an implicit boolean OR operator between its selectors.
-         (:name "Today"  ; Optionally specify section name
-                :todo "TODAY")  ; Items that have this TODO keyword
+       '(
          (:name "Important"
-                ;; Single arguments given alone
                 :tag "bills"
-                :priority "A")
-        (:name "Due Soon"
-                :deadline future
-                :order 8)
+                :priority "A"
+                :order 1
+                :transformer (--> it (propertize it 'face ' (:foreground "OrangeRed"))))
+
+         (:name "Today"
+                :order 2
+                :transformer (--> it (propertize it 'face ' (:foreground "DarkOrange"))))
+
         (:name "Overdue"
                 :deadline past
-                :order 7)
-         ;; Set order of multiple groups at once
-         (:order-multi (2 (:name "Class Work"
-                                 ;; Boolean AND group matches items that match all subgroups
-                                 :tag ("class"))
-                          (:name "Edugator Work"
-                                 ;; Multiple args given in list with implicit OR
-                                 :tag ("edugator"))
-                          (:name "Personal"
-                                 :habit t
-                                 :tag "personal")))
+                :order 2
+                :transformer (--> it (propertize it 'face ' (:foreground "Red"))))
 
-         ;; Groups supply their own section names when none are given
-         (:name "In Progress" :todo "WAITING" :order 8)  ; Set order of this section
-         (:name "Someday" :todo ("SOMEDAY" "TO-READ" "CHECK" "TO-WATCH" "WATCHING")
-                ;; Show this group at the end of the agenda (since it has the
-                ;; highest number). If you specified this group last, items
-                ;; with these todo keywords that e.g. have priority A would be
-                ;; displayed in that group instead, because items are grouped
-                ;; out in the order the groups are listed.
+        (:name "Due Soon"
+                :deadline future
+                :transformer (--> it (propertize it 'face ' (:foreground "Green")))
+                :order 3)
+
+        (:name "Upcoming Exams"
+                :tag "exams"
+                :transformer (--> it (propertize it 'face ' (:foreground "Yellow")))
+                :order 4)
+
+        (:name "Class Work"
+                :tag "class"
+                :order 5)
+
+        (:name "Edugator Work"
+                :tag "edugator"
+                :order 6)
+
+        (:name "Personal"
+                :habit t
+                :tag "personal"
+                :order 7)
+
+        (:name "Clubs"
+                :tag "clubs"
+                :order 7)
+
+        (:name "Class Schedule"
+                :tag "classes"
+                :order 8)
+
+        (:name "In Progress"
+                :todo "WAITING"
                 :order 9)
-         (:name "Other work" :priority<= "B"
-                      ;; Show this section after "Today" and "Important", because
-                      ;; their order is unspecified, defaulting to 0. Sections
-                      ;; are displayed lowest-number-first.
-                      :order 1)
-         ;; After the last group, the agenda will display items that didn't
-         ;; match any of these groups, with the default order position of 99
-         ))
+
+        (:name "Someday"
+                :todo ("SOMEDAY" "TO-READ" "CHECK" "TO-WATCH" "WATCHING")
+                :order 10)
+
+        (:name "Other work"
+                :priority<= "B"
+                :order 11)
+))
 
 (org-super-agenda-mode)
 
@@ -119,6 +154,12 @@
   (cd (file-name-directory (find-file-in-heirarchy "./" "setup.py")))
   (compile "pip install .")
   (cd (file-name-directory buffer-file-name)))
+
+(defun cpp-compile ()
+  (interactive)
+  (cd (file-name-directory (find-file-in-heirarchy "./" "Makefile")))
+  (compile "make all")
+  (cd (file-name-directory buffer-file-nam)))
 
 ;; (defun code-compile ()
 ;;   (interactive)
@@ -180,11 +221,11 @@
 
 (add-hook 'c-mode-hook
   (lambda ()
-    (define-key c-mode-map (kbd "C-c C-c") '+make/run)))
+    (define-key c-mode-map (kbd "C-c C-c") 'cpp-compile)))
 
 (add-hook 'c++-mode-hook
   (lambda ()
-    (define-key c++-mode-map (kbd "C-c C-c") '+make/run)))
+    (define-key c++-mode-map (kbd "C-c C-c") 'cpp-compile)))
 
 (add-hook 'latex-mode-hook
   (lambda ()
@@ -218,6 +259,22 @@
 (add-hook 'python-mode-hook
   (lambda ()
     (define-key python-mode-map (kbd "C-c C-c") 'python-compile)))
+
+(add-hook 'org-agenda-mode-hook
+  (lambda ()
+    (define-key org-super-agenda-header-map (kbd "k") nil)
+    (define-key org-super-agenda-header-map (kbd "j") nil)
+    (define-key org-super-agenda-header-map (kbd "l") nil)
+    (define-key org-super-agenda-header-map (kbd "h") nil)
+
+    (define-key org-agenda-mode-map (kbd "k") 'org-agenda-next-item)
+    (define-key org-agenda-mode-map (kbd "j") 'org-agenda-previous-item)
+
+    (define-key org-super-agenda-header-map (kbd "C-h") 'org-agenda-earlier)
+    (define-key org-super-agenda-header-map (kbd "C-l") 'org-agenda-later)
+
+    (define-key org-agenda-mode-map (kbd "C-h") 'org-agenda-earlier)
+    (define-key org-agenda-mode-map (kbd "C-l") 'org-agenda-later)))
 
 ;; (map! :map general-override-mode-map "C-c C-c" 'code-compile)
 ;; (map! :map general-override-mode-map "C-c C-x" 'code-run)

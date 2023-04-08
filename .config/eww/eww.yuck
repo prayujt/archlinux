@@ -5,10 +5,10 @@
             (box :class "symbol"
                 "${position['symbol']}:"
             )
-            (box :class "${position['change'] <= 0 ? 'negative' : 'positive'}"
+            (box :class "${position['change'] < 0 ? 'negative' : 'positive'}"
                 "${position['change'] < 0 ? '-' : '+'}$${position['change'] < 0 ? 0 - position['change'] : position['change']}"
             )
-            (box :class "${position['percent_change'] <= 0 ? 'negative' : 'positive'}"
+            (box :class "${position['percent_change'] < 0 ? 'negative' : 'positive'}"
                 "${position['percent_change'] > 0 ? '+' : ''}${position['percent_change']}%"
             )
             (box :class "value"
@@ -17,13 +17,32 @@
          )
     )))
 
-(deflisten positions :initial "Loading..."
-  `cat /home/prayuj/.config/eww/data.json`)
+(defpoll positions :interval "1s" :initial "Loading..."
+  `cat /home/prayuj/.config/eww/stock_data.json`)
 
 (defwindow stocks
   :monitor 0
-  :geometry (geometry :x "1460px"
+  :geometry (geometry :x "1400px"
                       :y "40px"
                       :width "250px"
                       :height "200px")
   (positions_widget))
+
+
+(defwidget voice_recognition_widget []
+  (box :class "voice_recognition_widget" :orientation "h" :space-evenly true
+    (box :class "${words['finished'] == false ? 'partial' : 'complete'}"
+        "${words['words']}"
+    )
+  ))
+
+(defpoll words :interval "0.1s" :initial "Loading..."
+  `cat /home/prayuj/.config/eww/word_data.json`)
+
+(defwindow voice_recognition
+  :monitor 0
+  :geometry (geometry :x "1470px"
+                      :y "40px"
+                      :width "450px"
+                      :height "100px")
+  (voice_recognition_widget))
