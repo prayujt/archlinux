@@ -56,6 +56,7 @@
         (sequence "[ ](T)" "[-](S)" "[?](W)" "|" "[X](D)")))
 
 (setq org-deadline-warning-days 7)
+(setq org-scheduled-delay-days 7)
 ;; (setq org-agenda-skip-scheduled-if-done t)
 
 (setq org-super-agenda-groups
