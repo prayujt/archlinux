@@ -134,6 +134,7 @@ export PATH=$PATH:/home/prayuj/.scripts/bin
 export PATH=$PATH:/home/prayuj/.miner
 export PATH=$PATH:/home/prayuj/.thinkorswim
 export PATH=$PATH:$GOPATH/bin
+export PATH=$PATH:/home/prayuj/.cargo/bin
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word

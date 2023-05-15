@@ -15,6 +15,7 @@
 (package! org-super-agenda)
 (package! org-ql)
 (package! helm-org-ql)
+(package! rust-mode)
 
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))

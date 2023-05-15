@@ -149,6 +149,18 @@
 
   (cd (file-name-directory buffer-file-name)))
 
+(defun go-run ()
+  (interactive)
+
+  (cd (file-name-directory (find-file-in-heirarchy "./" "go.mod")))
+
+  ;; (if (-non-nil (string-match "_test.go" (file-name-nondirectory buffer-file-name)))
+  (if (string-match "_test.go" (file-name-nondirectory buffer-file-name))
+      (compile "go test -v ./...")
+  (compile "go get; go build; sudo rm -rf ~/go"))
+
+  (cd (file-name-directory buffer-file-name)))
+
 (defun python-compile ()
   (interactive)
 
@@ -161,6 +173,27 @@
   (cd (file-name-directory (find-file-in-heirarchy "./" "Makefile")))
   (compile "make all")
   (cd (file-name-directory buffer-file-nam)))
+
+(defun rust-compile ()
+  (interactive)
+
+  (cd (file-name-directory (find-file-in-heirarchy "./" "Cargo.toml")))
+  (compile "cargo build")
+  (cd (file-name-directory buffer-file-name)))
+
+(defun rust-run ()
+  (interactive)
+
+  (cd (file-name-directory (find-file-in-heirarchy "./" "Cargo.toml")))
+  (compile "cargo run")
+  (cd (file-name-directory buffer-file-name)))
+
+(defun rust-check ()
+  (interactive)
+
+  (cd (file-name-directory (find-file-in-heirarchy "./" "Cargo.toml")))
+  (compile "cargo check")
+  (cd (file-name-directory buffer-file-name)))
 
 ;; (defun code-compile ()
 ;;   (interactive)
@@ -187,14 +220,40 @@
 
 ;; ---- miscellanious ----
 
-(defun generate-makefile ()
+;; default project creation entry point
+(defun create-project ()
   (interactive)
-  (let (makefile_directory)
-    (setq makefile_directory (read-directory-name "Directory:"))
-    (message "Generated makefile in %s" makefile_directory)
+  (let (choice)
+    (let ((choices '("C++" "Rust")))
+    (setq choice (completing-read "New Project:" choices)))
+    (cond
+      ((equal choice "C++") (init-cpp-project))
+      ((equal choice "Rust") (init-cargo-project)))
+))
+
+(defun init-cpp-project ()
+  (interactive)
+    (setq project_directory (read-directory-name "Directory: "))
+    (if (file-directory-p project_directory) () (make-directory project_directory))
+    (cd project_directory)
+    (create-cpp-files project_directory))
+
+(defun create-cpp-files (project_directory)
     (f-write-text "CC = g++\nCFLAGS  = -w -g\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)\nclean:\n\trm $(TARGET)"
-                  'utf-8 (concat makefile_directory "/Makefile"))
-  )
+                  'utf-8 (concat project_directory "/Makefile"))
+    (if (file-exists-p (concat project_directory "/main.cpp")) ()
+      (f-write-text "using namespace std;\n\nint main() {\n\treturn 0;\n}"
+                'utf-8 (concat project_directory "/main.cpp")))
+    (message "Initialized new C++ project in %s" project_directory))
+
+(defun init-cargo-project ()
+  (interactive)
+    (setq project_directory (read-directory-name "Directory: "))
+    (if (file-directory-p project_directory) () (make-directory project_directory))
+    (setq project_name (read-string "Enter Project Name: "))
+    (cd project_directory)
+    (compile (format "cargo new %s --vcs=\"none\"" project_name))
+    (message "Initialized new Rust project in %s" project_directory)
 )
 
 (defun insert-current-date () (interactive)
@@ -255,11 +314,23 @@
 
 (add-hook 'go-mode-hook
   (lambda ()
-    (define-key go-mode-map (kbd "C-c C-c") 'go-compile)))
+    (define-key go-mode-map (kbd "C-c C-c") 'go-compile)
+    (define-key go-mode-map (kbd "C-c C-x") 'go-run)))
 
 (add-hook 'python-mode-hook
   (lambda ()
     (define-key python-mode-map (kbd "C-c C-c") 'python-compile)))
+
+(setq rust-format-on-save t)
+(add-hook 'rustic-mode-hook
+  (lambda ()
+    (define-key rustic-mode-map (kbd "C-c C-c") 'rust-compile)
+    (define-key rustic-mode-map (kbd "C-c C-x") 'rust-run)
+    (define-key rustic-mode-map (kbd "C-c C-v") 'rust-check)))
+
+(add-hook 'emacs-lisp-mode-hook
+  (lambda ()
+    (define-key emacs-lisp-mode-map (kbd "C-c C-c") 'doom/reload)))
 
 (add-hook 'org-agenda-mode-hook
   (lambda ()
@@ -281,7 +352,7 @@
 ;; (map! :map general-override-mode-map "C-c C-x" 'code-run)
 
 (map! :map general-override-mode-map "C-c e l" 'flycheck-list-errors)
-(map! :map general-override-mode-map "C-c C-g" 'generate-makefile)
+(map! :map general-override-mode-map "C-c C-n" 'create-project)
 (map! :map general-override-mode-map "C-/" 'comment-line)
 ;; (map! :map general-override-mode-map "C-c C-d" 'insert-current-date)
 (map! :map general-override-mode-map "M-t" 'shell)
