@@ -34,22 +34,22 @@ check() {
   nmap -sT -p- "$1"
 }
 download() {
-  scp -P 1024 prayuj@prayujt.com:~/"$1" "$2" 
+  scp -P 1024 root@prayujt.com:~/"$1" "$2" 
 }
 downloadf() {
-  scp -r -P 1024 prayuj@prayujt.com:~/"$1" "$2" 
+  scp -r -P 1024 root@prayujt.com:~/"$1" "$2" 
 }
 downloadfiles() {
   scp -P 1024 files@prayujt.com:~/"$1" "$2" 
 }
 downloadfilesf() {
-  scp -r -P 1024 prayuj@prayujt.com:~/"$1" "$2" 
+  scp -r -P 1024 root@prayujt.com:~/"$1" "$2" 
 }
 upload() {
-  scp -P 1024 "$1" prayuj@prayujt.com:~/"$2"
+  scp -P 1024 "$1" root@prayujt.com:~/"$2"
 }
 uploadf() {
-  scp -P 1024 -r "$1" prayuj@prayujt.com:~/"$2"
+  scp -P 1024 -r "$1" root@prayujt.com:~/"$2"
 }
 uploadfiles() {
   scp -P 1024 "$1" files@prayujt.com:~/"$2"

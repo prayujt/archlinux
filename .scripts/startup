@@ -6,7 +6,7 @@ nitrogen --restore
 # ~/.scripts/mousewatch &
 blueman-applet & > /dev/null
 # ~/.scripts/tilt &
-~/.scripts/firefox_background &
+# ~/.scripts/firefox_background &
 discord --start-minimized & > /dev/null
 bspc monitor eDP-1 -d X
 mailspring -b &

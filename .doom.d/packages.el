@@ -7,24 +7,19 @@
 
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
 ;(package! some-package)
-(package! nord-theme)
 (package! elcord)
 (package! lsp-java)
 (package! jupyter)
-(package! ein)
+(package! dashboard)
+;; (package! ein)
 (package! org-super-agenda)
 (package! org-ql)
 (package! helm-org-ql)
 (package! rust-mode)
+(package! typescript-mode)
 
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
-;(package! gitconfig-mode
-;:recipe (:host github :repo "magit/git-modes"
-;:files ("gitconfig-mode.el")))
-;(package! gitignore-mode
-;:recipe (:host github :repo "magit/git-modes"
-;:files ("gitignore-mode.el")))
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:

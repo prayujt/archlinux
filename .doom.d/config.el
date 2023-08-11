@@ -1,17 +1,20 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
 (require 'compile)
-
-(load-theme 'doom-henna t)
+(require 'dashboard)
+(load-theme 'doom-snazzy t)
 
 ;; (setq doom-font (font-spec :family "Source Code Pro" :size 12))
 ;; (global-hl-line-mode 1)
 ;; (set-face-background 'hl-line "#3e4446")
 ;; (set-face-foreground 'highlight nil)
 
-;; (add-hook 'prog-mode-hook 'copilot-mode)
+(elcord-mode)
+
+(add-hook 'prog-mode-hook 'copilot-mode)
 
 (setq default-tab-width 2)
+(setq-default tab-width 2)
 
 (setq user-full-name "Prayuj Tuli"
       user-mail-address "prayujtuli@hotmail.com")
@@ -20,24 +23,27 @@
 (setq evil-escape-key-sequence "qw")
 
 (if (string= system-type "darwin")
-    (toggle-frame-fullscreen)
-  (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
-)
+    (progn
+      (toggle-frame-fullscreen)
+      (setq copilot-node-executable "/Users/prayuj/.nvm/versions/node/v16.20.1/bin/node")))
 
-(elcord-mode)
+;; (use-package tramp
+;;   :ensure nil
+;;   :custom
+;;   (setq tramp-default-method "ssh"))
 
-;; (if (string= system-type ";; gnu/linux")
-    ;; (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
-    ;; (toggle-frame-maximized)
-;; )
+(if (string= system-type ";; gnu/linux")
+    (progn
+        (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
+        (toggle-frame-maximized)))
 
 ;; Org Agenda Configuration
 
 (setq org-directory "~/iCloud/org/")
 
-(setq org-agenda-custom-commands
-        '(("n" "Agenda for Today"
-           ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "-0d")))))))
+;; (setq org-agenda-custom-commands
+;;         '(("n" "Agenda for Today"
+;;            ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "-0d")))))))
                 ;; ((org-ql-block '(or
                 ;;         (tags "classes")
                 ;;         (planning 'today))
@@ -122,6 +128,16 @@
 
 (org-super-agenda-mode)
 
+;; ---- org dashboard ----
+(setq dashboard-banner-logo-title 'nil)
+(setq dashboard-startup-banner 2)
+(setq dashboard-items '((recents  . 5)
+                        (projects . 5)
+                        (agenda . 5)))
+(setq dashboard-set-footer nil)
+(dashboard-setup-startup-hook)
+
+
 ;; ---- lsp setup ----
 
 (setq lsp-pylsp-plugins-flake8-ignore ["E501"])
@@ -160,6 +176,14 @@
   (compile "go get; go build; sudo rm -rf ~/go"))
 
   (cd (file-name-directory buffer-file-name)))
+
+(defun ts-compile ()
+  (interactive)
+  (compile "npm run build"))
+
+(defun ts-run ()
+  (interactive)
+  (compile "npm run dev"))
 
 (defun python-compile ()
   (interactive)
@@ -214,8 +238,8 @@
 
 
 ;; ---- projectile ----
-(after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
-          projectile-project-root-files-bottom-up)))
+;; (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
+          ;; projectile-project-root-files-bottom-up)))
 
 
 ;; ---- miscellanious ----
@@ -315,11 +339,17 @@
 (add-hook 'go-mode-hook
   (lambda ()
     (define-key go-mode-map (kbd "C-c C-c") 'go-compile)
-    (define-key go-mode-map (kbd "C-c C-x") 'go-run)))
+    (define-key go-mode-map (kbd "C-c C-x") 'projectile-run-project)))
+
+(add-hook 'typescript-mode-hook
+  (lambda ()
+    (define-key typescript-mode-map (kbd "C-c C-c") 'ts-compile)
+    (define-key typescript-mode-map (kbd "C-c C-x") 'projectile-run-project)))
 
 (add-hook 'python-mode-hook
   (lambda ()
-    (define-key python-mode-map (kbd "C-c C-c") 'python-compile)))
+    (define-key python-mode-map (kbd "C-c C-c") 'python-compile)
+    (define-key python-mode-map (kbd "C-c C-x") 'projectile-run-project)))
 
 (setq rust-format-on-save t)
 (add-hook 'rustic-mode-hook
@@ -327,6 +357,10 @@
     (define-key rustic-mode-map (kbd "C-c C-c") 'rust-compile)
     (define-key rustic-mode-map (kbd "C-c C-x") 'rust-run)
     (define-key rustic-mode-map (kbd "C-c C-v") 'rust-check)))
+
+(add-hook 'org-mode-hook
+ (lambda ()
+   (define-key org-mode-map (kbd "C-c C-c") 'org-icalendar-export-to-ics)))
 
 (add-hook 'emacs-lisp-mode-hook
   (lambda ()
@@ -348,6 +382,10 @@
     (define-key org-agenda-mode-map (kbd "C-h") 'org-agenda-earlier)
     (define-key org-agenda-mode-map (kbd "C-l") 'org-agenda-later)))
 
+(add-hook 'helm-minibuffer-set-up-hook
+  (lambda ()
+    (define-key swiper-helm-keymap (kbd "C-k") 'helm-previous-line)
+    (define-key swiper-helm-keymap (kbd "C-j") 'helm-next-line)))
 ;; (map! :map general-override-mode-map "C-c C-c" 'code-compile)
 ;; (map! :map general-override-mode-map "C-c C-x" 'code-run)
 
@@ -367,15 +405,15 @@
 (map! :map general-override-mode-map "M-RET" 'evil-window-vsplit)
 
 (global-set-key (kbd "C-c o")
-        (lambda () (interactive) (find-file "~/iCloud/org/todo.org")))
+        (lambda () (interactive) (find-file "~/iCloud/org/calendar.org")))
 
-;; (use-package! copilot
-;;   :hook (prog-mode . copilot-mode)
-;;   :bind (("C-TAB" . 'copilot-accept-completion-by-word)
-;;          ("C-<tab>" . 'copilot-accept-completion-by-word)
-;;          :map copilot-completion-map
-;;          ("<tab>" . 'copilot-accept-completion)
-;;          ("TAB" . 'copilot-accept-completion)))
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (("C-TAB" . 'copilot-accept-completion-by-word)
+         ("C-<tab>" . 'copilot-accept-completion-by-word)
+         :map copilot-completion-map
+         ("<tab>" . 'copilot-accept-completion)
+         ("TAB" . 'copilot-accept-completion)))
 
 ;; ---- gradle variables and commands ----
 
@@ -444,41 +482,41 @@
 
 ;; ---- ein configuration ---
 
-(setq ein:jupyter-server-args '("--ip" "127.0.0.1"))
+;; (setq ein:jupyter-server-args '("--ip" "127.0.0.1"))
 
-(defun insert-jupyter-json ()
-        (interactive "*")
-        (insert
-                "{
-                        \"cells\": [
-                                {
-                                        \"cell_type\": \"code\",
-                                        \"execution_count\": null,
-                                        \"id\": \"b727f3c4\",
-                                        \"metadata\": {},
-                                        \"outputs\": [],
-                                        \"source\": []
-                                }
-                        ],
-                        \"metadata\": {
-                                \"kernelspec\" {
-                                        \"display_name\": \"Python 3 (ipykernel)\",
-                                        \"language\": \"python\",
-                                        \"name\": \"python3\"
-                                },
-                                \"language_info\": {
-                                        \"codemirror_mode\": {
-                                                \"name\": \"ipython\",
-                                                \"version\": 3
-                                        },
-                                        \"file_extension\": \"py\",
-                                        \"mimetype\": \"text/x-python\",
-                                        \"name\": \"python\",
-                                        \"nbconvert_exporter\": \"python\",
-                                        \"pygments_lexer\": \"ipython3\",
-                                        \"version\": \"3.10.9\"
-                                }
-                        },
-                        \"nbformat\": 4,
-                        \"nbformat_minor\": 5
-                }"))
+;; (defun insert-jupyter-json ()
+;;         (interactive "*")
+;;         (insert
+;;                 "{
+;;                         \"cells\": [
+;;                                 {
+;;                                         \"cell_type\": \"code\",
+;;                                         \"execution_count\": null,
+;;                                         \"id\": \"b727f3c4\",
+;;                                         \"metadata\": {},
+;;                                         \"outputs\": [],
+;;                                         \"source\": []
+;;                                 }
+;;                         ],
+;;                         \"metadata\": {
+;;                                 \"kernelspec\" {
+;;                                         \"display_name\": \"Python 3 (ipykernel)\",
+;;                                         \"language\": \"python\",
+;;                                         \"name\": \"python3\"
+;;                                 },
+;;                                 \"language_info\": {
+;;                                         \"codemirror_mode\": {
+;;                                                 \"name\": \"ipython\",
+;;                                                 \"version\": 3
+;;                                         },
+;;                                         \"file_extension\": \"py\",
+;;                                         \"mimetype\": \"text/x-python\",
+;;                                         \"name\": \"python\",
+;;                                         \"nbconvert_exporter\": \"python\",
+;;                                         \"pygments_lexer\": \"ipython3\",
+;;                                         \"version\": \"3.10.9\"
+;;                                 }
+;;                         },
+;;                         \"nbformat\": 4,
+;;                         \"nbformat_minor\": 5
+;;                 }"))

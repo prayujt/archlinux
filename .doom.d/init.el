@@ -66,8 +66,8 @@
 
        :emacs
        ;;dired             ; making dired pretty [functional]
-       ;;electric          ; smarter, keyword-based electric-indent
-       ;;ibuffer         ; interactive buffer management
+       electric          ; smarter, keyword-based electric-indent
+       ibuffer         ; interactive buffer management
        undo              ; persistent, smarter undo for your inevitable mistakes
        ;;vc                ; version-control and Emacs, sitting in a tree
 
@@ -165,7 +165,7 @@
        sh                ; she sells {ba,z,fi}sh shells on the C xor
        ;;sml
        ;;solidity          ; do you need a blockchain? No.
-       ;;swift             ; who asked for emoji variables?
+       swift             ; who asked for emoji variables?
        ;;terra             ; Earth and Moon in alignment for performance.
        web               ; the tubes
        yaml              ; JSON, but readable
@@ -179,7 +179,7 @@
        :app
        ;;calendar
        ;;emms
-       everywhere        ; *leave* Emacs!? You must be joking
+       ;;everywhere        ; *leave* Emacs!? You must be joking
        ;;irc               ; how neckbeards socialize
        ;;(rss +org)        ; emacs as an RSS reader
        ;;twitter           ; twitter client https://twitter.com/vnought
