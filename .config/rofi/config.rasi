@@ -1,0 +1,250 @@
+* {
+    active-background: #98971a;
+    active-foreground: #ebdbb2;
+    normal-background: #282828;
+    normal-foreground: #ebdbb2;
+    urgent-background: #282828;
+    urgent-foreground: #ebdbb2;
+
+    alternate-active-background: #282828;
+    alternate-active-foreground: #ebdbb2;
+    alternate-normal-background: #282828;
+    alternate-normal-foreground: #ebdbb2;
+    alternate-urgent-background: #282828;
+    alternate-urgent-foreground: #ebdbb2;
+
+    selected-active-background: #cc241d;
+    selected-active-foreground: #ebdbb2;
+    selected-normal-background: #ebdbb2;
+    selected-normal-foreground: #282828;
+    selected-urgent-background: #d79921;
+    selected-urgent-foreground: #ebdbb2;
+
+    background-color: #282828;
+    background: #282828;
+    foreground: #ebdbb2;
+    border-color: #ebdbb2;
+    spacing: 2;
+}
+
+#window {
+    background-color: #282828;
+    border: 0;
+    padding: 48;
+    width: 460;
+    height: 260;
+}
+
+#mainbox {
+    border: 0;
+    padding: 0;
+}
+
+#message {
+    border: 2px 0px 0px;
+    border-color: @border-color;
+    padding: 1px;
+}
+
+#textbox {
+    text-color: @foreground;
+}
+
+#inputbar {
+    children:   [ prompt,textbox-prompt-colon,entry,case-indicator ];
+}
+
+#textbox-prompt-colon {
+    expand: false;
+    str: ":";
+    margin: 0px 0.3em 0em 0em;
+    text-color: @normal-foreground;
+}
+
+#listview {
+    fixed-height: 0;
+    border: 2px 0px 0px;
+    border-color: @border-color;
+    spacing: 2px;
+    scrollbar: true;
+    padding: 2px 0px 0px;
+}
+
+#element {
+    border: 0;
+    padding: 1px;
+}
+
+#element.normal.normal {
+    background-color: @normal-background;
+    text-color: @normal-foreground;
+}
+
+#element.normal.urgent {
+    background-color: @urgent-background;
+    text-color: @urgent-foreground;
+}
+
+#element.normal.active {
+    background-color: @active-background;
+    text-color: @active-foreground;
+}
+
+#element.selected.normal {
+    background-color: @selected-normal-background;
+    text-color: @selected-normal-foreground;
+}
+
+#element.selected.urgent {
+    background-color: @selected-urgent-background;
+    text-color: @selected-urgent-foreground;
+}
+
+#element.selected.active {
+    background-color: @selected-active-background;
+    text-color: @selected-active-foreground;
+}
+
+#element.alternate.normal {
+    background-color: @alternate-normal-background;
+    text-color: @alternate-normal-foreground;
+}
+
+#element.alternate.urgent {
+    background-color: @alternate-urgent-background;
+    text-color: @alternate-urgent-foreground;
+}
+
+#element.alternate.active {
+    background-color: @alternate-active-background;
+    text-color: @alternate-active-foreground;
+}
+
+#scrollbar {
+    width: 4px;
+    border: 0;
+    handle-width: 8px;
+    padding: 0;
+}
+
+#sidebar {
+    border: 2px 0px 0px;
+    border-color: @border-color;
+}
+
+#button {
+    text-color: @normal-foreground;
+}
+
+#button.selected {
+    background-color: @selected-normal-background;
+    text-color: @selected-normal-foreground;
+}
+
+#inputbar {
+    spacing: 0;
+    text-color: @normal-foreground;
+    padding: 1px;
+}
+
+#case-indicator {
+    spacing: 0;
+    text-color: @normal-foreground;
+}
+
+#entry {
+    spacing: 0;
+    text-color: @normal-foreground;
+}
+
+#prompt {
+    spacing: 0;
+    text-color: @normal-foreground;
+}
+
+configuration {
+/*	location: 0;*/
+/*	yoffset: 0;*/
+/*	xoffset: 0;*/
+    terminal: "alacritty";
+    kb-primary-paste: "Control+V,Shift+Insert";
+    kb-secondary-paste: "Control+v,Insert";
+    kb-clear-line: "Control+a";
+    kb-move-front: "Control+w";
+    kb-move-end: "Control+e";
+    kb-move-word-back: "Alt+b,Control+Left";
+    kb-move-word-forward: "Alt+f,Control+Right";
+    kb-move-char-back: "Left,Control+b";
+    kb-move-char-forward: "Right,Control+f";
+    kb-remove-word-back: "Control+Alt+h,Control+BackSpace";
+    kb-remove-word-forward: "Control+Alt+d";
+    kb-remove-char-forward: "Delete,Control+d";
+    kb-remove-char-back: "BackSpace,Shift+BackSpace,Control+h";
+    kb-remove-to-eol: "";
+    kb-remove-to-sol: "Control+u";
+    kb-accept-entry: "Control+m,Return,KP_Enter";
+    kb-accept-custom: "Control+Return";
+    kb-accept-custom-alt: "Control+Shift+Return";
+    kb-accept-alt: "Shift+Return";
+    kb-delete-entry: "Shift+Delete";
+    kb-mode-next: "Shift+Right,Control+Tab";
+    kb-mode-previous: "Shift+Left,Control+ISO_Left_Tab";
+    kb-mode-complete: "Control+l";
+    kb-row-left: "Control+Page_Up";
+    kb-row-right: "Control+Page_Down";
+    kb-row-up: "Up,Control+p,Control+k,ISO_Left_Tab";
+    kb-row-down: "Down,Control+n,Control+j";
+    kb-row-tab: "Tab";
+    kb-page-prev: "Page_Up";
+    kb-page-next: "Page_Down";
+    kb-row-first: "Home,KP_Home";
+    kb-row-last: "End,KP_End";
+    kb-row-select: "Control+space";
+    kb-element-next: "";
+    kb-element-prev: "";
+    kb-screenshot: "Alt+S";
+    kb-ellipsize: "Alt+period";
+    kb-toggle-case-sensitivity: "grave,dead_grave";
+    kb-toggle-sort: "Alt+grave";
+    kb-cancel: "Escape,Control+g,Control+bracketleft";
+    kb-custom-1: "Alt+1";
+    kb-custom-2: "Alt+2";
+    kb-custom-3: "Alt+3";
+    kb-custom-4: "Alt+4";
+    kb-custom-5: "Alt+5";
+    kb-custom-6: "Alt+6";
+    kb-custom-7: "Alt+7";
+    kb-custom-8: "Alt+8";
+    kb-custom-9: "Alt+9";
+    kb-custom-10: "Alt+0";
+    kb-custom-11: "Alt+exclam";
+    kb-custom-12: "Alt+at";
+    kb-custom-13: "Alt+numbersign";
+    kb-custom-14: "Alt+dollar";
+    kb-custom-15: "Alt+percent";
+    kb-custom-16: "Alt+dead_circumflex";
+    kb-custom-17: "Alt+ampersand";
+    kb-custom-18: "Alt+asterisk";
+    kb-custom-19: "Alt+parenleft";
+    kb-select-1: "Super+1";
+    kb-select-2: "Super+2";
+    kb-select-3: "Super+3";
+    kb-select-4: "Super+4";
+    kb-select-5: "Super+5";
+    kb-select-6: "Super+6";
+    kb-select-7: "Super+7";
+    kb-select-8: "Super+8";
+    kb-select-9: "Super+9";
+    kb-select-10: "Super+0";
+    ml-row-left: "ScrollLeft";
+    ml-row-right: "ScrollRight";
+    ml-row-up: "ScrollUp";
+    ml-row-down: "ScrollDown";
+    me-select-entry: "MousePrimary";
+    me-accept-entry: "MouseDPrimary";
+    me-accept-custom: "Control+MouseDPrimary";
+    timeout {
+        action: "kb-cancel";
+        delay:  0;
+    }
+}

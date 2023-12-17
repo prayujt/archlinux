@@ -1,0 +1,17 @@
+#!/bin/bash
+
+COMMAND=$1
+WORKSPACE=$2
+MONITOR=$(hyprctl monitors | awk -v RS="" '/focused: yes/ {print $2}')
+
+if [ $MONITOR == 'HDMI-A-1' ]
+then
+    WORKSPACE=$((10+$WORKSPACE))
+fi
+
+if [ $COMMAND == 'focus' ]
+then
+    hyprctl dispatch workspace $WORKSPACE > /dev/null
+else
+    hyprctl dispatch movetoworkspace $WORKSPACE > /dev/null
+fi
