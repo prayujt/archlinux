@@ -1,0 +1,29 @@
+* {
+  all: unset;
+}
+window {
+    background-color: #272E33;
+    border-radius: 20px;
+    //font-family : Iosevka Nerd Font;
+    //font-family: JetBrainsMono Nerd Font;
+}
+
+.symbol {
+    color: #FFFFFF;
+}
+
+.value {
+    color: #C19025;
+}
+
+.positive {
+    color: #2FCB56;
+}
+
+.negative {
+    color: #DA3B3B;
+}
+
+.complete {
+    color: #2FCB56;
+}

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+monitors=$(hyprctl monitors)
+
+if echo "$monitors" | grep -q "transform: 1"; then
+    hyprctl keyword monitor DP-1, 1920x1080@240,1920x0, 1
+else
+    hyprctl keyword monitor DP-1, 1920x1080@240,1920x0, 1, transform, 1
+fi

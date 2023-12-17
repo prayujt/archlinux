@@ -1,0 +1,130 @@
+* {
+    border: none;
+    border-radius: 0;
+    font-family: JetBrains Mono;
+    min-height: 20px;
+}
+
+window#waybar {
+    background: transparent;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+#workspaces {
+    margin-right: 8px;
+    border-radius: 10px;
+    transition: none;
+    background: #383c4a;
+}
+
+#workspaces button {
+    transition: none;
+    color: #7c818c;
+    background: transparent;
+    padding: 5px;
+    padding-right: 8px;
+    padding-left: 6px;
+    font-size: 20px;
+}
+
+#workspaces button.persistent {
+    color: #7c818c;
+    font-size: 14px;
+}
+
+/* https://github.com/Alexays/Waybar/wiki/FAQ#the-workspace-buttons-have-a-strange-hover-effect */
+#workspaces button:hover {
+    transition: none;
+    box-shadow: inherit;
+    text-shadow: inherit;
+    border-radius: inherit;
+}
+
+#workspaces button.active {
+    color: #f5f2f2;
+}
+
+#window {
+    margin-right: 8px;
+    border-radius: 10px;
+    transition: none;
+    color: #b261c7;
+    background: #383c4a;
+}
+
+#clock {
+    padding-left: 16px;
+    padding-right: 16px;
+    border-radius: 10px;
+    transition: none;
+    color: #49d66f;
+    background: #383c4a;
+}
+
+#pulseaudio {
+    margin-right: 8px;
+    border-radius: 10px;
+    transition: none;
+    color: #e39d4d;
+    background: #383c4a;
+}
+
+#pulseaudio.muted {
+    color: #f02e2e;
+}
+
+#tray {
+    padding-left: 16px;
+    padding-right: 16px;
+    border-radius: 10px;
+    transition: none;
+    color: #ffffff;
+    background: #383c4a;
+}
+
+@keyframes blink {
+    to {
+        background-color: #ffffff;
+        color: #000000;
+    }
+}
+
+#custom-news {
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 10px;
+    transition: none;
+    color: #ffffff;
+    background: #383c4a;
+}
+
+#custom-portfolio {
+    margin-right: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 10px;
+    transition: none;
+    background: #383c4a;
+    color: #e39d4d;
+}
+
+#custom-hyprland {
+    padding-right: 8px;
+    padding-left: 6px;
+    font-size: 20px;
+    border-radius: 10px;
+    transition: none;
+    background: #383c4a;
+}
+
+#custom-cava {
+    margin-right: 8px;
+    padding-right: 8px;
+    padding-left: 8px;
+    background: #383c4a;
+    border-radius: 10px;
+    color: #ffffff;
+}

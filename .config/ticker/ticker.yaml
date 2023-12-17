@@ -1,0 +1,30 @@
+watchlist:
+  - AAPL
+  - VTI
+  - EFX
+  - HTZWW
+  - BUD
+show-summary: true
+show-tags: true
+show-fundamentals: true
+show-separator: true
+show-holdings: true
+interval: 5
+currency: USD
+currency-summary-only: false
+lots:
+  - symbol: "VTI"
+    quantity: 73.0
+    unit_cost: 220.22
+  - symbol: "AAPL"
+    quantity: 24.0
+    unit_cost: 164.11
+  - symbol: "BUD"
+    quantity: 91.0
+    unit_cost: 55.63
+  - symbol: "EFX"
+    quantity: 15.0
+    unit_cost: 193.62
+  - symbol: "HTZWW"
+    quantity: 466.0
+    unit_cost: 7.50
