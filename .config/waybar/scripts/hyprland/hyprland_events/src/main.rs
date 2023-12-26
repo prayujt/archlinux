@@ -61,6 +61,7 @@ fn compute_windows() {
             && name != ""
             && name != "Mailspring"
             && monitor_range.contains(&workspace)
+            && client.pid != -1
         {
             if client.title.contains("tick") {
                 name = client.title.clone();

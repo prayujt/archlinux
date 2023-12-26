@@ -92,6 +92,36 @@ window#waybar.hidden {
     }
 }
 
+#window {
+    transition: 0.3s;
+    color: #87cfff;
+    border-radius: 10px;
+    margin-left: 35px;
+    padding-left: 10px;
+    padding-right: 10px;
+    background: #383c4a;
+}
+
+#waybar.google-chrome #window {
+    background: #446600;
+    color: #ffffff;
+}
+
+#waybar.Emacs #window {
+    background: #ffffff;
+    color: #000000;
+}
+
+#waybar.Alacritty #window {
+    background: #ffffff;
+    color: #000000;
+}
+
+#waybar.empty #window {
+    transition: width 2s;
+    background-color: transparent;
+}
+
 #custom-news {
     padding-left: 8px;
     padding-right: 8px;

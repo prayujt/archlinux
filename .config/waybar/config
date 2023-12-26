@@ -4,7 +4,7 @@
     "position": "top",
     "height": 30,
     "margin": "5 17 -8 17",
-    "modules-left": ["custom/hyprland"],
+    "modules-left": ["custom/hyprland", "hyprland/window"],
     "modules-center": ["custom/news", "custom/news_update"],
 
     //"modules-right": ["custom/portfolio", "pulseaudio", "clock"],
@@ -62,7 +62,8 @@
 
     "custom/cava": {
         "format": "{}",
-        "exec": "~/.config/waybar/scripts/audio/cava"
+        "exec": "~/.config/waybar/scripts/audio/cava",
+        "tooltip": "false"
     },
 
     "custom/news": {
