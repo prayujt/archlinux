@@ -30,10 +30,11 @@
 
     "hyprland/window": {
         "format": "{}",
-        "max-length": 50,
+        "max-length": 40,
         "rewrite": {
             "(.*) — Mozilla Firefox": " Mozilla Firefox",
-            "(.*) - alacritty": "> [$1]"
+            "(.*) - alacritty": "> [$1]",
+            "": "No focused window"
         }
     },
 

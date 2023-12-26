@@ -58,8 +58,8 @@ fn compute_windows() {
         let workspace = client.workspace.id;
         let mut name = client.initial_class.clone();
         if workspace != -1
+            && client.mapped == true
             && name != ""
-            && name != "Mailspring"
             && monitor_range.contains(&workspace)
             && client.pid != -1
         {
@@ -103,8 +103,12 @@ fn compute_windows() {
             };
             if classes.contains(&"discord".to_string()) {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+            } else if classes.contains(&"Mailspring".to_string()) {
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"Emacs".to_string()) {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+            } else if classes.contains(&"Postman".to_string()) {
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"google-chrome".to_string())
                 || classes.contains(&"Firefox".to_string())
             {
