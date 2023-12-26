@@ -117,6 +117,16 @@ window#waybar.hidden {
     color: #000000;
 }
 
+#waybar.feishin #window {
+    background: #75a8ff;
+    color: #000000;
+}
+
+#waybar.Sonixd #window {
+    background: #75a8ff;
+    color: #000000;
+}
+
 #waybar.empty #window {
     transition: width 2s;
     background-color: transparent;
