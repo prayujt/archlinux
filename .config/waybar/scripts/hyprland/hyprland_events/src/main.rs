@@ -105,6 +105,8 @@ fn compute_windows() {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"Mailspring".to_string()) {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+            } else if classes.contains(&"zoom".to_string()) {
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"Emacs".to_string()) {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"Postman".to_string()) {
