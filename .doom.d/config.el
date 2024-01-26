@@ -176,7 +176,7 @@
   ;; (if (-non-nil (string-match "_test.go" (file-name-nondirectory buffer-file-name)))
   (if (string-match "_test.go" (file-name-nondirectory buffer-file-name))
       (compile "go test -v ./...")
-  (compile "go get; go build; sudo rm -rf ~/go"))
+  (compile "go get; go build; rm -rf ~/go"))
 
   (cd (file-name-directory buffer-file-name)))
 
