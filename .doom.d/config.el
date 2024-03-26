@@ -38,7 +38,6 @@
                       :remote? t
                       :server-id 'clangd-remote))))
 
-;;
 ;; (use-package tramp
 ;;   :ensure nil
 ;;   :custom
@@ -46,8 +45,8 @@
 
 (if (string= system-type ";; gnu/linux")
     (progn
-        (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
-        (toggle-frame-maximized)))
+      (setq copilot-node-executable "/home/prayuj/.nvm/versions/node/v17.9.1/bin/node")
+      (toggle-frame-maximized)))
 
 ;; Org Agenda Configuration
 
@@ -56,17 +55,17 @@
 ;; (setq org-agenda-custom-commands
 ;;         '(("n" "Agenda for Today"
 ;;            ((agenda "" ((org-agenda-span 1) (org-agenda-start-day "-0d")))))))
-                ;; ((org-ql-block '(or
-                ;;         (tags "classes")
-                ;;         (planning 'today))
-                ;; ((org-ql-block-header "Agenda for Today")))))))
+;; ((org-ql-block '(or
+;;         (tags "classes")
+;;         (planning 'today))
+;; ((org-ql-block-header "Agenda for Today")))))))
 
 (setq org-agenda-sorting-strategy
-       '((agenda timestamp-up time-up priority-down category-keep habit-down)
-       (todo time-up priority-down category-keep)
-       (tags time-up priority-down category-keep)
-       (search category-keep))
-)
+      '((agenda timestamp-up time-up priority-down category-keep habit-down)
+        (todo time-up priority-down category-keep)
+        (tags time-up priority-down category-keep)
+        (search category-keep))
+      )
 
 (setq org-todo-keywords
       '(
@@ -77,77 +76,80 @@
 (setq org-scheduled-delay-days 7)
 ;; (setq org-agenda-skip-scheduled-if-done t)
 
-(setq org-super-agenda-groups
-       '(
-         (:name "Important"
-                :tag "bills"
-                :priority "A"
-                :order 1
-                :transformer (--> it (propertize it 'face ' (:foreground "OrangeRed"))))
+;; (setq org-super-agenda-groups
+;;       '(
+;;         (:name "Important"
+;;          :tag "bills"
+;;          :priority "A"
+;;          :order 1
+;;          :transformer (--> it (propertize it 'face ' (:foreground "OrangeRed"))))
 
-         (:name "Today"
-                :order 2
-                :transformer (--> it (propertize it 'face ' (:foreground "DarkOrange"))))
+;;         (:name "Today"
+;;          :order 2
+;;          :transformer (--> it (propertize it 'face ' (:foreground "DarkOrange"))))
 
-        (:name "Overdue"
-                :deadline past
-                :order 2
-                :transformer (--> it (propertize it 'face ' (:foreground "Red"))))
+;;         (:name "Overdue"
+;;          :deadline past
+;;          :order 2
+;;          :transformer (--> it (propertize it 'face ' (:foreground "Red"))))
 
-        (:name "Due Soon"
-                :deadline future
-                :transformer (--> it (propertize it 'face ' (:foreground "Green")))
-                :order 3)
+;;         (:name "Due Soon"
+;;          :deadline future
+;;          :transformer (--> it (propertize it 'face ' (:foreground "Green")))
+;;          :order 3)
 
-        (:name "Upcoming Exams"
-                :tag "exams"
-                :transformer (--> it (propertize it 'face ' (:foreground "Yellow")))
-                :order 4)
+;;         (:name "Upcoming Exams"
+;;          :tag "exams"
+;;          :transformer (--> it (propertize it 'face ' (:foreground "Yellow")))
+;;          :order 4)
 
-        (:name "Class Work"
-                :tag "class"
-                :order 5)
+;;         (:name "Class Work"
+;;          :tag "class"
+;;          :order 5)
 
-        (:name "Edugator Work"
-                :tag "edugator"
-                :order 6)
+;;         (:name "Edugator Work"
+;;          :tag "edugator"
+;;          :order 6)
 
-        (:name "Personal"
-                :habit t
-                :tag "personal"
-                :order 7)
+;;         (:name "Personal"
+;;          :habit t
+;;          :tag "personal"
+;;          :order 7)
 
-        (:name "Clubs"
-                :tag "clubs"
-                :order 7)
+;;         (:name "Clubs"
+;;          :tag "clubs"
+;;          :order 7)
 
-        (:name "Class Schedule"
-                :tag "classes"
-                :order 8)
+;;         (:name "Class Schedule"
+;;          :tag "classes"
+;;          :order 8)
 
-        (:name "In Progress"
-                :todo "WAITING"
-                :order 9)
+;;         (:name "In Progress"
+;;          :todo "WAITING"
+;;          :order 9)
 
-        (:name "Someday"
-                :todo ("SOMEDAY" "TO-READ" "CHECK" "TO-WATCH" "WATCHING")
-                :order 10)
+;;         (:name "Someday"
+;;          :todo ("SOMEDAY" "TO-READ" "CHECK" "TO-WATCH" "WATCHING")
+;;          :order 10)
 
-        (:name "Other work"
-                :priority<= "B"
-                :order 11)
-))
+;;         (:name "Other work"
+;;          :priority<= "B"
+;;          :order 11)
+;;         ))
 
-(org-super-agenda-mode)
+;; (org-super-agenda-mode)
 
 ;; ---- org dashboard ----
+(setq dashboard-navigation-cycle t)
 (setq dashboard-banner-logo-title 'nil)
 (setq dashboard-startup-banner 2)
 (setq dashboard-items '((recents  . 5)
-                        (projects . 5)
-                        (agenda . 5)))
-(setq dashboard-set-footer nil)
-;; (setq dashboard-agenda-sort-strategy 'time-up)
+                        (projects . 5)))
+(add-hook 'dashboard-mode-hook (lambda ()
+                                 (evil-local-set-key 'normal (kbd "r") 'dashboard-section-1)
+                                 (evil-local-set-key 'normal (kbd "p") 'dashboard-section-2)
+                                 (evil-local-set-key 'normal (kbd "j") 'dashboard-next-line)
+                                 (evil-local-set-key 'normal (kbd "k") 'dashboard-previous-line)))
 
 (dashboard-setup-startup-hook)
 
@@ -166,7 +168,7 @@
 
 (defun latex-open ()
   (interactive)
-        (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
+  (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
 
 (defun go-compile ()
   (interactive)
@@ -176,7 +178,7 @@
   ;; (if (-non-nil (string-match "_test.go" (file-name-nondirectory buffer-file-name)))
   (if (string-match "_test.go" (file-name-nondirectory buffer-file-name))
       (compile "go test -v ./...")
-  (compile "go get; go build; rm -rf ~/go"))
+    (compile "go get; go build; rm -rf ~/go"))
 
   (cd (file-name-directory buffer-file-name)))
 
@@ -188,7 +190,7 @@
   ;; (if (-non-nil (string-match "_test.go" (file-name-nondirectory buffer-file-name)))
   (if (string-match "_test.go" (file-name-nondirectory buffer-file-name))
       (compile "go test -v ./...")
-  (compile "go get; go build; sudo rm -rf ~/go"))
+    (compile "go get; go build; sudo rm -rf ~/go"))
 
   (cd (file-name-directory buffer-file-name)))
 
@@ -253,8 +255,17 @@
 
 
 ;; ---- projectile ----
-;; (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
-          ;; projectile-project-root-files-bottom-up)))
+(after! projectile
+  (setq projectile-project-root-files-bottom-up (remove ".git" projectile-project-root-files-bottom-up)))
+;; (setq projectile-project-root-functions ()))
+
+(map! :leader "/" #'+vertico/project-search)
+
+
+;; ---- fzf ----
+(setq fzf/position-bottom t)
+(setq fzf/window-height 15)
+(setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll")
 
 
 ;; ---- miscellanious ----
@@ -264,39 +275,39 @@
   (interactive)
   (let (choice)
     (let ((choices '("C++" "Rust")))
-    (setq choice (completing-read "New Project:" choices)))
+      (setq choice (completing-read "New Project:" choices)))
     (cond
-      ((equal choice "C++") (init-cpp-project))
-      ((equal choice "Rust") (init-cargo-project)))
-))
+     ((equal choice "C++") (init-cpp-project))
+     ((equal choice "Rust") (init-cargo-project)))
+    ))
 
 (defun init-cpp-project ()
   (interactive)
-    (setq project_directory (read-directory-name "Directory: "))
-    (if (file-directory-p project_directory) () (make-directory project_directory))
-    (cd project_directory)
-    (create-cpp-files project_directory))
+  (setq project_directory (read-directory-name "Directory: "))
+  (if (file-directory-p project_directory) () (make-directory project_directory))
+  (cd project_directory)
+  (create-cpp-files project_directory))
 
 (defun create-cpp-files (project_directory)
-    (f-write-text "CC = g++\nINCLUDES = \nCFLAGS = -w -g\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(SOURCES) $(CFLAGS) $(INCLUDES) -o $(TARGET)\nclean:\n\trm $(TARGET)\n"
-                  'utf-8 (concat project_directory "/Makefile"))
-    (if (file-exists-p (concat project_directory "/main.cpp")) ()
-      (f-write-text "using namespace std;\n\nint main() {\n\treturn 0;\n}"
-                'utf-8 (concat project_directory "/main.cpp")))
-    (message "Initialized new C++ project in %s" project_directory))
+  (f-write-text "CC = g++\nINCLUDES = \nCFLAGS = -w -g\n\nTARGET = main\nSOURCES := $(shell find . -name '*.cpp')\nall:\n\t$(CC) $(SOURCES) $(CFLAGS) $(INCLUDES) -o $(TARGET)\nclean:\n\trm $(TARGET)\n"
+                'utf-8 (concat project_directory "/Makefile"))
+  (if (file-exists-p (concat project_directory "/main.cpp")) ()
+    (f-write-text "using namespace std;\n\nint main() {\n\treturn 0;\n}"
+                  'utf-8 (concat project_directory "/main.cpp")))
+  (message "Initialized new C++ project in %s" project_directory))
 
 (defun init-cargo-project ()
   (interactive)
-    (setq project_directory (read-directory-name "Directory: "))
-    (if (file-directory-p project_directory) () (make-directory project_directory))
-    (setq project_name (read-string "Enter Project Name: "))
-    (cd project_directory)
-    (compile (format "cargo new %s --vcs=\"none\"" project_name))
-    (message "Initialized new Rust project in %s" project_directory)
-)
+  (setq project_directory (read-directory-name "Directory: "))
+  (if (file-directory-p project_directory) () (make-directory project_directory))
+  (setq project_name (read-string "Enter Project Name: "))
+  (cd project_directory)
+  (compile (format "cargo new %s --vcs=\"none\"" project_name))
+  (message "Initialized new Rust project in %s" project_directory)
+  )
 
 (defun insert-current-date () (interactive)
-  (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
+       (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
 
 (defun parent-directory (dir)
   (unless (equal "/" dir)
@@ -318,106 +329,126 @@
 ;; compilation keybindings
 
 (add-hook 'java-mode-hook
-  (lambda ()
-    (define-key java-mode-map (kbd "C-c C-c") 'gradle-build)
-    (flycheck-mode nil)))
+          (lambda ()
+            (define-key java-mode-map (kbd "C-c C-c") 'gradle-build)
+            (flycheck-mode nil)))
 
 (add-hook 'c-mode-hook
-  (lambda ()
-    (define-key c-mode-map (kbd "C-c C-c") 'cpp-compile)))
+          (lambda ()
+            (define-key c-mode-map (kbd "C-c C-c") 'cpp-compile)))
 
 (add-hook 'c++-mode-hook
-  (lambda ()
-    (define-key c++-mode-map (kbd "C-c C-c") 'cpp-compile)))
+          (lambda ()
+            (define-key c++-mode-map (kbd "C-c C-c") 'cpp-compile)))
 
 (add-hook 'latex-mode-hook
-  (lambda ()
-    (define-key latex-mode-map (kbd "C-c C-c") 'latex-compile)
-    (define-key latex-mode-map (kbd "C-c C-x") 'latex-open)))
+          (lambda ()
+            (define-key latex-mode-map (kbd "C-c C-c") 'latex-compile)
+            (define-key latex-mode-map (kbd "C-c C-x") 'latex-open)))
 
 (add-hook 'LaTeX-mode-hook
-  (lambda ()
-    (define-key LaTeX-mode-map (kbd "C-c C-c") 'latex-compile)
-    (define-key LaTeX-mode-map (kbd "C-c C-x") 'latex-open)))
+          (lambda ()
+            (define-key LaTeX-mode-map (kbd "C-c C-c") 'latex-compile)
+            (define-key LaTeX-mode-map (kbd "C-c C-x") 'latex-open)))
 
 (add-hook 'tex-mode-hook
-  (lambda ()
-    (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)
-    (define-key tex-mode-map (kbd "C-c C-x") 'latex-open)))
+          (lambda ()
+            (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)
+            (define-key tex-mode-map (kbd "C-c C-x") 'latex-open)))
 
 (add-hook 'ein:notebook-mode-hook
-  (lambda ()
-    (define-key ein:notebook-mode-map (kbd "C-c j") 'ein:worksheet-goto-next-input)
-    (define-key ein:notebook-mode-map (kbd "C-c k") 'ein:worksheet-goto-prev-input)
-    (define-key ein:notebook-mode-map (kbd "C-c C-j") 'ein:worksheet-insert-cell-below)
-    (define-key ein:notebook-mode-map (kbd "C-c C-k") 'ein:worksheet-insert-cell-above)
-    (define-key ein:notebook-mode-map (kbd "C-c C-d") 'ein:worksheet-delete-cell)
-    (define-key ein:notebook-mode-map (kbd "C-c C-r") 'ein:notebook-restart-session-command)
-    (define-key ein:notebook-mode-map (kbd "C-c C-<backspace>") 'ein:worksheet-clear-output)))
+          (lambda ()
+            (define-key ein:notebook-mode-map (kbd "C-c j") 'ein:worksheet-goto-next-input)
+            (define-key ein:notebook-mode-map (kbd "C-c k") 'ein:worksheet-goto-prev-input)
+            (define-key ein:notebook-mode-map (kbd "C-c C-j") 'ein:worksheet-insert-cell-below)
+            (define-key ein:notebook-mode-map (kbd "C-c C-k") 'ein:worksheet-insert-cell-above)
+            (define-key ein:notebook-mode-map (kbd "C-c C-d") 'ein:worksheet-delete-cell)
+            (define-key ein:notebook-mode-map (kbd "C-c C-r") 'ein:notebook-restart-session-command)
+            (define-key ein:notebook-mode-map (kbd "C-c C-<backspace>") 'ein:worksheet-clear-output)))
 
 (add-hook 'go-mode-hook
-  (lambda ()
-    (define-key go-mode-map (kbd "C-c C-c") 'go-compile)
-    (define-key go-mode-map (kbd "C-c C-x") 'projectile-run-project)))
+          (lambda ()
+            (define-key go-mode-map (kbd "C-c C-c") 'go-compile)
+            (define-key go-mode-map (kbd "C-c C-x") 'projectile-run-project)))
 
 (add-hook 'typescript-mode-hook
-  (lambda ()
-    (setq lsp-before-save-edits nil)
-    (add-hook 'after-save-hook 'ts-prettier-write)
-    (define-key typescript-mode-map (kbd "C-c C-c") 'ts-compile)
-    (define-key typescript-mode-map (kbd "C-c C-x") 'projectile-run-project)))
+          (lambda ()
+            (setq lsp-before-save-edits nil)
+            (add-hook 'after-save-hook 'ts-prettier-write)
+            (define-key typescript-mode-map (kbd "C-c C-c") 'ts-compile)
+            (define-key typescript-mode-map (kbd "C-c C-x") 'projectile-run-project)))
 
 (add-hook 'python-mode-hook
-  (lambda ()
-    (define-key python-mode-map (kbd "C-c C-c") 'python-compile)
-    (define-key python-mode-map (kbd "C-c C-x") 'projectile-run-project)))
+          (lambda ()
+            (define-key python-mode-map (kbd "C-c C-c") 'python-compile)
+            (define-key python-mode-map (kbd "C-c C-x") 'projectile-run-project)))
 
 (setq rust-format-on-save t)
 (add-hook 'rustic-mode-hook
-  (lambda ()
-    (define-key rustic-mode-map (kbd "C-c C-c") 'rust-compile)
-    (define-key rustic-mode-map (kbd "C-c C-x") 'rust-run)
-    (define-key rustic-mode-map (kbd "C-c C-v") 'rust-check)))
+          (lambda ()
+            (define-key rustic-mode-map (kbd "C-c C-c") 'rust-compile)
+            (define-key rustic-mode-map (kbd "C-c C-x") 'rust-run)
+            (define-key rustic-mode-map (kbd "C-c C-v") 'rust-check)))
 
 (add-hook 'org-mode-hook
- (lambda ()
-   (define-key org-mode-map (kbd "C-c C-c") 'org-icalendar-export-to-ics)))
+          (lambda ()
+            (define-key org-mode-map (kbd "C-c C-c") 'org-icalendar-export-to-ics)))
 
 (add-hook 'emacs-lisp-mode-hook
-  (lambda ()
-    (define-key emacs-lisp-mode-map (kbd "C-c C-c") 'doom/reload)))
+          (lambda ()
+            (define-key emacs-lisp-mode-map (kbd "C-c C-c") 'doom/reload)))
 
 (add-hook 'org-agenda-mode-hook
-  (lambda ()
-    (define-key org-super-agenda-header-map (kbd "k") nil)
-    (define-key org-super-agenda-header-map (kbd "j") nil)
-    (define-key org-super-agenda-header-map (kbd "l") nil)
-    (define-key org-super-agenda-header-map (kbd "h") nil)
+          (lambda ()
+            (define-key org-super-agenda-header-map (kbd "k") nil)
+            (define-key org-super-agenda-header-map (kbd "j") nil)
+            (define-key org-super-agenda-header-map (kbd "l") nil)
+            (define-key org-super-agenda-header-map (kbd "h") nil)
 
-    (define-key org-agenda-mode-map (kbd "k") 'org-agenda-next-item)
-    (define-key org-agenda-mode-map (kbd "j") 'org-agenda-previous-item)
+            (define-key org-agenda-mode-map (kbd "k") 'org-agenda-next-item)
+            (define-key org-agenda-mode-map (kbd "j") 'org-agenda-previous-item)
 
-    (define-key org-super-agenda-header-map (kbd "C-h") 'org-agenda-earlier)
-    (define-key org-super-agenda-header-map (kbd "C-l") 'org-agenda-later)
+            (define-key org-super-agenda-header-map (kbd "C-h") 'org-agenda-earlier)
+            (define-key org-super-agenda-header-map (kbd "C-l") 'org-agenda-later)
 
-    (define-key org-agenda-mode-map (kbd "C-h") 'org-agenda-earlier)
-    (define-key org-agenda-mode-map (kbd "C-l") 'org-agenda-later)))
+            (define-key org-agenda-mode-map (kbd "C-h") 'org-agenda-earlier)
+            (define-key org-agenda-mode-map (kbd "C-l") 'org-agenda-later)))
 
 ;; (map! :map general-override-mode-map "C-c C-c" 'code-compile)
 ;; (map! :map general-override-mode-map "C-c C-x" 'code-run)
 
 ;; vertico mode hooks
 (add-hook 'vertico-mode-hook
-  (lambda ()
-  (define-key vertico-map (kbd "C-j") 'vertico-next)
-  (define-key vertico-map (kbd "C-k") 'vertico-previous)))
+          (lambda ()
+            (define-key vertico-map (kbd "C-j") 'vertico-next)
+            (define-key vertico-map (kbd "C-k") 'vertico-previous)))
 
+(defun esc-minibuffer ()
+  (interactive)
+  (if (and delete-selection-mode transient-mark-mode mark-active)
+      (setq deactivate-mark  t)
+    (when (get-buffer "*Completions*") (delete-windows-on "*Completions*"))
+    (abort-recursive-edit)))
 
-(map! :map general-override-mode-map "C-c e l" 'flycheck-list-errors)
+(with-eval-after-load 'evil-maps
+  (define-key evil-normal-state-map [escape] 'keyboard-quit)
+  (define-key evil-visual-state-map [escape] 'keyboard-quit)
+  (define-key minibuffer-local-map [escape] 'esc-minibuffer)
+  (define-key minibuffer-local-ns-map [escape] 'esc-minibuffer)
+  (define-key minibuffer-local-completion-map [escape] 'esc-minibuffer)
+  (define-key minibuffer-local-must-match-map [escape] 'esc-minibuffer)
+  (define-key minibuffer-local-isearch-map [escape] 'esc-minibuffer))
+
+(defun open-project-shell()
+  (interactive)
+  (split-window-right)
+  (other-window 1)
+  (project-shell))
+
+(map! :map general-override-mode-map "C-c l" 'flycheck-list-errors)
 (map! :map general-override-mode-map "C-c C-n" 'create-project)
 (map! :map general-override-mode-map "C-/" 'comment-line)
-;; (map! :map general-override-mode-map "C-c C-d" 'insert-current-date)
-(map! :map general-override-mode-map "M-t" 'shell)
+(map! :map general-override-mode-map "M-t" 'open-project-shell)
 (map! :map general-override-mode-map "M-T" 'shell-command)
 
 (map! :map general-override-mode-map "M-l" 'evil-window-right)
@@ -425,11 +456,24 @@
 (map! :map general-override-mode-map "M-j" 'evil-window-down)
 (map! :map general-override-mode-map "M-k" 'evil-window-up)
 (map! :map general-override-mode-map "M-w" 'evil-window-delete)
+(map! :map general-override-mode-map "M-q" 'evil-window-delete)
 
 (map! :map general-override-mode-map "M-RET" 'evil-window-vsplit)
+(map! :map general-override-mode-map "C-M-<return>" 'evil-window-split)
+
+(defun project-file-search ()
+  "Run different functions depending on the current directory."
+  (interactive)
+  (if (string= (expand-file-name default-directory) (expand-file-name "~/"))
+      (projectile-find-file)
+    (fzf-projectile)))
+
+(map! :leader
+      :desc "Run Projectile File Search"
+      "SPC" #'project-file-search)
 
 (global-set-key (kbd "C-c o")
-        (lambda () (interactive) (find-file "~/iCloud/org/calendar.org")))
+                (lambda () (interactive) (find-file "~/iCloud/org/calendar.org")))
 
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
@@ -458,10 +502,10 @@
 
 (defun gradle-is-project-dir (dir)
   (let ((dirname (file-name-nondirectory
-        (directory-file-name (expand-file-name dir)))))
+                  (directory-file-name (expand-file-name dir)))))
     (or (file-exists-p (expand-file-name "build.gradle" dir))
         (file-exists-p (expand-file-name
-                (concat dirname ".gradle") dir)))))
+                        (concat dirname ".gradle") dir)))))
 
 (defun gradle-is-gradlew-dir (dir)
   (file-exists-p (expand-file-name "gradlew" dir)))
@@ -470,8 +514,8 @@
   (progn
     (if (get-buffer "*compilation*")
         (progn
-                (delete-windows-on (get-buffer "*compilation*"))
-                (kill-buffer "*compilation*")))))
+          (delete-windows-on (get-buffer "*compilation*"))
+          (kill-buffer "*compilation*")))))
 
 (defun gradle-run-from-dir (is-dir)
   (locate-dominating-file default-directory is-dir))
@@ -479,15 +523,15 @@
 (defun gradle-run (gradle-tasks)
   (gradle-kill-compilation-buffer)
   (let ((default-directory
-        (gradle-run-from-dir (if gradle-use-gradlew
-                'gradle-is-gradlew-dir
-                'gradle-is-project-dir))))
+          (gradle-run-from-dir (if gradle-use-gradlew
+                                   'gradle-is-gradlew-dir
+                                 'gradle-is-project-dir))))
     (compile (gradle-make-command gradle-tasks))))
 
 (defun gradle-make-command (gradle-tasks)
   (let ((gradle-executable (if gradle-use-gradlew
-        gradle-gradlew-executable
-        gradle-executable-path)))
+                               gradle-gradlew-executable
+                             gradle-executable-path)))
     (s-join " " (list gradle-executable gradle-tasks))))
 
 (defun gradle-execute (tasks)

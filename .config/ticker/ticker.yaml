@@ -4,6 +4,10 @@ watchlist:
   - EFX
   - HTZWW
   - BUD
+  - PFE
+  - RHHBY
+  - SWGAY
+  - VOD
 show-summary: true
 show-tags: true
 show-fundamentals: true
@@ -28,3 +32,15 @@ lots:
   - symbol: "HTZWW"
     quantity: 466.0
     unit_cost: 7.50
+  - symbol: "PFE"
+    quantity: 120
+    unit_cost: 28.62
+  - symbol: "RHHBY"
+    quantity: 81
+    unit_cost: 35.18
+  - symbol: "SWGAY"
+    quantity: 49
+    unit_cost: 35.18
+  - symbol: "VOD"
+    quantity: 500
+    unit_cost: 8.80
