@@ -30,6 +30,7 @@ alias wallpaper='killall hyprpaper; hyprpaper &; disown'
 alias record_screen='wf-recorder --muxer=v4l2 --codec=rawvideo --file=/dev/video4 -x yuv420p'
 alias ws='wscat --connect'
 alias waybar_restart='killall -SIGUSR2 waybar'
+alias c='z'
 
 open() {
   xdg-open "$1" &
@@ -139,6 +140,8 @@ case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
+
+eval "$(zoxide init zsh)"
 # pnpm end
 
 #export NVM_DIR="$HOME/.config/nvm"
