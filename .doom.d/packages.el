@@ -17,6 +17,7 @@
 (package! helm-org-ql)
 (package! rust-mode)
 (package! typescript-mode)
+(package! svelte-mode)
 (package! fzf)
 (package! lsp-ui)
 
