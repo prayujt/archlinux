@@ -63,7 +63,7 @@ fn compute_windows() {
             && monitor_range.contains(&workspace)
             && client.pid != -1
         {
-            if client.title.contains("tick") {
+            if name == "tick" || name == "tickrs" {
                 name = client.title.clone();
             }
             workspace_classes
@@ -79,11 +79,11 @@ fn compute_windows() {
         if workspace_classes.is_empty() {
             if monitor_range.contains(&active_workspace) && active_workspace >= idx {
                 while idx < active_workspace {
-                    let spaces = if text.len() == 0 { "" } else { "   " };
-                    text += &format!("<span color=\"#7c818c\">{spaces}</span>");
+                    let spaces = if text.len() == 0 { "" } else { " " };
+                    text += &format!("<span color=\"#7c818c\">{spaces}</span>");
                     idx += 1;
                 }
-                let spaces = if text.len() == 0 { "" } else { "   " };
+                let spaces = if text.len() == 0 { "" } else { " " };
                 text += &format!("<span color=\"#f5f2f2\">{spaces}</span>");
             }
             break;
@@ -99,45 +99,42 @@ fn compute_windows() {
             let space = if workspace_classes.len() == 1 {
                 ""
             } else {
-                "   "
+                " "
             };
             if classes.contains(&"discord".to_string()) {
-                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"Mailspring".to_string()) {
-                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"zoom".to_string()) {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"emacs".to_string()) {
-                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"Postman".to_string()) {
-                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+                text += &format!("<span color=\"{0}\">󰢩{1}</span>", color, space);
             } else if classes.contains(&"google-chrome".to_string())
                 || classes.contains(&"Firefox".to_string())
+                || classes.contains(&"firefoxdeveloperedition".to_string())
             {
-                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
-            } else if classes.iter().any(|s| s.to_lowercase().contains(&"ticker"))
-                || classes.contains(&"tickrs".to_string())
-            {
-                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"feishin".to_string())
                 || classes.contains(&"sonixd".to_string())
                 || classes.contains(&"Sonixd".to_string())
             {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"Alacritty".to_string()) {
-                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             }
         } else {
-            text += &format!("<span color=\"{0}\">   </span>", color);
+            text += &format!("<span color=\"{0}\"> </span>", color);
         }
 
         workspace_classes.retain(|&workspace, _| workspace > idx);
     }
 
     if text.len() == 0 {
-        text += "<span color=\"#7c818c\"></span>";
+        text += "<span color=\"#7c818c\"></span>";
     }
     println!("{}", text);
 }

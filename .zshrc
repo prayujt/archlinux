@@ -23,7 +23,6 @@ alias edugator='ssh root@edugator.cise.ufl.edu'
 alias wifioff=nmcli radio wifi off
 alias wifion=nmcli radio wifi on
 alias wifistatus=nmcli device
-alias news='cat ~/.config/polybar/scripts/news/current_news.txt | sed -r "s/[\[]+/\n\[/g"'
 alias volume='~/.scripts/pulseaudio | wob -c ~/.config/wob/wob.ini &; disown'
 alias vpn='sudo openconnect --protocol=anyconnect -u ptuli@ufl.edu --server=vpn.ufl.edu'
 alias wallpaper='killall hyprpaper; hyprpaper &; disown'
