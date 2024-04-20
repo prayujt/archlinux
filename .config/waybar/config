@@ -5,7 +5,7 @@
     "height": 30,
     "margin": "5 17 -8 17",
     "modules-left": ["custom/hyprland", "hyprland/window"],
-    "modules-center": ["custom/news", "custom/news_update"],
+    "modules-center": ["custom/news"],
 
     //"modules-right": ["custom/portfolio", "pulseaudio", "clock"],
     "modules-right": ["custom/cava", "pulseaudio", "clock", "custom/notification"],
@@ -14,19 +14,6 @@
     //***************************
     //*  Modules configuration  *
     //***************************
-
-    "hyprland/workspaces": {
-        "format": "{icon}",
-         "format-icons": {
-             "1": "",
-             "2": "",
-             "3": "",
-             "default": ""
-         },
-        "separate-outputs": true,
-        "disable-scroll": true,
-        "sort-by-number": true
-    },
 
     "hyprland/window": {
         "format": "{}",
@@ -69,7 +56,7 @@
 
     "custom/news": {
         "format": " {}",
-        "exec": "~/.config/waybar/scripts/news/scroll_news_status.sh"
+        "exec": "news 75 0.06"
     },
 
     "custom/news_update": {
