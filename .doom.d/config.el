@@ -140,6 +140,8 @@
 ;; (org-super-agenda-mode)
 
 ;; ---- org dashboard ----
+(map! :leader
+      "d" #'dashboard-open)
 (setq dashboard-navigation-cycle t)
 (setq dashboard-banner-logo-title 'nil)
 (setq dashboard-startup-banner 2)
@@ -255,18 +257,21 @@
 
 
 ;; ---- projectile ----
-(after! projectile
-  (setq projectile-project-root-files-bottom-up (remove ".git" projectile-project-root-files-bottom-up)))
+;; (after! projectile
+;; (setq projectile-project-root-files-bottom-up (remove ".git" projectile-project-root-files-bottom-up)))
 ;; (setq projectile-project-root-functions ()))
+(after! projectile
+  (setq projectile-project-search-path '("~/repos" "~/Projects"))
+  (setq projectile-enable-caching t))
 
 (map! :leader "/" #'+vertico/project-search)
 
 
 ;; ---- fzf ----
-(setq fzf/position-bottom t)
-(setq fzf/window-height 15)
-(setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll")
-
+(after! fzf
+  (setq fzf/position-bottom t)
+  (setq fzf/window-height 15)
+  (setq fzf/args "-x --color bw --print-query --margin=1,0 --layout=reverse --no-hscroll"))
 
 ;; ---- miscellanious ----
 
@@ -445,6 +450,8 @@
   (other-window 1)
   (project-shell))
 
+(map! :map general-override-mode-map "C-c p" 'project-compile)
+
 (map! :map general-override-mode-map "C-c l" 'flycheck-list-errors)
 (map! :map general-override-mode-map "C-c C-n" 'create-project)
 (map! :map general-override-mode-map "C-/" 'comment-line)
@@ -470,10 +477,10 @@
 
 (map! :leader
       :desc "Run Projectile File Search"
-      "SPC" #'project-file-search)
+      "f SPC" #'project-file-search)
 
-(global-set-key (kbd "C-c o")
-                (lambda () (interactive) (find-file "~/iCloud/org/calendar.org")))
+;; (global-set-key (kbd "C-c o")
+;; (lambda () (interactive) (find-file "~/iCloud/org/calendar.org")))
 
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
