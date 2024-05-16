@@ -103,6 +103,7 @@ export TERM=xterm-256color
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 export TERMINAL="alacritty"
 export LD_LIBRARY_PATH=/opt/cuda/lib
+export DOCKER_BUILDKIT=1
 source ~/.keys
 
 export PATH=$PATH:/home/prayuj/.local/bin
