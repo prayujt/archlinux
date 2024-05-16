@@ -10,15 +10,6 @@ discord --start-minimized --enable-features=UseOzonePlatform --ozone-platform=wa
 waybar -c ~/.config/waybar/config &
 ~/.scripts/pulseaudio | wob -c ~/.config/wob/wob.ini &
 
-# Launches stock viewing applications on secondary display
-hyprctl dispatch focusmonitor HDMI-A-1 &
-sleep 0.1
-alacritty --class "ticker" -e "ticker --config=/home/prayuj/.config/ticker/ticker.yaml" &
-sleep 0.2
-alacritty --class "tickrs" -e "tickrs" &
-sleep 0.1
-
 hyprctl dispatch focusmonitor DP-1
 emacs &
 mailspring -b &
-
