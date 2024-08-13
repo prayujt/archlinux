@@ -6,7 +6,7 @@ set tabstop=4
 set shiftwidth=4
 set secure
 set foldcolumn=0
-set number
+set relativenumber
 set splitright
 set noshowmode
 set noruler

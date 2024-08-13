@@ -14,8 +14,10 @@
 (package! rust-mode)
 (package! typescript-mode)
 (package! svelte-mode)
+(package! prettier-js)
 (package! fzf)
 (package! lsp-ui)
+(package! prisma-ts-mode)
 
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))

@@ -113,7 +113,7 @@ fn compute_windows() {
                 text += &format!("<span color=\"{0}\">󰢩{1}</span>", color, space);
             } else if classes.contains(&"google-chrome".to_string())
                 || classes.contains(&"Firefox".to_string())
-                || classes.contains(&"firefoxdeveloperedition".to_string())
+                || classes.contains(&"firefox-developer-edition".to_string())
             {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"feishin".to_string())
