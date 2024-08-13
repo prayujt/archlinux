@@ -17,15 +17,16 @@
 (setq-default tab-width 2)
 
 (setq user-full-name "Prayuj Tuli"
-      user-mail-address "prayujtuli@hotmail.com")
+      user-mail-address "prayuj@prayujt.com")
 
-(setq display-line-numbers-type t)
+(setq display-line-numbers t)
+(setq display-line-numbers-type 'relative)
 (setq evil-escape-key-sequence "qw")
 
 (if (string= system-type "darwin")
     (progn
-      (toggle-frame-fullscreen)
-      (setq copilot-node-executable "/Users/prayuj/.nvm/versions/node/v16.20.1/bin/node")))
+      (toggle-frame-fullscreen)))
+;;      (setq copilot-node-executable "/Users/prayuj/.nvm/versions/node/v16.20.1/bin/node")))
 
 (use-package lsp-mode
   :hook ((prog-mode . lsp-deferred))
@@ -326,9 +327,8 @@
       (when parent
         (find-file-in-heirarchy parent fname)))))
 
-(defun ts-prettier-write ()
-  (shell-command (concat "npx prettier --write " buffer-file-name)))
-
+;; (defun ts-prettier-write ()
+;;   (shell-command (concat "npx prettier --write " buffer-file-name)))
 
 
 ;; compilation keybindings
@@ -378,8 +378,8 @@
 
 (add-hook 'typescript-mode-hook
           (lambda ()
-            (setq lsp-before-save-edits nil)
-            (add-hook 'after-save-hook 'ts-prettier-write)
+            ;; (setq lsp-before-save-edits nil)
+            ;; (add-hook 'after-save-hook 'ts-prettier-write)
             (define-key typescript-mode-map (kbd "C-c C-c") 'ts-compile)
             (define-key typescript-mode-map (kbd "C-c C-x") 'projectile-run-project)))
 
@@ -530,9 +530,9 @@
 (defun gradle-run (gradle-tasks)
   (gradle-kill-compilation-buffer)
   (let ((default-directory
-          (gradle-run-from-dir (if gradle-use-gradlew
-                                   'gradle-is-gradlew-dir
-                                 'gradle-is-project-dir))))
+         (gradle-run-from-dir (if gradle-use-gradlew
+                                  'gradle-is-gradlew-dir
+                                'gradle-is-project-dir))))
     (compile (gradle-make-command gradle-tasks))))
 
 (defun gradle-make-command (gradle-tasks)
