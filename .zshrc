@@ -1,5 +1,6 @@
 export ZSH="/home/prayuj/.config/oh-my-zsh"
 ZSH_THEME="jonathan"
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=239'
 
 zstyle ':completion:*' '' matcher-list 'm:{a-z}={A-Z}'
 zstyle ':omz:plugins:nvm' lazy yes
