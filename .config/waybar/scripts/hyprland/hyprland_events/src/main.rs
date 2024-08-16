@@ -102,7 +102,10 @@ fn compute_windows() {
                 " "
             };
             if classes.contains(&"discord".to_string()) {
-                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
+                text += &format!(
+                    "<span color=\"{0}\" size=\"small\">{1}</span>",
+                    color, space
+                );
             } else if classes.contains(&"Mailspring".to_string()) {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"zoom".to_string()) {
