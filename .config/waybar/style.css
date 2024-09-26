@@ -180,6 +180,7 @@ window#waybar.hidden {
 }
 
 #custom-music-left {
+    font-size: 20px;
     padding-left: 5px;
     padding-right: 5px;
     border-radius: 10px 0px 0px 10px;
@@ -189,7 +190,19 @@ window#waybar.hidden {
     margin: 0 0px;
 }
 
+#custom-music-play-pause {
+    font-size: 20px;
+    padding-left: 0px;
+    padding-right: 8px;
+    border-radius: 0px;
+    transition: none;
+    color: #ffffff;
+    background: #383c4a;
+    margin: 0 0px;
+}
+
 #custom-music-right {
+    font-size: 20px;
     padding-left: 5px;
     padding-right: 5px;
     border-radius: 0px 10px 10px 0px;
@@ -201,7 +214,7 @@ window#waybar.hidden {
 
 #custom-music {
     padding-left: 15px;
-    padding-right: 15px;
+    padding-right: 10px;
     border-radius: 0px;
     transition: none;
     color: #ffffff;
