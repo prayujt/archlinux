@@ -7,6 +7,7 @@ set shiftwidth=4
 set secure
 set foldcolumn=0
 set relativenumber
+set number
 set splitright
 set noshowmode
 set noruler

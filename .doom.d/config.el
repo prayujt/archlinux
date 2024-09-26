@@ -75,70 +75,7 @@
 
 (setq org-deadline-warning-days 7)
 (setq org-scheduled-delay-days 7)
-;; (setq org-agenda-skip-scheduled-if-done t)
 
-;; (setq org-super-agenda-groups
-;;       '(
-;;         (:name "Important"
-;;          :tag "bills"
-;;          :priority "A"
-;;          :order 1
-;;          :transformer (--> it (propertize it 'face ' (:foreground "OrangeRed"))))
-
-;;         (:name "Today"
-;;          :order 2
-;;          :transformer (--> it (propertize it 'face ' (:foreground "DarkOrange"))))
-
-;;         (:name "Overdue"
-;;          :deadline past
-;;          :order 2
-;;          :transformer (--> it (propertize it 'face ' (:foreground "Red"))))
-
-;;         (:name "Due Soon"
-;;          :deadline future
-;;          :transformer (--> it (propertize it 'face ' (:foreground "Green")))
-;;          :order 3)
-
-;;         (:name "Upcoming Exams"
-;;          :tag "exams"
-;;          :transformer (--> it (propertize it 'face ' (:foreground "Yellow")))
-;;          :order 4)
-
-;;         (:name "Class Work"
-;;          :tag "class"
-;;          :order 5)
-
-;;         (:name "Edugator Work"
-;;          :tag "edugator"
-;;          :order 6)
-
-;;         (:name "Personal"
-;;          :habit t
-;;          :tag "personal"
-;;          :order 7)
-
-;;         (:name "Clubs"
-;;          :tag "clubs"
-;;          :order 7)
-
-;;         (:name "Class Schedule"
-;;          :tag "classes"
-;;          :order 8)
-
-;;         (:name "In Progress"
-;;          :todo "WAITING"
-;;          :order 9)
-
-;;         (:name "Someday"
-;;          :todo ("SOMEDAY" "TO-READ" "CHECK" "TO-WATCH" "WATCHING")
-;;          :order 10)
-
-;;         (:name "Other work"
-;;          :priority<= "B"
-;;          :order 11)
-;;         ))
-
-;; (org-super-agenda-mode)
 
 ;; ---- org dashboard ----
 (map! :leader
@@ -239,6 +176,11 @@
   (compile "cargo check")
   (cd (file-name-directory buffer-file-name)))
 
+
+(defun pony-compile ()
+  (interactive)
+  (compile "ponyc"))
+
 ;; (defun code-compile ()
 ;;   (interactive)
 ;;   (let ((file (file-name-nondirectory buffer-file-name)))
@@ -266,6 +208,51 @@
   (setq projectile-enable-caching t))
 
 (map! :leader "/" #'+vertico/project-search)
+
+;; ---- eslint ----
+(setq lsp-eslint-auto-fix-on-save t)
+
+(use-package lsp-mode
+  :hook (js-mode . lsp)
+  :commands lsp
+  :config
+  (setq lsp-eslint-package-manager 'npm)
+  (setq lsp-eslint-node-path (expand-file-name "node_modules/.bin" (projectile-project-root)))
+  (setq lsp-eslint-linter "eslint")
+  (add-to-list 'lsp-language-id-configuration '(js-mode . "javascript"))
+  (add-to-list 'lsp-language-id-configuration '(typescript-mode . "typescript")))
+
+(use-package lsp-eslint
+  :after lsp-mode
+  :config
+  (setq lsp-eslint-node-path (expand-file-name "node_modules/.bin" (projectile-project-root))))
+
+(defun flycheck-eslint-setup ()
+  "Setup ESLint with Flycheck."
+  (setq-local flycheck-checker 'javascript-eslint)
+  (setq-local flycheck-javascript-eslint-executable
+              (expand-file-name "node_modules/.bin/eslint" (projectile-project-root))))
+
+(add-hook 'js-mode-hook #'flycheck-eslint-setup)
+(add-hook 'typescript-mode-hook #'flycheck-eslint-setup)
+;; (defun use-local-eslint ()
+;;   (let* ((root (locate-dominating-file
+;;                 (or (buffer-file-name) default-directory)
+;;                 "node_modules"))
+;;          (eslint-executable
+;;           (and root
+;;                (expand-file-name "node_modules/.bin/eslint"
+;;                                  root)))
+;;          (eslint-server-command
+;;           (and root
+;;                (list (expand-file-name "node_modules/.bin/eslint.js"
+;;                                        root)))))
+;;     (when (and eslint-executable (file-executable-p eslint-executable))
+;;       (setq-local flycheck-javascript-eslint-executable eslint-executable))
+;;     (setq-local lsp-eslint-server-command eslint-server-command)
+;;     (setq lsp-eslint-node-path (expand-file-name "node_modules/.bin" (projectile-project-root)))))
+
+;; (add-hook 'flycheck-mode-hook #'use-local-eslint)
 
 
 ;; ---- fzf ----
@@ -387,6 +374,11 @@
           (lambda ()
             (define-key python-mode-map (kbd "C-c C-c") 'python-compile)
             (define-key python-mode-map (kbd "C-c C-x") 'projectile-run-project)))
+
+(add-hook 'ponylang-mode-hook
+          (lambda ()
+            (define-key ponylang-mode-map (kbd "C-c C-c") 'pony-compile)
+            (define-key ponylang-mode-map (kbd "C-c C-x") 'projectile-run-project)))
 
 (setq rust-format-on-save t)
 (add-hook 'rustic-mode-hook
