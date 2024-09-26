@@ -1,6 +1,7 @@
 use reqwest::{Error as ReqwestError, Client};
 use serde_json::Error as SerdeError;
 use serde::{Deserialize, Serialize};
+use tokio::time;
 
 use std::env;
 use std::fmt;
@@ -67,26 +68,32 @@ async fn fetch_top_stories(r#type: &str) -> Result<TopStoriesResponse, FetchErro
 
 #[tokio::main]
 async fn main() -> Result<(), FetchError> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 3 {
-        eprintln!("Usage: {0} <width> <speed>", args[0]);
-        return Ok(());
-    }
-    let width: usize = args[1].parse().expect("Width should be a number");
-    let speed: f64 = args[2].parse().expect("Speed should be a number");
-
-    let data = fetch_top_stories("politics").await?;
-    let mut full_text = String::new();
-    for article in data.results {
-        full_text += format!("{} - {} | ", article.title, article.r#abstract).as_str();
-    }
-
     loop {
-      let cycled_chars = full_text.chars().cycle();
-      for start in 0..full_text.len() {
-          let chunk: String = cycled_chars.clone().skip(start).take(width).collect();
-          println!("{}", chunk);
-          thread::sleep(Duration::from_secs_f64(speed));
-      }
+        let args: Vec<String> = env::args().collect();
+        if args.len() < 3 {
+            eprintln!("Usage: {0} <width> <speed>", args[0]);
+            return Ok(());
+        }
+        let width: usize = args[1].parse().expect("Width should be a number");
+        let speed: f64 = args[2].parse().expect("Speed should be a number");
+
+        let data = fetch_top_stories("politics").await?;
+        let mut full_text = String::new();
+        for article in data.results {
+            full_text += format!("{} - {} | ", article.title, article.r#abstract).as_str();
+        }
+
+        // This loop prints the scrolling text
+        for _ in 0..(30.0 * 60.0 / speed) as usize {
+            let cycled_chars = full_text.chars().cycle();
+            for start in 0..full_text.len() {
+                let chunk: String = cycled_chars.clone().skip(start).take(width).collect();
+                println!("{}", chunk);
+                thread::sleep(Duration::from_secs_f64(speed));
+            }
+        }
+
+        // Wait for 30 minutes before restarting
+        time::sleep(Duration::from_secs(30 * 60)).await;
     }
 }

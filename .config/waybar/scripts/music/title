@@ -1,0 +1,14 @@
+#!/bin/bash
+
+while true; do
+  title=$(playerctl metadata xesam:title 2>&1)
+
+  if [[ "$title" == "No players found" ]]; then
+    echo "No music playing"
+  else
+      echo "$title - $(playerctl metadata xesam:artist)"
+  fi
+
+  sleep 1
+done
+

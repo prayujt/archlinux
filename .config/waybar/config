@@ -6,9 +6,8 @@
     "margin": "5 17 -8 17",
     "modules-left": ["custom/hyprland", "hyprland/window"],
     "modules-center": ["custom/news"],
-
     //"modules-right": ["custom/portfolio", "pulseaudio", "clock"],
-    "modules-right": ["custom/cava", "pulseaudio", "clock", "custom/notification"],
+    "modules-right": ["pulseaudio", "clock", "custom/notification"],
 
 
     //***************************
@@ -55,7 +54,7 @@
     },
 
     "custom/news": {
-        "format": " {}",
+        "format": "  {}",
         "exec": "news 75 0.06"
     },
 
@@ -103,9 +102,26 @@
     "height": 30,
     "margin": "5 17 -8 17",
     "modules-left": ["custom/hyprland"],
+    "modules-center": ["custom/music-left", "custom/music", "custom/music-right"],
 
     "custom/hyprland": {
         "format": "{}",
         "exec": "hyprland_events 2"
-    }
+    },
+
+    "custom/music": {
+        "format": "{}",
+        "exec": "scripts/music/title",
+    },
+
+    "custom/music-left": {
+        "format": "◀",
+        "on-click": "playerctl previous",
+    },
+
+    "custom/music-right": {
+        "format": "▶",
+        "on-click": "playerctl next",
+    },
+
 }]

@@ -178,3 +178,33 @@ window#waybar.hidden {
     border-radius: 10px;
     color: #ff2222;
 }
+
+#custom-music-left {
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 10px 0px 0px 10px;
+    transition: none;
+    color: #ffffff;
+    background: #383c4a;
+    margin: 0 0px;
+}
+
+#custom-music-right {
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 0px 10px 10px 0px;
+    transition: none;
+    color: #ffffff;
+    background: #383c4a;
+    margin: 0 0px;
+}
+
+#custom-music {
+    padding-left: 15px;
+    padding-right: 15px;
+    border-radius: 0px;
+    transition: none;
+    color: #ffffff;
+    background: #383c4a;
+    margin: 0 0px;
+}
