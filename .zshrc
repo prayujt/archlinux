@@ -10,6 +10,7 @@ plugins=(git dotenv nvm)
 source $ZSH/oh-my-zsh.sh
 
 alias vim=nvim
+alias mysql=mariadb
 alias path=realpath
 alias ls=lsd
 alias graph='git log --all --decorate --oneline --graph'
@@ -101,7 +102,7 @@ export HYPRSHOT_DIR=/home/prayuj/Pictures/screenshots
 export EDITOR=nvim
 export VISUAL=nvim
 export TERM=xterm-256color
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+export JAVA_HOME=/usr/lib/jvm/default
 export TERMINAL="alacritty"
 export LD_LIBRARY_PATH=/opt/cuda/lib
 export DOCKER_BUILDKIT=1
@@ -110,7 +111,6 @@ source ~/.keys
 export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/opt/cuda
 export PATH=$PATH:/opt/cuda/bin
-export PATH=$PATH:/usr/lib/jvm/java-11-openjdk
 export PATH=$PATH:/home/prayuj/.emacs.d/bin
 export PATH=$PATH:/home/prayuj/.scripts
 export PATH=$PATH:/home/prayuj/.scripts/bin
@@ -148,3 +148,4 @@ eval "$(zoxide init zsh)"
 #export NVM_DIR="$HOME/.config/nvm"
 #[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 #[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+. "/home/prayuj/.deno/env"

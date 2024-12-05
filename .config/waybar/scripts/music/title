@@ -3,7 +3,7 @@
 while true; do
   title=$(playerctl metadata xesam:title 2>&1)
 
-  if [[ "$title" == "No players found" ]]; then
+  if [[ "$title" == "No players found" ]] || [[ "$title" == "No player could handle this command" ]]; then
     echo "No music playing"
   else
       echo "$title - $(playerctl metadata xesam:artist)"
