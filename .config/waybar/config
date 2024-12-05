@@ -33,7 +33,7 @@
     "pulseaudio": {
         "scroll-step": 1,
         "reverse-scrolling": 1,
-        "format": "{icon} {volume}%",
+        "format": "{icon}  {volume}%",
         "format-muted": " {volume}%",
         "format-icons": {
             "default": ["", "", ""]
@@ -111,22 +111,22 @@
 
     "custom/music": {
         "format": "{}",
-        "exec": "scripts/music/title",
+        "exec": "~/.config/waybar/scripts/music/title",
     },
 
     "custom/music-left": {
-        "format": "◀",
+        "format": "",
         "on-click": "playerctl previous",
     },
 
     "custom/music-right": {
-        "format": "▶",
+        "format": "",
         "on-click": "playerctl next",
     },
 
     "custom/music-play-pause": {
         "format": "{}",
-        "exec": "scripts/music/status",
+        "exec": "~/.config/waybar/scripts/music/status",
         "on-click": "playerctl play-pause",
     },
 }]

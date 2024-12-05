@@ -522,9 +522,9 @@
 (defun gradle-run (gradle-tasks)
   (gradle-kill-compilation-buffer)
   (let ((default-directory
-         (gradle-run-from-dir (if gradle-use-gradlew
-                                  'gradle-is-gradlew-dir
-                                'gradle-is-project-dir))))
+          (gradle-run-from-dir (if gradle-use-gradlew
+                                   'gradle-is-gradlew-dir
+                                 'gradle-is-project-dir))))
     (compile (gradle-make-command gradle-tasks))))
 
 (defun gradle-make-command (gradle-tasks)

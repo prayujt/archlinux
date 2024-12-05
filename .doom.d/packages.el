@@ -19,6 +19,8 @@
 (package! lsp-ui)
 (package! prisma-ts-mode)
 (package! ponylang-mode)
+(package! arduino-mode)
+(package! arduino-cli-mode)
 
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
