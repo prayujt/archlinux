@@ -18,16 +18,42 @@
 (setq evil-default-state 'normal)
 (setq evil-motion-state-cursor 'box)
 
+(evil-set-undo-system 'undo-redo)
+
+(setq evil-undo-system 'undo-redo)
+
+(require 'evil-escape)
+(evil-escape-mode 1)
+(setq-default evil-escape-key-sequence "qw")
+(setq-default evil-escape-delay 0.1)
+(setq evil-escape-unordered-key-sequence t)
+
+(require 'dashboard)
+(dashboard-setup-startup-hook)
+
+(setq dashboard-heading-shorcut-format " [%s]")
+(setq dashboard-items '((projects   . 5)
+                        (recents  . 5)
+                        (agenda    . 5)))
+(setq dashboard-item-shortcuts '((recents   . "r")
+                                 (projects  . "p")
+                                 (agenda    . "a")))
+
+(with-eval-after-load 'dashboard
+  (evil-define-key 'normal dashboard-mode-map (kbd "r") 'dashboard-jump-to-recents)
+  (evil-define-key 'normal dashboard-mode-map (kbd "p") 'dashboard-jump-to-projects))
+
+
 (when (eq system-type 'darwin)
   (setq exec-path (append '("/opt/homebrew/bin" "/Users/prayuj/.nvm/versions/node/v22.3.0/bin") exec-path))
   (setenv "PATH" (concat "/opt/homebrew/bin:/Users/prayuj/.nvm/versions/node/v22.3.0/bin:" (getenv "PATH"))))
 
 (when (eq system-type 'gnu/linux)
-  (setq exec-path (append '("/home/prayuj/.go/bin") exec-path))
-  (setenv "PATH" (concat "/home/prayuj/.go/bin:" (getenv "PATH"))))
+  (setq exec-path (append '("/home/prayuj/.go/bin" "/home/prayuj/.local/bin") exec-path))
+  (setenv "PATH" (concat "/home/prayuj/.go/bin:/home/prayuj/.local/bin" (getenv "PATH"))))
 
 (require 'elcord)
-(elcord-mode)
+(elcord-mode 1)
 
 (require 'ivy)
 (ivy-mode 1)
@@ -41,7 +67,6 @@
 
 (setq doom-themes-enable-bold t)    ; if nil, bold is universally disabled
 (setq doom-themes-enable-italic t) ; if nil, italics is universally disabled
-(load-theme 'doom-one-light t)
 
 (global-display-line-numbers-mode)
 (setq display-line-numbers-type 'relative)
@@ -59,6 +84,27 @@
       (call-interactively 'projectile-switch-project)
     (call-interactively 'projectile-find-file)))
 
+(require 'copilot)
+(add-hook 'prog-mode-hook 'copilot-mode)
+
+(define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+(define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
+
+(require 'aider)
+(setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
+
+(defun load-api-key (file-path)
+  "Load the secret key from a file and set it as an environment variable."
+  (let ((key (with-temp-buffer
+               (insert-file-contents file-path)
+               (buffer-string))))
+    (setenv "ANTHROPIC_API_KEY" (string-trim key))))
+
+(when (eq system-type 'gnu/linux)
+  (load-api-key "/home/prayuj/.emacs.d/.anthropic-key.txt"))
+
+(global-set-key (kbd "C-c a") 'aider-transient-menu)
+
 
 ;; ----- Language Modes -----
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
@@ -66,9 +112,7 @@
 
 (add-to-list 'auto-mode-alist '("\\.go\\'" . go-mode))
 
-(add-hook 'typescript-mode-hook #'lsp-bridge-mode)
-(add-hook 'python-mode-hook #'lsp-bridge-mode)
-(add-hook 'go-mode-hook #'lsp-bridge-mode)
+(global-lsp-bridge-mode)
 
 ;; ----- LSP Configs -----
 (setq lsp-bridge-enable-hover-diagnostic t)  ;; show diagnostics in hover popups
@@ -85,18 +129,18 @@
 
 
 ;; ----- Language Configs -----
+(setq lisp-indent-offset 2)
 (setq typescript-indent-level 2)
 
 
 ;; ----- Key Bindings -----
 
-;; --- Global Bindings ---
+;; --- Evil Bindings ---
 (with-eval-after-load 'evil
-  (define-key evil-insert-state-map (kbd "q w") 'evil-normal-state)
   (define-key evil-normal-state-map (kbd "SPC f s") 'save-buffer)
   (define-key evil-normal-state-map (kbd "SPC `") 'evil-switch-to-windows-last-buffer)
 
-  ;; --- Window Bindings ---
+  ;; --- Windows ---
   (define-key evil-normal-state-map (kbd "SPC w c") 'delete-window)
   (define-key evil-normal-state-map (kbd "M-RET") 'evil-window-vsplit)
 
@@ -116,10 +160,9 @@
   (define-key evil-normal-state-map (kbd "SPC ?") 'projectile-ripgrep))
 
 
-(global-set-key (kbd "C-/") 'swiper)
+;; --- Global Bindings ---
+(global-set-key (kbd "C-s") 'swiper)
 (global-set-key (kbd "M-x") 'counsel-M-x) ;; overrides default command exec
-
-
 
 
 ;; --- Mode Bindings ---
