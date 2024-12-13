@@ -119,6 +119,10 @@ export PATH=$PATH:/home/prayuj/.thinkorswim
 export PATH=$PATH:$GOPATH/bin
 export PATH=$PATH:/home/prayuj/.cargo/bin
 export PATH=$PATH:/home/prayuj/.config/emacs/bin
+export PATH=$PATH:/usr/local/sbin
+export PATH=$PATH:/home/prayuj/.config/nvm/versions/node/v22.2.0/bin
+
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word
