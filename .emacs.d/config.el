@@ -10,8 +10,32 @@
 (setq scroll-margin 3)      ;; number of lines to keep visible at top and bottom
 (setq auto-window-vscroll nil)  ;; disables automatic vertical scrolling when resizing windows
 
+;; --- Window splitting ---
+(add-hook 'compilation-start-hook
+  (lambda (_process)
+    (when-let ((result (get-buffer-window "*compilation*")))
+      (select-window result))))
+
+(setq display-buffer-alist
+  `(("*compilation*"
+      (display-buffer-reuse-window display-buffer-at-bottom)
+      (reusable-frames . visible)
+      (window-height . 0.3))
+     ("*dashboard*"
+       (display-buffer-reuse-window display-buffer-same-window)
+       (reusable-frames . visible))
+     ("^magit:.*"
+       (display-buffer-in-side-window)
+       (side . right)
+       (slot . 0)
+       (window-width . 0.4))
+     ;; all other buffers use default rules
+     (".*"
+       (display-buffer-reuse-window display-buffer-same-window))))
+
 
 ;; ----- Functionality -----
+(setq evil-want-keybinding nil)
 (require 'evil)
 (evil-mode 1)
 
@@ -26,7 +50,9 @@
 (evil-escape-mode 1)
 (setq-default evil-escape-key-sequence "qw")
 (setq-default evil-escape-delay 0.1)
-(setq evil-escape-unordered-key-sequence t)
+
+(require 'evil-collection)
+(evil-collection-init '(dired magit mu4e))
 
 (require 'dashboard)
 (dashboard-setup-startup-hook)
@@ -45,12 +71,22 @@
 
 
 (when (eq system-type 'darwin)
-  (setq exec-path (append '("/opt/homebrew/bin" "/Users/prayuj/.nvm/versions/node/v22.3.0/bin") exec-path))
-  (setenv "PATH" (concat "/opt/homebrew/bin:/Users/prayuj/.nvm/versions/node/v22.3.0/bin:" (getenv "PATH"))))
+  (setq exec-path (append '("/opt/homebrew/bin" "/Users/prayuj/.go/bin" "/Users/prayuj/.nvm/versions/node/v22.3.0/bin") exec-path))
+  (setenv "PATH" (concat "/opt/homebrew/bin:/Users/prayuj/.go/bin:/Users/prayuj/.nvm/versions/node/v22.3.0/bin:" (getenv "PATH")))
+  (setenv "GOPATH" "/Users/prayuj/.go"))
 
 (when (eq system-type 'gnu/linux)
   (setq exec-path (append '("/home/prayuj/.go/bin" "/home/prayuj/.local/bin") exec-path))
-  (setenv "PATH" (concat "/home/prayuj/.go/bin:/home/prayuj/.local/bin" (getenv "PATH"))))
+  (setenv "PATH" (concat "/home/prayuj/.go/bin:/home/prayuj/.local/bin" (getenv "PATH")))
+  (setenv "GOPATH" "/home/prayuj/.go"))
+
+(require 'mu4e)
+;; Set the mail directory
+(setq mu4e-maildir "~/Mail")
+
+;; Define subdirectories (these depend on your mail setup)
+(setq mu4e-maildir-shortcuts
+  '((:maildir "/Gmail/inbox" :key ?g)))
 
 (require 'elcord)
 (elcord-mode 1)
@@ -114,6 +150,9 @@
 
 (global-lsp-bridge-mode)
 
+(add-to-list 'copilot-indentation-alist
+  '(go-mode 4))
+
 ;; ----- LSP Configs -----
 (setq lsp-bridge-enable-hover-diagnostic t)  ;; show diagnostics in hover popups
 (setq lsp-bridge-signature-help-enable t)    ;; enable signature help
@@ -138,6 +177,7 @@
 ;; --- Evil Bindings ---
 (with-eval-after-load 'evil
   (define-key evil-normal-state-map (kbd "SPC f s") 'save-buffer)
+  (define-key evil-normal-state-map (kbd "SPC f r") 'recentf-open)
   (define-key evil-normal-state-map (kbd "SPC `") 'evil-switch-to-windows-last-buffer)
 
   ;; --- Windows ---
@@ -163,9 +203,69 @@
 ;; --- Global Bindings ---
 (global-set-key (kbd "C-s") 'swiper)
 (global-set-key (kbd "M-x") 'counsel-M-x) ;; overrides default command exec
+(global-set-key (kbd "C-<tab>") 'other-window) ;; overrides default command exec
 
 
 ;; --- Mode Bindings ---
+
+(defun latex-compile ()
+  (interactive)
+  (compile (concat "pdflatex " buffer-file-name " && rm -rf *.log *.aux *.out")))
+
+(defun latex-open ()
+  (interactive)
+  (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
+
+(add-hook 'tex-mode-hook
+  (lambda ()
+    (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)
+    (define-key tex-mode-map (kbd "C-c C-x") 'latex-open)))
+
+(defun go-compile ()
+  "Compile or test Go files based on the current buffer."
+  (interactive)
+  (let ((project-root (or (projectile-project-root)
+                          (error "Not in a Projectile project"))))
+    (cd project-root)
+    (if (string-match-p "_test\\.go\\'" (file-name-nondirectory buffer-file-name))
+        (compile "go test -v ./...")
+      (compile "go get && go build && rm -rf ~/go"))))
+
+(add-hook 'go-mode-hook
+  (lambda ()
+    (define-key go-mode-map (kbd "C-c C-c") 'go-compile)))
+
+
+;; --- Magit Bindings ---
+(defun magit-stash-current-buffer-file ()
+  "Stash changes to the file in the current buffer with a prompt for a message.
+The default message includes the branch name and latest commit hash."
+  (interactive)
+  (let* ((file (buffer-file-name))
+         (branch (magit-get-current-branch))
+         (commit (magit-git-string "rev-parse" "--short" "HEAD"))
+         (default-message (format "%s changing some more things" commit))
+         (message (read-string
+                   (format "Stash message (default: %s): " default-message)
+                   nil nil default-message)))
+    (if file
+        (magit-run-git "stash" "push" "-m" message "--" file)
+      (message "Current buffer is not visiting a file!"))))
+
+(global-set-key (kbd "C-c C-g") 'magit-status)
+(global-set-key (kbd "C-c C-p") 'magit-pull)
+(global-set-key (kbd "C-c C-a") 'magit-stage-buffer-file)
+(global-set-key (kbd "C-c C-u") 'magit-unstage-buffer-file)
+(global-set-key (kbd "C-c C-s") 'magit-stash-current-buffer-file)
+
+(with-eval-after-load 'magit
+  (define-key magit-mode-map (kbd "^") 'evil-beginning-of-line)
+  (define-key magit-mode-map (kbd "w") 'evil-forward-word-begin)
+  (define-key magit-mode-map (kbd "l") 'evil-forward-char)
+  (define-key magit-mode-map (kbd "h") 'evil-backward-char)
+  (define-key magit-mode-map (kbd "P") 'magit-pull)
+  (define-key magit-mode-map (kbd "L") 'magit-log)
+  (define-key magit-mode-map (kbd "H") 'magit-dispatch))
 
 ;; Ivy
 
