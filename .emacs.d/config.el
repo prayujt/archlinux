@@ -54,6 +54,13 @@
 (require 'evil-collection)
 (evil-collection-init '(dired magit mu4e))
 
+(require 'evil-org)
+(add-hook 'org-mode-hook 'evil-org-mode)
+(evil-org-set-key-theme '(navigation insert textobjects additional calendar))
+
+(require 'evil-org-agenda)
+(evil-org-agenda-set-keys)
+
 (require 'dashboard)
 (dashboard-setup-startup-hook)
 
@@ -84,9 +91,30 @@
 ;; Set the mail directory
 (setq mu4e-maildir "~/Mail")
 
-;; Define subdirectories (these depend on your mail setup)
+;; Account settings
+(setq mu4e-contexts
+    `(,(make-mu4e-context
+	:name "Gmail"
+	:match-func (lambda (msg) (when msg (string-prefix-p "/Gmail" (mu4e-message-field msg :maildir))))
+	:vars '((user-mail-address      . "prayujtuli@gmail.com")
+		(user-full-name         . "Prayuj Tuli")
+		(mu4e-sent-folder       . "/Gmail/[GMAIL].SENT MAIL")
+		(mu4e-drafts-folder     . "/Gmail/[GMAIL].DRAFTS")
+		(mu4e-refile-folder     . "/Gmail/[Gmail].All Mail")))))
+
+;; Keybindings for mu4e
+(global-set-key (kbd "C-c m") 'mu4e)
+
+(evil-define-key 'normal mu4e-headers-mode-map
+  (kbd "j") 'evil-next-line
+  (kbd "k") 'evil-previous-line)
+
 (setq mu4e-maildir-shortcuts
-  '((:maildir "/Gmail/inbox" :key ?g)))
+  '((:maildir "/Gmail/Inbox" :key ?g)))
+
+;; Org Agenda
+(setq org-agenda-files '("~/.emacs.d/org"))
+
 
 (require 'elcord)
 (elcord-mode 1)
@@ -145,8 +173,12 @@
 ;; ----- Language Modes -----
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
-
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 (add-to-list 'auto-mode-alist '("\\.go\\'" . go-mode))
+
+(add-hook 'yaml-mode-hook
+  '(lambda ()
+     (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
 
 (global-lsp-bridge-mode)
 
