@@ -23,6 +23,12 @@
 (unless (package-installed-p 'doom-themes)
   (package-install 'doom-themes))
 
+(unless (package-installed-p 'evil-org)
+  (package-install 'evil-org))
+
+(unless (package-installed-p 'org-timeblock)
+  (package-install 'org-timeblock))
+
 (when (eq system-type 'darwin)
   (add-to-list 'load-path "/opt/homebrew/share/emacs/site-lisp/mu4e"))
 
@@ -39,6 +45,9 @@
 
 (unless (package-installed-p 'markdown-mode)
   (package-install 'markdown-mode))
+
+(unless (package-installed-p 'yaml-mode)
+  (package-install 'yaml-mode))
 
 
 (unless (package-installed-p 'elcord)
