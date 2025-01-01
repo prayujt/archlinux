@@ -3,6 +3,9 @@
 (menu-bar-mode -1) ;; disable menu bar
 
 (scroll-bar-mode -1) ;; disable scroll bar
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+(setq indent-line-function 'insert-tab)
 
 ;; --- Smooth scrolling ---
 (setq scroll-step 1)        ;; scroll one line at a time
@@ -226,6 +229,7 @@
 
   (define-key evil-normal-state-map (kbd "SPC SPC") 'projectile-search-file)
   (define-key evil-normal-state-map (kbd "SPC p s") 'projectile-switch-project)
+  (define-key evil-normal-state-map (kbd "SPC p i") 'projectile-invalidate-cache)
   (define-key evil-normal-state-map (kbd "SPC f f") 'counsel-find-file)
 
   (define-key evil-normal-state-map (kbd "SPC /") 'counsel-projectile-rg)
@@ -233,6 +237,7 @@
 
 
 ;; --- Global Bindings ---
+(global-set-key (kbd "C-c C-w") 'whitespace-mode)
 (global-set-key (kbd "C-s") 'swiper)
 (global-set-key (kbd "M-x") 'counsel-M-x) ;; overrides default command exec
 (global-set-key (kbd "C-<tab>") 'other-window) ;; overrides default command exec
