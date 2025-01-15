@@ -49,6 +49,9 @@
 (unless (package-installed-p 'yaml-mode)
   (package-install 'yaml-mode))
 
+(unless (package-installed-p 'svelte-mode)
+  (package-install 'svelte-mode))
+
 
 (unless (package-installed-p 'elcord)
   (package-install 'elcord))

@@ -24,6 +24,11 @@
       (display-buffer-reuse-window display-buffer-at-bottom)
       (reusable-frames . visible)
       (window-height . 0.3))
+     ("*run*"
+       (display-buffer-in-side-window)
+       (side . right)
+       (slot . 0)
+       (window-width . 0.4))
      ("*dashboard*"
        (display-buffer-reuse-window display-buffer-same-window)
        (reusable-frames . visible))
@@ -74,6 +79,7 @@
 (setq dashboard-item-shortcuts '((recents   . "r")
                                  (projects  . "p")
                                  (agenda    . "a")))
+(setq dashboard-projects-backend 'projectile)
 
 (with-eval-after-load 'dashboard
   (evil-define-key 'normal dashboard-mode-map (kbd "r") 'dashboard-jump-to-recents)
@@ -153,6 +159,7 @@
 
 (require 'copilot)
 (add-hook 'prog-mode-hook 'copilot-mode)
+(setq copilot-max-char -1)
 
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
@@ -238,13 +245,111 @@
 
 ;; --- Global Bindings ---
 (global-set-key (kbd "C-c C-w") 'whitespace-mode)
+(global-set-key (kbd "C-/") 'comment-line)
 (global-set-key (kbd "C-s") 'swiper)
 (global-set-key (kbd "M-x") 'counsel-M-x) ;; overrides default command exec
 (global-set-key (kbd "C-<tab>") 'other-window) ;; overrides default command exec
 
 
 ;; --- Mode Bindings ---
+(defun run (command directory)
+  "Run a shell COMMAND in a specified DIRECTORY and display the output in a dedicated buffer.
+Automatically checks for a .env file in DIRECTORY and sources it if present."
+  (let* ((run-buffer-name "*run*")
+         (default-directory (or directory default-directory))
+         (env-file (expand-file-name ".env" default-directory))
+         (env-status (if (file-exists-p env-file) "Included" "Not found"))
+         (timestamp (format-time-string "%a %b %d %H:%M:%S"))
+         (header (format "-*- mode: run; default-directory: \"%s\" -*-\n-*- .env: %s -*-\nCompilation started at %s\n\n"
+                         default-directory env-status timestamp))
+        (full-command (if (file-exists-p env-file)
+                        (format "bash -c 'export $(grep -v '^#' %s | xargs) && %s'" env-file command)
+                        command)))
+    (with-current-buffer (get-buffer-create run-buffer-name)
+      (read-only-mode -1) ;; Allow writing to the buffer
+      (erase-buffer) ;; Clear the buffer for new output
+      (insert header)
+      (insert (format "%s\n" command)) ;; Command summary
+      (insert "\n")
+      (start-process-shell-command
+       "run-command" run-buffer-name full-command)
+      (read-only-mode 1)) ;; Set buffer to read-only mode
+    (pop-to-buffer run-buffer-name)))
 
+;; --- Go ---
+(defun go-compile ()
+  "Compile or test Go files based on the current buffer."
+  (interactive)
+  (if (string-match-p "_test\\.go\\'" (file-name-nondirectory buffer-file-name))
+    (compile (concat "go test -v " buffer-file-name))
+    (let ((project-root (or (projectile-project-root)
+                          (error "Not in a Projectile project"))))
+      (cd project-root)
+      (compile "make build"))))
+
+(defun go-run ()
+  "Run the current Go project with env"
+  (interactive)
+  (let* ((project-root (or (projectile-project-root)
+                           (error "Not in a Projectile project")))
+         (env-file (expand-file-name ".env" project-root)))
+    (run "make" project-root)))
+
+(add-hook 'go-mode-hook
+  (lambda ()
+    (add-hook 'before-save-hook 'gofmt-before-save nil t)
+    (define-key go-mode-map (kbd "C-c C-c") 'go-compile)
+    (define-key go-mode-map (kbd "C-c C-x") 'go-run)))
+
+
+;; --- TypeScript ---
+(defun ts-compile ()
+  "Compile the current TypeScript project."
+  (interactive)
+  (let ((project-root (or (projectile-project-root)
+                        (error "Not in a Projectile project"))))
+    (cd project-root)
+    (compile "npm run build")))
+
+(defun ts-run ()
+  "Run a development server for the current TypeScript project."
+  (interactive)
+  (let ((project-root (or (projectile-project-root)
+                        (error "Not in a Projectile project"))))
+    (cd project-root)
+    (run "npm run dev" project-root)))
+
+(add-hook 'typescript-mode-hook
+  (lambda ()
+    (define-key typescript-mode-map (kbd "C-c C-c") 'ts-compile)
+    (define-key typescript-mode-map (kbd "C-c C-x") 'ts-run)))
+
+;; --- Java ---
+(defun find-pom-directory (root)
+  "Recursively find the directory containing a pom.xml starting from ROOT."
+  (let ((subdirs (directory-files root t "^[^.].*")) ; Exclude `.` and `..`
+        (found nil))
+    (dolist (dir subdirs found)
+      (when (and (file-directory-p dir)
+                 (file-exists-p (expand-file-name "pom.xml" dir)))
+        (setq found dir)))
+    (or found root)))
+
+(defun java-compile ()
+  "Compile the current Java project using Maven."
+  (interactive)
+  (if-let ((project-root (projectile-project-root)))
+      (let ((pom-dir (find-pom-directory project-root)))
+        (cd pom-dir)
+        (compile "mvn package"))
+    (error "Not in a Projectile project")))
+
+(add-hook 'java-mode-hook
+  (lambda ()
+    (define-key java-mode-map (kbd "C-c C-w") 'whitespace-mode)
+    (define-key java-mode-map (kbd "C-c C-c") 'java-compile)))
+
+;; --- LaTeX ---
 (defun latex-compile ()
   (interactive)
   (compile (concat "pdflatex " buffer-file-name " && rm -rf *.log *.aux *.out")))
@@ -257,20 +362,6 @@
   (lambda ()
     (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)
     (define-key tex-mode-map (kbd "C-c C-x") 'latex-open)))
-
-(defun go-compile ()
-  "Compile or test Go files based on the current buffer."
-  (interactive)
-  (let ((project-root (or (projectile-project-root)
-                          (error "Not in a Projectile project"))))
-    (cd project-root)
-    (if (string-match-p "_test\\.go\\'" (file-name-nondirectory buffer-file-name))
-        (compile "go test -v ./...")
-      (compile "go get && go build && rm -rf ~/go"))))
-
-(add-hook 'go-mode-hook
-  (lambda ()
-    (define-key go-mode-map (kbd "C-c C-c") 'go-compile)))
 
 
 ;; --- Magit Bindings ---
