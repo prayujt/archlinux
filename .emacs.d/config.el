@@ -92,8 +92,8 @@
   (setenv "GOPATH" "/Users/prayuj/.go"))
 
 (when (eq system-type 'gnu/linux)
-  (setq exec-path (append '("/home/prayuj/.go/bin" "/home/prayuj/.local/bin") exec-path))
-  (setenv "PATH" (concat "/home/prayuj/.go/bin:/home/prayuj/.local/bin" (getenv "PATH")))
+  (setq exec-path (append '("/home/prayuj/.go/bin" "/home/prayuj/.local/bin" "/home/prayuj/.config/nvm/versions/node/v22.2.0/bin") exec-path))
+  (setenv "PATH" (concat "/home/prayuj/.go/bin:/home/prayuj/.local/bin:/home/prayuj/.config/nvm/versions/node/v22.2.0/bin" (getenv "PATH")))
   (setenv "GOPATH" "/home/prayuj/.go"))
 
 (require 'mu4e)
@@ -134,7 +134,6 @@
 (setq ivy-use-virtual-buffers t)  ;; enable ivy recent files and bookmarks
 (setq ivy-count-format "(%d/%d) ")  ;; show result counts
 
-(require 'lsp-bridge)
 (require 'yasnippet)
 (yas-global-mode 1)
 
@@ -161,6 +160,11 @@
 (add-hook 'prog-mode-hook 'copilot-mode)
 (setq copilot-max-char -1)
 
+(add-to-list 'copilot-indentation-alist '(typescript-mode 2))
+(add-to-list 'copilot-indentation-alist '(go-mode 4))
+(add-to-list 'copilot-indentation-alist '(python-mode 4))
+(add-to-list 'copilot-indentation-alist '(lisp-mode 2))
+
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
 
@@ -181,24 +185,43 @@
 
 
 ;; ----- Language Modes -----
+(require 'web-mode)
+
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
+
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+
 (add-to-list 'auto-mode-alist '("\\.go\\'" . go-mode))
+
+(add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.svelte\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
 
 (add-hook 'yaml-mode-hook
   '(lambda ()
      (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
 
-(global-lsp-bridge-mode)
-
-(add-to-list 'copilot-indentation-alist
-  '(go-mode 4))
 
 ;; ----- LSP Configs -----
+(require 'lsp-bridge)
+
+(global-lsp-bridge-mode)
+
+(setq lsp-bridge-enable-log 't)
+(setq lsp-bridge-python-lsp-server 'pylsp)
 (setq lsp-bridge-enable-hover-diagnostic t)  ;; show diagnostics in hover popups
 (setq lsp-bridge-signature-help-enable t)    ;; enable signature help
 (setq lsp-bridge-enable-log nil) ;; ensure logging is disabled for performance
+(setq lsp-bridge-single-lang-server-mode-list
+  '(((web-mode) . "svelteserver")))
+(setq lsp-bridge-get-language-id
+(lambda (project-path file-path server-name extension-name)
+(when (string-equal server-name "tailwindcss")
+    (cond ((string-equal extension-name "html") "html")
+        ((string-equal extension-name "svelte") "svelte")
+        (t "")))))
 
 (with-eval-after-load 'lsp-bridge
   (evil-define-key 'insert lsp-bridge-mode-map
@@ -352,7 +375,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 ;; --- LaTeX ---
 (defun latex-compile ()
   (interactive)
-  (compile (concat "pdflatex " buffer-file-name " && rm -rf *.log *.aux *.out")))
+  (compile (concat "pdflatex " buffer-file-name " && rm -rf *.log *.aux *.out *.run.xml")))
 
 (defun latex-open ()
   (interactive)
