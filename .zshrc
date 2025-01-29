@@ -21,6 +21,7 @@ alias record_screen='wf-recorder --muxer=v4l2 --codec=rawvideo --file=/dev/video
 alias ws='wscat --connect'
 alias waybar_restart='killall -SIGUSR2 waybar'
 alias c='z'
+alias activate='source ~/.miniconda3/bin/activate ml4t'
 
 open() {
   xdg-open "$1" &
@@ -81,6 +82,7 @@ export PATH=$PATH:/home/prayuj/.cargo/bin
 export PATH=$PATH:/home/prayuj/.config/emacs/bin
 export PATH=$PATH:/usr/local/sbin
 export PATH=$PATH:/home/prayuj/.config/nvm/versions/node/v22.2.0/bin
+export PATH=$PATH:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl
 
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
@@ -109,6 +111,6 @@ esac
 eval "$(zoxide init zsh)"
 # pnpm end
 
-#export NVM_DIR="$HOME/.config/nvm"
+export NVM_DIR="$HOME/.config/nvm"
 #[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 #[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
