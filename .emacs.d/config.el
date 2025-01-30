@@ -209,19 +209,13 @@
 
 (global-lsp-bridge-mode)
 
-(setq lsp-bridge-enable-log 't)
 (setq lsp-bridge-python-lsp-server 'pylsp)
 (setq lsp-bridge-enable-hover-diagnostic t)  ;; show diagnostics in hover popups
 (setq lsp-bridge-signature-help-enable t)    ;; enable signature help
 (setq lsp-bridge-enable-log nil) ;; ensure logging is disabled for performance
 (setq lsp-bridge-single-lang-server-mode-list
   '(((web-mode) . "svelteserver")))
-(setq lsp-bridge-get-language-id
-(lambda (project-path file-path server-name extension-name)
-(when (string-equal server-name "tailwindcss")
-    (cond ((string-equal extension-name "html") "html")
-        ((string-equal extension-name "svelte") "svelte")
-        (t "")))))
+
 
 (with-eval-after-load 'lsp-bridge
   (evil-define-key 'insert lsp-bridge-mode-map
