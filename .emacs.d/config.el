@@ -213,8 +213,11 @@
 (setq lsp-bridge-enable-hover-diagnostic t)  ;; show diagnostics in hover popups
 (setq lsp-bridge-signature-help-enable t)    ;; enable signature help
 (setq lsp-bridge-enable-log nil) ;; ensure logging is disabled for performance
-(setq lsp-bridge-single-lang-server-mode-list
-  '(((web-mode) . "svelteserver")))
+
+(add-to-list 'lsp-bridge-single-lang-server-mode-list '((web-mode) . "svelteserver"))
+
+;; (setq lsp-bridge-single-lang-server-mode-list
+  ;; '(((web-mode) . "svelteserver")))
 
 
 (with-eval-after-load 'lsp-bridge
@@ -229,6 +232,9 @@
 ;; ----- Language Configs -----
 (setq lisp-indent-offset 2)
 (setq typescript-indent-level 2)
+(setq web-mode-markup-indent-offset 2)
+
+(setq-default indent-tabs-mode nil)
 
 
 ;; ----- Key Bindings -----
@@ -340,6 +346,29 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
   (lambda ()
     (define-key typescript-mode-map (kbd "C-c C-c") 'ts-compile)
     (define-key typescript-mode-map (kbd "C-c C-x") 'ts-run)))
+
+;; --- Web ---
+(defun web-compile ()
+  "Compile the current TypeScript project."
+  (interactive)
+  (let ((project-root (or (projectile-project-root)
+                        (error "Not in a Projectile project"))))
+    (cd project-root)
+    (compile "yarn build")))
+
+(defun web-run ()
+  "Run a development server for the current TypeScript project."
+  (interactive)
+  (let ((project-root (or (projectile-project-root)
+                        (error "Not in a Projectile project"))))
+    (cd project-root)
+    (run "yarn dev" project-root)))
+
+(add-hook 'web-mode-hook
+  (lambda ()
+    (define-key web-mode-map (kbd "C-c C-c") 'web-compile)
+    (define-key web-mode-map (kbd "C-c C-x") 'web-run)))
+
 
 ;; --- Java ---
 (defun find-pom-directory (root)
