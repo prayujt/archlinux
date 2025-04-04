@@ -14,7 +14,7 @@ alias mysql=mariadb
 alias path=realpath
 alias ls=lsd
 alias graph='git log --all --decorate --oneline --graph'
-alias copy='xclip -selection clipboard'
+alias copy='wl-copy'
 alias volume='~/.scripts/pulseaudio | wob -c ~/.config/wob/wob.ini &; disown'
 alias wallpaper='killall hyprpaper; hyprpaper &; disown'
 alias record_screen='wf-recorder --muxer=v4l2 --codec=rawvideo --file=/dev/video4 -x yuv420p'
@@ -22,6 +22,10 @@ alias ws='wscat --connect'
 alias waybar_restart='killall -SIGUSR2 waybar'
 alias c='z'
 alias activate='source ~/.miniconda3/bin/activate ml4t'
+
+planewise() {
+    PGPASSWORD=$(pass planewise/rds) psql -h planewise-psql.cjeqfhagckjg.us-east-1.rds.amazonaws.com -U planewise sslmode=require
+}
 
 open() {
   xdg-open "$1" &

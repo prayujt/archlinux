@@ -164,6 +164,7 @@
 (add-to-list 'copilot-indentation-alist '(go-mode 4))
 (add-to-list 'copilot-indentation-alist '(python-mode 4))
 (add-to-list 'copilot-indentation-alist '(lisp-mode 2))
+(add-to-list 'copilot-indentation-alist '(sql-mode 2))
 
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
@@ -398,7 +399,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 ;; --- LaTeX ---
 (defun latex-compile ()
   (interactive)
-  (compile (concat "pdflatex " buffer-file-name " && rm -rf *.log *.aux *.out *.run.xml")))
+  (compile (concat "pdflatex " buffer-file-name " && rm -rf *.log *.aux *.out")))
 
 (defun latex-open ()
   (interactive)
