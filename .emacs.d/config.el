@@ -187,6 +187,7 @@
 
 ;; ----- Language Modes -----
 (require 'web-mode)
+(require 'solidity-mode)
 
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
@@ -199,6 +200,8 @@
 (add-to-list 'auto-mode-alist '("\\.svelte\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+
+(add-to-list 'auto-mode-alist '("\\.sol\\'" . solidity-mode))
 
 (add-hook 'yaml-mode-hook
   '(lambda ()
@@ -396,6 +399,26 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
     (define-key java-mode-map (kbd "C-c C-w") 'whitespace-mode)
     (define-key java-mode-map (kbd "C-c C-c") 'java-compile)))
 
+
+;; --- C / C++ ---
+(defun c-compile ()
+  "Compile the current C / C++ project using Makefile."
+  (interactive)
+  (if-let ((project-root (projectile-project-root)))
+      (let ((makefile-dir (find-pom-directory project-root)))
+        (cd makefile-dir)
+        (compile "make"))
+    (error "Not in a Projectile project")))
+
+(add-hook 'c-mode-hook
+  (lambda ()
+    (define-key c-mode-map (kbd "C-c C-c") 'c-compile)))
+
+(add-hook 'c++-mode-hook
+  (lambda ()
+    (define-key c++-mode-map (kbd "C-c C-c") 'c-compile)))
+
+
 ;; --- LaTeX ---
 (defun latex-compile ()
   (interactive)
@@ -409,6 +432,19 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
   (lambda ()
     (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)
     (define-key tex-mode-map (kbd "C-c C-x") 'latex-open)))
+
+
+;; --- Solidity ---
+(defun solidity-compile ()
+  "Compile the current Solidity file using solc."
+  (interactive)
+  (let* ((file (buffer-file-name))
+         (default-directory (or (locate-dominating-file file ".git") default-directory)))
+    (when file
+      (compile (format "solc %s" (file-relative-name file default-directory))))))
+
+(with-eval-after-load 'solidity-mode
+  (define-key solidity-mode-map (kbd "C-c C-c") 'solidity-compile))
 
 
 ;; --- Magit Bindings ---
