@@ -1,5 +1,5 @@
 export ZSH="/home/prayuj/.config/oh-my-zsh"
-ZSH_THEME="jonathan"
+ZSH_THEME="spaceship"
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=239'
 
 zstyle ':completion:*' '' matcher-list 'm:{a-z}={A-Z}'
@@ -21,7 +21,7 @@ alias record_screen='wf-recorder --muxer=v4l2 --codec=rawvideo --file=/dev/video
 alias ws='wscat --connect'
 alias waybar_restart='killall -SIGUSR2 waybar'
 alias c='z'
-alias activate='source ~/.miniconda3/bin/activate ml4t'
+alias edugator='mysql -h database-edugator.cznhwcrim7oz.us-east-1.rds.amazonaws.com -D edugator -u admin -p'
 
 planewise() {
     PGPASSWORD=$(pass planewise/rds) psql -h planewise-psql.cjeqfhagckjg.us-east-1.rds.amazonaws.com -U planewise sslmode=require
@@ -118,3 +118,5 @@ eval "$(zoxide init zsh)"
 export NVM_DIR="$HOME/.config/nvm"
 #[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 #[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+if [ -e /home/prayuj/.nix-profile/etc/profile.d/nix.sh ]; then . /home/prayuj/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
