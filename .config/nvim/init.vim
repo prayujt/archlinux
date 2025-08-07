@@ -1,9 +1,10 @@
 let mapleader = " "
 syntax on
 set modeline
+set tabstop=2
+set softtabstop=2
+set shiftwidth=2
 set expandtab
-set tabstop=4
-set shiftwidth=4
 set secure
 set foldcolumn=0
 set relativenumber
