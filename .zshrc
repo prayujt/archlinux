@@ -3,9 +3,6 @@ ZSH_THEME="spaceship"
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=239'
 
 zstyle ':completion:*' '' matcher-list 'm:{a-z}={A-Z}'
-zstyle ':omz:plugins:nvm' lazy yes
-
-plugins=(git dotenv nvm)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -22,6 +19,9 @@ alias ws='wscat --connect'
 alias waybar_restart='killall -SIGUSR2 waybar'
 alias c='z'
 alias edugator='mysql -h database-edugator.cznhwcrim7oz.us-east-1.rds.amazonaws.com -D edugator -u admin -p'
+
+alias editenv='nvim ~/nix/flake.nix'
+alias updateenv='nix profile upgrade --profile ~/.nix-profiles/user-env nix'
 
 planewise() {
     PGPASSWORD=$(pass planewise/rds) psql -h planewise-psql.cjeqfhagckjg.us-east-1.rds.amazonaws.com -U planewise sslmode=require
@@ -105,18 +105,7 @@ export ZSH_AUTOSUGGEST_STRATEGY=(
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-# pnpm
-export PNPM_HOME="/home/prayuj/.local/share/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-
 eval "$(zoxide init zsh)"
-# pnpm end
 
-export NVM_DIR="$HOME/.config/nvm"
-#[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-#[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 if [ -e /home/prayuj/.nix-profile/etc/profile.d/nix.sh ]; then . /home/prayuj/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
