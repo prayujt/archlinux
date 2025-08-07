@@ -22,6 +22,7 @@ alias edugator='mysql -h database-edugator.cznhwcrim7oz.us-east-1.rds.amazonaws.
 
 alias editenv='nvim ~/nix/flake.nix'
 alias updateenv='nix profile upgrade --profile ~/.nix-profiles/user-env nix'
+alias cleanup='nix store gc && nix-collect-garbage -d'
 
 planewise() {
     PGPASSWORD=$(pass planewise/rds) psql -h planewise-psql.cjeqfhagckjg.us-east-1.rds.amazonaws.com -U planewise sslmode=require
