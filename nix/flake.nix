@@ -19,6 +19,7 @@
           epc
           watchdog
           setuptools
+          pulsectl
         ]);
 
         nodeEnv = pkgs.buildEnv {
@@ -60,6 +61,16 @@
           ];
         };
 
+
+        devToolsEnv = pkgs.buildEnv {
+          name = "devtools-env";
+          paths = with pkgs; [
+            postgresql
+            htop
+            tmux
+          ];
+        };
+
       in {
         python = pythonEnv;
         node = nodeEnv;
@@ -70,7 +81,7 @@
 
         default = pkgs.buildEnv {
           name = "user-env";
-          paths = [ pkgs.nix pythonEnv nodeEnv goEnv rustEnv solidityEnv elixirEnv ];
+          paths = [ pkgs.nix pythonEnv nodeEnv goEnv rustEnv solidityEnv elixirEnv devToolsEnv ];
         };
       };
   };

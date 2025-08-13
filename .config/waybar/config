@@ -7,7 +7,7 @@
     "modules-left": ["custom/hyprland", "hyprland/window"],
     "modules-center": ["custom/news"],
     //"modules-right": ["custom/portfolio", "pulseaudio", "clock"],
-    "modules-right": ["pulseaudio", "clock", "custom/notification"],
+    "modules-right": ["custom/default-audio", "pulseaudio", "clock", "custom/notification"],
 
 
     //***************************
@@ -38,7 +38,8 @@
         "format-icons": {
             "default": ["", "", ""]
         },
-        "on-click": "pavucontrol",
+        "on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+        "on-click-right": "pavucontrol",
         "min-length": 10,
     },
 
@@ -93,7 +94,15 @@
         "on-click": "swaync-client -t -sw",
         "on-click-right": "swaync-client -d -sw",
         "escape": true
-    }
+    },
+
+    "custom/default-audio": {
+      "format": "{}",
+      "exec": "~/.config/waybar/scripts/audio/default-audio",
+      "interval": 1,
+      "tooltip": true,
+      "on-click": "pavucontrol"
+    },
 },
 {
     "layer": "top",
