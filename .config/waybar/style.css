@@ -221,3 +221,15 @@ window#waybar.hidden {
     background: #383c4a;
     margin: 0 0px;
 }
+
+
+#custom-default-audio {
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-right: 8px;
+    border-radius: 10px;
+    transition: none;
+    ;;color: #9c571f;
+    color: #f07918;
+    background: #383c4a;
+}

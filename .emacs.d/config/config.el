@@ -5,10 +5,7 @@
 (scroll-bar-mode -1) ;; disable scroll bar
 (electric-indent-mode -1) ;; disable weird indentation
 (electric-pair-mode) ;; enable pair matching
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 2)
-(setq-default standard-indent 2)
-(setq-default tab-always-indent t)
+(setq-default tab-width 4)
 (setq native-comp-async-report-warnings-errors nil)
 
 ;; --- Smooth scrolling ---
@@ -55,7 +52,16 @@
 (setq evil-motion-state-cursor 'box)
 (setq evil-shift-width 2)
 
-(define-key evil-insert-state-map (kbd "TAB") (lambda () (interactive) (insert "  ")))
+(defun insert-space-tab ()
+  "Insert spaces or a tab based on `indent-space-size`."
+  (interactive)
+  (if indent-space-size
+      (insert (make-string indent-space-size ?\s)) ;; spaces
+    (insert "\t"))) ;; literal tab
+
+(setq-default indent-space-size 2) ;; Set the size of the tab to 2 spaces
+
+(define-key evil-insert-state-map (kbd "TAB") 'insert-space-tab)
 (define-key evil-insert-state-map (kbd "<backtab>") 'indent-for-tab-command)
 (define-key evil-insert-state-map (kbd "RET") 'newline-and-indent)
 
@@ -161,8 +167,9 @@
 (defun projectile-search-file ()
   "Run `projectile-find-file` only if the current directory is not `~/`."
   (interactive)
-  (if (string= (expand-file-name "~/") (file-truename default-directory))
-      (call-interactively 'projectile-switch-project)
+  (if (file-equal-p default-directory (expand-file-name "~"))
+      (let ((projectile-auto-discover nil))
+        (call-interactively 'projectile-switch-project))
     (call-interactively 'projectile-find-file)))
 
 (require 'copilot)
@@ -171,6 +178,8 @@
 (setq copilot-indent-offset 2)
 
 (add-to-list 'copilot-indentation-alist '(typescript-mode 2))
+(add-to-list 'copilot-indentation-alist '(makefile-gmake-mode 2))
+(add-to-list 'copilot-indentation-alist '(makefile-mode 2))
 (add-to-list 'copilot-indentation-alist '(go-mode 4))
 (add-to-list 'copilot-indentation-alist '(c++-mode 2))
 (add-to-list 'copilot-indentation-alist '(c-mode 2))
@@ -230,18 +239,18 @@
 
 (add-to-list 'lsp-bridge-single-lang-server-mode-list '((web-mode) . "svelteserver"))
 
-;; (setq lsp-bridge-single-lang-server-mode-list
-  ;; '(((web-mode) . "svelteserver")))
-
-
 (with-eval-after-load 'lsp-bridge
   (evil-define-key 'insert lsp-bridge-mode-map
     (kbd "C-j") 'acm-select-next
     (kbd "C-k") 'acm-select-prev)
   (define-key lsp-bridge-mode-map (kbd "C-j") 'acm-select-next)
   (define-key lsp-bridge-mode-map (kbd "C-k") 'acm-select-prev)
-  (define-key lsp-bridge-mode-map (kbd "C-SPC") 'lsp-bridge-find-def))
+  (define-key lsp-bridge-mode-map (kbd "C-SPC") 'lsp-bridge-find-def)
+  (define-key lsp-bridge-mode-map (kbd "C-S-SPC") 'lsp-bridge-find-references))
 
+(with-eval-after-load 'acm
+  (evil-define-key 'insert acm-mode-map
+	(kbd "RET") 'acm-complete))
 
 ;; ----- Language Configs -----
 (setq lisp-indent-offset 2)
@@ -262,6 +271,15 @@
   "Open a file from the ~/.emacs.d directory using counsel."
   (interactive)
   (let ((default-directory (expand-file-name "~/.emacs.d/config/")))
+    (counsel-find-file)))
+
+(defun counsel-find-file-here ()
+  "Run `counsel-find-file` starting in the current buffer's directory."
+  (interactive)
+  (let ((default-directory
+          (if buffer-file-name
+              (file-name-directory buffer-file-name)
+            default-directory)))  ;; fallback if no file
     (counsel-find-file)))
 
 
@@ -286,7 +304,7 @@
   (define-key evil-normal-state-map (kbd "SPC SPC") 'projectile-search-file)
   (define-key evil-normal-state-map (kbd "SPC p s") 'projectile-switch-project)
   (define-key evil-normal-state-map (kbd "SPC p i") 'projectile-invalidate-cache)
-  (define-key evil-normal-state-map (kbd "SPC f f") 'counsel-find-file)
+  (define-key evil-normal-state-map (kbd "SPC f f") 'counsel-find-file-here)
 
   (define-key evil-normal-state-map (kbd "SPC /") 'counsel-projectile-rg)
   (define-key evil-normal-state-map (kbd "SPC ?") 'projectile-ripgrep))
@@ -440,6 +458,16 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 (add-hook 'c++-mode-hook
   (lambda ()
     (define-key c++-mode-map (kbd "C-c C-c") 'c-compile)))
+
+
+;; --- Makefile ---
+(add-hook 'makefile-mode-hook
+  (lambda ()
+    (setq-local indent-space-size nil)))
+
+(add-hook 'makefile-gmake-mode-hook
+  (lambda ()
+    (setq-local indent-space-size nil)))
 
 
 ;; --- LaTeX ---

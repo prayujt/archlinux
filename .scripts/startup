@@ -12,4 +12,3 @@ waybar -c ~/.config/waybar/config &
 
 hyprctl dispatch focusmonitor DP-1
 emacs &
-#mailspring -b &
