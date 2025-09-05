@@ -19,6 +19,7 @@ alias ws='wscat --connect'
 alias waybar_restart='killall -SIGUSR2 waybar'
 alias c='z'
 alias edugator='mysql -h database-edugator.cznhwcrim7oz.us-east-1.rds.amazonaws.com -D edugator -u admin -p'
+alias nd='nix develop -c zsh -l'
 
 alias editenv='nvim ~/nix/flake.nix'
 alias updateenv='nix profile upgrade --profile ~/.nix-profiles/user-env nix'
@@ -86,7 +87,6 @@ export PATH=$PATH:$GOPATH/bin
 export PATH=$PATH:/home/prayuj/.cargo/bin
 export PATH=$PATH:/home/prayuj/.config/emacs/bin
 export PATH=$PATH:/usr/local/sbin
-export PATH=$PATH:/home/prayuj/.config/nvm/versions/node/v22.2.0/bin
 export PATH=$PATH:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl
 
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig

@@ -38,6 +38,11 @@
        (side . right)
        (slot . 0)
        (window-width . 0.4))
+	 ("\\*rg\\*"
+       (display-buffer-in-side-window)
+       (side . right)
+       (slot . 0)
+       (window-width . 0.5))
      ;; all other buffers use default rules
      (".*"
        (display-buffer-reuse-window display-buffer-same-window))))
@@ -154,6 +159,7 @@
 
 (setq doom-themes-enable-bold t)    ; if nil, bold is universally disabled
 (setq doom-themes-enable-italic t) ; if nil, italics is universally disabled
+(load-theme 'doom-nord-light t)
 
 (global-display-line-numbers-mode)
 (setq display-line-numbers-type 'relative)
@@ -192,13 +198,12 @@
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
 
 
-(require 'minimap)
-(minimap-mode 1)
-;; (add-hook 'prog-mode-hook 'minimap-mode)
+;;(require 'minimap)
+;;(minimap-mode 1)
 
-(setq minimap-window-location 'right)
-(setq minimap-update-delay 0.1)  ;; defaults to 0.5
-(setq minimap-highlight-line t)
+;;(setq minimap-window-location 'right)
+;;(setq minimap-update-delay 0.1)  ;; defaults to 0.5
+;;(setq minimap-highlight-line t)
 
 
 ;; ----- Language Modes -----
@@ -282,7 +287,6 @@
             default-directory)))  ;; fallback if no file
     (counsel-find-file)))
 
-
 (with-eval-after-load 'evil
   (define-key evil-normal-state-map (kbd "SPC f s") 'save-buffer)
   (define-key evil-normal-state-map (kbd "SPC f r") 'recentf-open)
@@ -307,18 +311,39 @@
   (define-key evil-normal-state-map (kbd "SPC f f") 'counsel-find-file-here)
 
   (define-key evil-normal-state-map (kbd "SPC /") 'counsel-projectile-rg)
-  (define-key evil-normal-state-map (kbd "SPC ?") 'projectile-ripgrep))
+  (define-key evil-normal-state-map (kbd "SPC ?") 'projectile-ripgrep)
+  (define-key evil-normal-state-map (kbd "C-c C-/") 'projectile-ripgrep)
+  (define-key evil-normal-state-map (kbd "C-c C-s") 'counsel-grep))
 
 
 ;; --- Global Bindings ---
 (global-set-key (kbd "C-c C-w") 'whitespace-mode)
+(define-key c-mode-map (kbd "C-c C-w") 'whitespace-mode)
+
 (global-set-key (kbd "C-/") 'comment-line)
 (global-set-key (kbd "C-s") 'swiper)
 (global-set-key (kbd "M-x") 'counsel-M-x) ;; overrides default command exec
 (global-set-key (kbd "C-<tab>") 'other-window) ;; overrides default command exec
+(global-set-key (kbd "M-h") 'evil-window-left)
+(global-set-key (kbd "M-l") 'evil-window-right)
+(global-set-key (kbd "M-k") 'evil-window-up)
+(global-set-key (kbd "M-j") 'evil-window-down)
 
 
 ;; --- Mode Bindings ---
+(defun find-dir-with-file (filename &optional start-dir)
+  "Find the closest ancestor directory containing FILENAME, starting from START-DIR.
+If not found, search upward until reaching the home directory (~).
+Returns the directory path, or nil if not found."
+  (let* ((dir (expand-file-name (or start-dir default-directory)))
+         (home (expand-file-name "~"))
+         (found nil))
+    (while (and dir (not found))
+      (if (file-exists-p (expand-file-name filename dir))
+          (setq found dir)
+        (setq dir (if (equal dir home) nil (file-name-directory (directory-file-name dir))))))
+    found))
+
 (defun run (command directory)
   "Run a shell COMMAND in a specified DIRECTORY and display the output in a dedicated buffer.
 Automatically checks for a .env file in DIRECTORY and sources it if present."
@@ -345,14 +370,14 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 
 ;; --- Go ---
 (defun go-compile ()
-  "Compile or test Go files based on the current buffer."
+  "Compile or test Go files from the Projectile project root."
   (interactive)
-  (if (string-match-p "_test\\.go\\'" (file-name-nondirectory buffer-file-name))
-    (compile (concat "go test -v " buffer-file-name))
-    (let ((project-root (or (projectile-project-root)
+  (let ((project-root (or (projectile-project-root)
                           (error "Not in a Projectile project"))))
-      (cd project-root)
-      (compile "make build"))))
+    (let ((default-directory project-root))
+      (if (string-match-p "_test\\.go\\'" (file-name-nondirectory buffer-file-name))
+          (compile "make test")
+        (compile "make build")))))
 
 (defun go-run ()
   "Run the current Go project with env"
@@ -376,7 +401,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
   (let ((project-root (or (projectile-project-root)
                         (error "Not in a Projectile project"))))
     (cd project-root)
-    (compile "npm run build")))
+    (compile "yarn build")))
 
 (defun ts-run ()
   "Run a development server for the current TypeScript project."
@@ -384,7 +409,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
   (let ((project-root (or (projectile-project-root)
                         (error "Not in a Projectile project"))))
     (cd project-root)
-    (run "npm run dev" project-root)))
+    (run "yarn dev" project-root)))
 
 (add-hook 'typescript-mode-hook
   (lambda ()
@@ -430,7 +455,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
   "Compile the current Java project using Maven."
   (interactive)
   (if-let ((project-root (projectile-project-root)))
-      (let ((pom-dir (find-pom-directory project-root)))
+      (let ((pom-dir (find-dir-with-file "pom.xml" project-root)))
         (cd pom-dir)
         (compile "mvn package"))
     (error "Not in a Projectile project")))
@@ -446,7 +471,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
   "Compile the current C / C++ project using Makefile."
   (interactive)
   (if-let ((project-root (projectile-project-root)))
-      (let ((makefile-dir (find-pom-directory project-root)))
+      (let ((makefile-dir (find-dir-with-file "Makefile" project-root)))
         (cd makefile-dir)
         (compile "make"))
     (error "Not in a Projectile project")))
@@ -527,6 +552,8 @@ The default message includes the branch name and latest commit hash."
   (define-key magit-mode-map (kbd "h") 'evil-backward-char)
   (define-key magit-mode-map (kbd "P") 'magit-pull)
   (define-key magit-mode-map (kbd "L") 'magit-log)
+  (define-key magit-mode-map (kbd "C") 'magit-commit)
+  (define-key magit-mode-map (kbd "C-<tab>") 'other-window)
   (define-key magit-mode-map (kbd "H") 'magit-dispatch))
 
 ;; Ivy

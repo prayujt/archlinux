@@ -9,6 +9,8 @@ eww daemon
 discord --start-minimized --enable-features=UseOzonePlatform --ozone-platform=wayland /opt/discord/resources/app.asar & > /dev/null
 waybar -c ~/.config/waybar/config &
 ~/.scripts/pulseaudio | wob -c ~/.config/wob/wob.ini &
+~/.config/hypr/setbrightness 2 50
+~/.config/hypr/setbrightness 1 50
 
 hyprctl dispatch focusmonitor DP-1
 emacs &
