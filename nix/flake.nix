@@ -20,6 +20,9 @@
           watchdog
           setuptools
           pulsectl
+          psycopg2
+          openai
+          python-dotenv
         ]);
 
         nodeEnv = pkgs.buildEnv {
@@ -36,7 +39,7 @@
 
         goEnv = pkgs.buildEnv {
           name = "go-env";
-          paths = [ pkgs.go pkgs.gopls ];
+          paths = [ pkgs.go pkgs.gopls pkgs.godef pkgs.gotools ];
         };
 
         rustEnv = pkgs.buildEnv {
