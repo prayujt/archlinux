@@ -69,6 +69,7 @@
           name = "devtools-env";
           paths = with pkgs; [
             postgresql
+            mariadb
             htop
             tmux
           ];
