@@ -23,7 +23,11 @@
 	   "34cf3305b35e3a8132a0b1bdf2c67623bc2cb05b125f8d7d26bd51fd16d547ec"
 	   "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e"
 	   default))
- '(package-selected-packages nil))
+ '(package-selected-packages
+	'(counsel-projectile dashboard doom-themes editorconfig elcord
+	   evil-collection evil-escape evil-org f go-mode magit
+	   markdown-mode minimap nix-mode org-timeblock rg solidity-mode
+	   svelte-mode typescript-mode yaml-mode yasnippet)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

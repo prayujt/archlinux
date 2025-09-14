@@ -313,7 +313,7 @@
   (define-key evil-normal-state-map (kbd "SPC /") 'counsel-projectile-rg)
   (define-key evil-normal-state-map (kbd "SPC ?") 'projectile-ripgrep)
   (define-key evil-normal-state-map (kbd "C-c C-/") 'projectile-ripgrep)
-  (define-key evil-normal-state-map (kbd "C-c C-s") 'counsel-grep))
+  (define-key evil-normal-state-map (kbd "C-c C-s") 'swiper))
 
 
 ;; --- Global Bindings ---
@@ -556,9 +556,22 @@ The default message includes the branch name and latest commit hash."
   (define-key magit-mode-map (kbd "C-<tab>") 'other-window)
   (define-key magit-mode-map (kbd "H") 'magit-dispatch))
 
+
 ;; Ivy
 
 (with-eval-after-load 'ivy
   (define-key ivy-minibuffer-map (kbd "C-j") 'ivy-next-line)
   (define-key ivy-minibuffer-map (kbd "C-k") 'ivy-previous-line)
   (define-key ivy-minibuffer-map (kbd "C-d") 'minibuffer-keyboard-quit))
+
+
+;; Org
+(add-hook 'org-timeblock-mode-hook
+  (lambda ()
+	(evil-define-key 'normal org-timeblock-mode-map (kbd "h") 'org-timeblock-backward-column)
+	(evil-define-key 'normal org-timeblock-mode-map (kbd "l") 'org-timeblock-forward-column)
+	(evil-define-key 'normal org-timeblock-mode-map (kbd "C-h") 'org-timeblock-day-earlier)
+	(evil-define-key 'normal org-timeblock-mode-map (kbd "C-l") 'org-timeblock-day-later)
+
+	(evil-define-key 'normal org-timeblock-mode-map (kbd "j") 'org-timeblock-forward-block)
+	(evil-define-key 'normal org-timeblock-mode-map (kbd "k") 'org-timeblock-backward-block)))
