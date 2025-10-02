@@ -56,6 +56,12 @@
        (window-width . 0.5)
        (window-parameters . ((no-other-window . t)
                               (no-delete-other-windows . t))))
+     ("\\*Claude\\*"
+       (display-buffer-in-side-window)
+       (side . right)
+       (slot . 0)
+       (window-width . 0.5))
+
      ;; all other buffers use default rules
      (".*"
        (display-buffer-reuse-window display-buffer-same-window))))
@@ -70,14 +76,29 @@
 (setq evil-motion-state-cursor 'box)
 (setq evil-shift-width 2)
 
-(defun insert-space-tab ()
-  "Insert spaces or a tab based on `indent-space-size`."
-  (interactive)
-  (if indent-space-size
-      (insert (make-string indent-space-size ?\s)) ;; spaces
-    (insert "\t"))) ;; literal tab
+(defvar indent-space-size-map nil
+  "Map of major modes to indentation sizes.")
 
-(setq-default indent-space-size 2) ;; Set the size of the tab to 2 spaces
+(setq indent-space-size-map
+      '((c-mode . 2)
+        (c++-mode . 2)
+        (typescript-mode . 2)
+        (python-mode . 2)
+        (go-mode . 4)
+        (lisp-mode . 2)
+        (elisp-mode . 2)
+        (emacs-lisp-mode . 2)
+        (web-mode . 2)))
+
+(defun get-indent-space-size ()
+  "Get indentation size for the current major mode."
+  (or (cdr (assoc major-mode indent-space-size-map)) 2))
+
+(defun insert-space-tab ()
+  "Insert spaces based on the current major mode's indentation size."
+  (interactive)
+  (let ((spaces (get-indent-space-size)))
+    (insert (make-string spaces ?\s))))
 
 (define-key evil-insert-state-map (kbd "TAB") 'insert-space-tab)
 (define-key evil-insert-state-map (kbd "<backtab>") 'indent-for-tab-command)
@@ -96,10 +117,6 @@
 
 (require 'evil-collection)
 (evil-collection-init '(dired magit))
-
-;; (require 'evil-org)
-;; (add-hook 'org-mode-hook 'evil-org-mode)
-;; (evil-org-set-key-theme '(navigation insert textobjects additional calendar))
 
 (require 'evil-org-agenda)
 (evil-org-agenda-set-keys)
@@ -199,11 +216,76 @@
 
 (require 'gptel)
 (require 'gptel-anthropic)
+(require 'gptel-context)
+(require 'gptel-request)
 (require 'gptel-rewrite)
 
 (setq
-  gptel-model 'claude-3-sonnet-2025-W38
+  gptel-model 'claude-3-7-sonnet-20250219
   gptel-backend (gptel-make-anthropic "Claude" :stream t :key gptel-api-key))
+
+(with-eval-after-load 'gptel
+  (add-hook 'gptel-mode-hook
+    (lambda ()
+      (define-key gptel-mode-map (kbd "C-c C-c") 'gptel-send))))
+
+(add-hook 'gptel-post-response-functions 'gptel-end-of-response)
+(add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
+
+
+;; ----- pgmacs -----
+(defun pgmacs-start ()
+  "Prompt user for PostgreSQL connection and open it in pgmacs."
+  (interactive)
+  (let ((conn-string (get-postgres-connection-string)))
+    (when conn-string
+      (pgmacs-open-uri conn-string))))
+
+(defun get-postgres-connection-string ()
+  "Prompt user for PostgreSQL connection name and return the connection string."
+  (interactive)
+  (let* ((all-connections (auth-source-search :max 100)) ; Get all auth entries
+         (postgres-connections 
+          (seq-filter (lambda (conn)
+                        (and (equal (plist-get conn :port) "postgres")
+                             (or (plist-get conn :name)
+                                 (string-match-p "planewise" (plist-get conn :host)))))
+                      all-connections)))
+    
+    (message "Found %d postgres connections" (length postgres-connections))
+    
+    (if (null postgres-connections)
+        (message "No PostgreSQL connections found in .authinfo")
+      (let* ((names (mapcar (lambda (auth)
+                              (or (plist-get auth :name)
+                                  (plist-get auth :host)))
+                            postgres-connections))
+             (selected-name (completing-read "Select PostgreSQL connection: " names nil t))
+             (auth (car (seq-filter (lambda (a)
+                                      (or (equal selected-name (plist-get a :name))
+                                          (equal selected-name (plist-get a :host))))
+                                    postgres-connections))))
+        (when auth
+          (let ((tls-param (if (equal (plist-get auth :tls) "yes") 
+                              "?sslmode=require" 
+                              "")))
+            (format "postgresql://%s:%s@%s/%s%s"
+                   (plist-get auth :user)
+                   (funcall (plist-get auth :secret))
+                   (plist-get auth :host)
+                   (or (plist-get auth :database) "postgres")
+                   tls-param)))))))
+
+(with-eval-after-load 'pgmacs
+  (define-key pgmacs-row-list-map/table (kbd "j") 'evil-next-line)
+  (define-key pgmacs-row-list-map/table (kbd "k") 'evil-previous-line)
+  (define-key pgmacs-row-list-map/table (kbd "h") 'evil-backward-char)
+  (define-key pgmacs-row-list-map/table (kbd "l") 'evil-forward-char)
+
+  (define-key pgmacs-table-list-map/table (kbd "j") 'evil-next-line)
+  (define-key pgmacs-table-list-map/table (kbd "k") 'evil-previous-line)
+  (define-key pgmacs-table-list-map/table (kbd "h") 'evil-backward-char)
+  (define-key pgmacs-table-list-map/table (kbd "l") 'evil-forward-char))
 
 
 ;; ----- Language Modes -----
@@ -341,6 +423,12 @@
   (define-key evil-normal-state-map (kbd "SPC o t") 'org-timeblock)
 
   (define-key evil-normal-state-map (kbd "C-c C-s") 'gptel-send)
+  (define-key evil-normal-state-map (kbd "SPC c c") 'gptel)
+  (define-key evil-normal-state-map (kbd "SPC c a") 'gptel-context-add)
+  (define-key evil-visual-state-map (kbd "SPC c a") 'gptel-context-add)
+  (define-key evil-visual-state-map (kbd "C-c C-a") 'gptel-context-add)
+
+  (define-key evil-normal-state-map (kbd "SPC p c") 'pgmacs-start)
 
   (define-key evil-normal-state-map (kbd "C-c C-g") 'magit-status)
   (define-key evil-normal-state-map (kbd "C-c C-p") 'magit-pull))
