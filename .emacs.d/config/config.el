@@ -95,7 +95,7 @@
 (setq-default evil-escape-delay 0.1)
 
 (require 'evil-collection)
-(evil-collection-init '(dired magit mu4e))
+(evil-collection-init '(dired magit))
 
 ;; (require 'evil-org)
 ;; (add-hook 'org-mode-hook 'evil-org-mode)
@@ -134,32 +134,6 @@
   (setenv "GOPATH" "/home/prayuj/.go"))
 
 
-(require 'mu4e)
-;; Set the mail directory
-(setq mu4e-maildir "~/Mail")
-
-;; Account settings
-(setq mu4e-contexts
-    `(,(make-mu4e-context
-	:name "Gmail"
-	:match-func (lambda (msg) (when msg (string-prefix-p "/Gmail" (mu4e-message-field msg :maildir))))
-	:vars '((user-mail-address      . "prayujtuli@gmail.com")
-		(user-full-name         . "Prayuj Tuli")
-		(mu4e-sent-folder       . "/Gmail/[GMAIL].SENT MAIL")
-		(mu4e-drafts-folder     . "/Gmail/[GMAIL].DRAFTS")
-		(mu4e-refile-folder     . "/Gmail/[Gmail].All Mail")))))
-
-;; Keybindings for mu4e
-(global-set-key (kbd "C-c m") 'mu4e)
-
-(evil-define-key 'normal mu4e-headers-mode-map
-  (kbd "j") 'evil-next-line
-  (kbd "k") 'evil-previous-line)
-
-(setq mu4e-maildir-shortcuts
-  '((:maildir "/Gmail/Inbox" :key ?g)))
-
-
 (require 'elcord)
 (elcord-mode 1)
 
@@ -193,6 +167,16 @@
         (call-interactively 'projectile-switch-project))
     (call-interactively 'projectile-find-file)))
 
+
+;;(require 'minimap)
+;;(minimap-mode 1)
+
+;;(setq minimap-window-location 'right)
+;;(setq minimap-update-delay 0.1)  ;; defaults to 0.5
+;;(setq minimap-highlight-line t)
+
+
+;; ----- AI Assistants -----
 (require 'copilot)
 (add-hook 'prog-mode-hook 'copilot-mode)
 (setq copilot-max-char -1)
@@ -213,12 +197,13 @@
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
 
-;;(require 'minimap)
-;;(minimap-mode 1)
+(require 'gptel)
+(require 'gptel-anthropic)
+(require 'gptel-rewrite)
 
-;;(setq minimap-window-location 'right)
-;;(setq minimap-update-delay 0.1)  ;; defaults to 0.5
-;;(setq minimap-highlight-line t)
+(setq
+  gptel-model 'claude-3-sonnet-2025-W38
+  gptel-backend (gptel-make-anthropic "Claude" :stream t :key gptel-api-key))
 
 
 ;; ----- Language Modes -----
@@ -355,6 +340,8 @@
   (define-key evil-normal-state-map (kbd "C-c C-o") 'org-capture)
   (define-key evil-normal-state-map (kbd "SPC o t") 'org-timeblock)
 
+  (define-key evil-normal-state-map (kbd "C-c C-s") 'gptel-send)
+
   (define-key evil-normal-state-map (kbd "C-c C-g") 'magit-status)
   (define-key evil-normal-state-map (kbd "C-c C-p") 'magit-pull))
 
@@ -399,10 +386,8 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 
 ;; --- Emacs Lisp / Lisp ---
 (evil-define-key 'normal emacs-lisp-mode-map (kbd "C-c r") 'eval-buffer)
-(evil-define-key 'normal emacs-lisp-mode-map (kbd "C-c C-r") 'eval-buffer)
 (evil-define-key 'normal emacs-lisp-mode-map (kbd "C-c C-c") 'eval-buffer)
 (evil-define-key 'normal lisp-mode-map (kbd "C-c r") 'eval-buffer)
-(evil-define-key 'normal lisp-mode-map (kbd "C-c C-r") 'eval-buffer)
 (evil-define-key 'normal lisp-mode-map (kbd "C-c C-c") 'eval-buffer)
 
 ;; --- Go ---
