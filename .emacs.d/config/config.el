@@ -6,6 +6,7 @@
 (electric-indent-mode -1) ;; disable weird indentation
 (electric-pair-mode) ;; enable pair matching
 (setq-default tab-width 4)
+(setq-default indent-tabs-mode nil)
 (setq native-comp-async-report-warnings-errors nil)
 
 ;; --- Smooth scrolling ---
@@ -43,6 +44,18 @@
        (side . right)
        (slot . 0)
        (window-width . 0.5))
+	 ("\\*Calendar\\*"
+	  (display-buffer-in-side-window)
+	  (side . right)
+	  (window-width . 0.4)
+	  (window-parameters . ((no-other-window . t)
+							(no-delete-other-windows . t))))
+	 ("\\`CAPTURE-.*\\.org\\'"
+       (display-buffer-in-side-window)
+       (side . right)
+       (window-width . 0.5)
+       (window-parameters . ((no-other-window . t)
+                              (no-delete-other-windows . t))))
      ;; all other buffers use default rules
      (".*"
        (display-buffer-reuse-window display-buffer-same-window))))
@@ -68,6 +81,8 @@
 
 (define-key evil-insert-state-map (kbd "TAB") 'insert-space-tab)
 (define-key evil-insert-state-map (kbd "<backtab>") 'indent-for-tab-command)
+(define-key evil-normal-state-map (kbd "<backtab>") 'indent-for-tab-command)
+(define-key evil-visual-state-map (kbd "<backtab>") 'indent-for-tab-command)
 (define-key evil-insert-state-map (kbd "RET") 'newline-and-indent)
 
 (evil-set-undo-system 'undo-redo)
@@ -82,9 +97,9 @@
 (require 'evil-collection)
 (evil-collection-init '(dired magit mu4e))
 
-(require 'evil-org)
-(add-hook 'org-mode-hook 'evil-org-mode)
-(evil-org-set-key-theme '(navigation insert textobjects additional calendar))
+;; (require 'evil-org)
+;; (add-hook 'org-mode-hook 'evil-org-mode)
+;; (evil-org-set-key-theme '(navigation insert textobjects additional calendar))
 
 (require 'evil-org-agenda)
 (evil-org-agenda-set-keys)
@@ -103,8 +118,10 @@
 
 (with-eval-after-load 'dashboard
   (evil-define-key 'normal dashboard-mode-map (kbd "r") 'dashboard-jump-to-recents)
-  (evil-define-key 'normal dashboard-mode-map (kbd "p") 'dashboard-jump-to-projects))
+  (evil-define-key 'normal dashboard-mode-map (kbd "p") 'dashboard-jump-to-projects)
+  (evil-define-key 'normal dashboard-mode-map (kbd "a") 'dashboard-jump-to-agenda))
 
+(setq calendar-width 5)
 
 (when (eq system-type 'darwin)
   (setq exec-path (append '("/opt/homebrew/bin" "/Users/prayuj/.go/bin" "/Users/prayuj/.nvm/versions/node/v22.3.0/bin") exec-path))
@@ -115,6 +132,7 @@
   (setq exec-path (append '("/home/prayuj/.nix-profile/bin" "/home/prayuj/.local/bin") exec-path))
   (setenv "PATH" (concat "/home/prayuj/.nix-profile/bin:/home/prayuj/.local/bin" (getenv "PATH")))
   (setenv "GOPATH" "/home/prayuj/.go"))
+
 
 (require 'mu4e)
 ;; Set the mail directory
@@ -140,9 +158,6 @@
 
 (setq mu4e-maildir-shortcuts
   '((:maildir "/Gmail/Inbox" :key ?g)))
-
-;; Org Agenda
-(setq org-agenda-files '("~/.emacs.d/org"))
 
 
 (require 'elcord)
@@ -192,11 +207,11 @@
 (add-to-list 'copilot-indentation-alist '(python-mode 4))
 (add-to-list 'copilot-indentation-alist '(nix-mode 2))
 (add-to-list 'copilot-indentation-alist '(lisp-mode 2))
+(add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
 (add-to-list 'copilot-indentation-alist '(sql-mode 2))
 
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
-
 
 ;;(require 'minimap)
 ;;(minimap-mode 1)
@@ -271,11 +286,17 @@
 
 ;; ----- Key Bindings -----
 
-;; --- Evil Bindings ---
+;; --- Global Bindings ---
 (defun open-emacs-config ()
-  "Open a file from the ~/.emacs.d directory using counsel."
+  "Open a file from the ~/.emacs.d/config/ directory using counsel."
   (interactive)
   (let ((default-directory (expand-file-name "~/.emacs.d/config/")))
+    (counsel-find-file)))
+
+(defun open-org-folder ()
+  "Open a file from the ~/.emacs.d/org directory using counsel."
+  (interactive)
+  (let ((default-directory (expand-file-name "~/.emacs.d/org/")))
     (counsel-find-file)))
 
 (defun counsel-find-file-here ()
@@ -288,15 +309,19 @@
     (counsel-find-file)))
 
 (with-eval-after-load 'evil
+  (define-key evil-normal-state-map (kbd "C-x b") 'counsel-switch-buffer)
   (define-key evil-normal-state-map (kbd "SPC f s") 'save-buffer)
   (define-key evil-normal-state-map (kbd "SPC f r") 'recentf-open)
   (define-key evil-normal-state-map (kbd "SPC f p") 'open-emacs-config)
+  (define-key evil-normal-state-map (kbd "SPC f o") 'open-org-folder)
   (define-key evil-normal-state-map (kbd "SPC `") 'evil-switch-to-windows-last-buffer)
 
   ;; --- Windows ---
   (define-key evil-normal-state-map (kbd "SPC w c") 'delete-window)
-  (define-key evil-normal-state-map (kbd "M-RET") 'evil-window-vsplit)
+  (define-key evil-normal-state-map (kbd "M-RET") 'counsel-switch-buffer-other-window)
 
+  (define-key evil-normal-state-map (kbd "C-<tab>") 'other-window)
+  (define-key evil-normal-state-map (kbd "M-x") 'counsel-M-x) ;; overrides default command exec
   (define-key evil-normal-state-map (kbd "M-h") 'evil-window-left)
   (define-key evil-normal-state-map (kbd "M-l") 'evil-window-right)
   (define-key evil-normal-state-map (kbd "M-k") 'evil-window-up)
@@ -313,21 +338,25 @@
   (define-key evil-normal-state-map (kbd "SPC /") 'counsel-projectile-rg)
   (define-key evil-normal-state-map (kbd "SPC ?") 'projectile-ripgrep)
   (define-key evil-normal-state-map (kbd "C-c C-/") 'projectile-ripgrep)
-  (define-key evil-normal-state-map (kbd "C-c C-s") 'swiper))
+  (define-key evil-normal-state-map (kbd "C-s") 'swiper)
 
+  (define-key evil-normal-state-map (kbd "C-j") 'evil-scroll-line-down)
+  (define-key evil-normal-state-map (kbd "C-k") 'evil-scroll-line-up)
 
-;; --- Global Bindings ---
-(global-set-key (kbd "C-c C-w") 'whitespace-mode)
-(define-key c-mode-map (kbd "C-c C-w") 'whitespace-mode)
+  (define-key evil-normal-state-map (kbd "C-c C-r") 'lsp-bridge-rename)
+  (define-key evil-normal-state-map (kbd "C-c C-w") 'whitespace-mode)
+  (define-key evil-insert-state-map (kbd "C-c C-w") 'whitespace-mode)
+  (define-key evil-normal-state-map (kbd "C-/") 'comment-line)
 
-(global-set-key (kbd "C-/") 'comment-line)
-(global-set-key (kbd "C-s") 'swiper)
-(global-set-key (kbd "M-x") 'counsel-M-x) ;; overrides default command exec
-(global-set-key (kbd "C-<tab>") 'other-window) ;; overrides default command exec
-(global-set-key (kbd "M-h") 'evil-window-left)
-(global-set-key (kbd "M-l") 'evil-window-right)
-(global-set-key (kbd "M-k") 'evil-window-up)
-(global-set-key (kbd "M-j") 'evil-window-down)
+  (define-key evil-normal-state-map (kbd "SPC o a") 'org-agenda)
+  (define-key evil-normal-state-map (kbd "SPC o c") 'org-capture)
+  (define-key evil-normal-state-map (kbd "SPC o j") 'org-journal-new-entry)
+  (define-key evil-normal-state-map (kbd "C-c o") 'org-capture)
+  (define-key evil-normal-state-map (kbd "C-c C-o") 'org-capture)
+  (define-key evil-normal-state-map (kbd "SPC o t") 'org-timeblock)
+
+  (define-key evil-normal-state-map (kbd "C-c C-g") 'magit-status)
+  (define-key evil-normal-state-map (kbd "C-c C-p") 'magit-pull))
 
 
 ;; --- Mode Bindings ---
@@ -368,6 +397,14 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
       (read-only-mode 1)) ;; Set buffer to read-only mode
     (pop-to-buffer run-buffer-name)))
 
+;; --- Emacs Lisp / Lisp ---
+(evil-define-key 'normal emacs-lisp-mode-map (kbd "C-c r") 'eval-buffer)
+(evil-define-key 'normal emacs-lisp-mode-map (kbd "C-c C-r") 'eval-buffer)
+(evil-define-key 'normal emacs-lisp-mode-map (kbd "C-c C-c") 'eval-buffer)
+(evil-define-key 'normal lisp-mode-map (kbd "C-c r") 'eval-buffer)
+(evil-define-key 'normal lisp-mode-map (kbd "C-c C-r") 'eval-buffer)
+(evil-define-key 'normal lisp-mode-map (kbd "C-c C-c") 'eval-buffer)
+
 ;; --- Go ---
 (defun go-compile ()
   "Compile or test Go files from the Projectile project root."
@@ -387,11 +424,13 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
          (env-file (expand-file-name ".env" project-root)))
     (run "make" project-root)))
 
+(with-eval-after-load 'go-mode
+  (evil-define-key 'normal go-mode-map (kbd "C-c C-c") 'go-compile)
+  (evil-define-key 'normal go-mode-map (kbd "C-c C-x") 'go-run))
+
 (add-hook 'go-mode-hook
   (lambda ()
-    (add-hook 'before-save-hook 'gofmt-before-save nil t)
-    (define-key go-mode-map (kbd "C-c C-c") 'go-compile)
-    (define-key go-mode-map (kbd "C-c C-x") 'go-run)))
+	(add-hook 'before-save-hook 'gofmt-before-save nil t)))
 
 
 ;; --- TypeScript ---
@@ -411,10 +450,10 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
     (cd project-root)
     (run "yarn dev" project-root)))
 
-(add-hook 'typescript-mode-hook
-  (lambda ()
-    (define-key typescript-mode-map (kbd "C-c C-c") 'ts-compile)
-    (define-key typescript-mode-map (kbd "C-c C-x") 'ts-run)))
+(with-eval-after-load 'typescript-mode
+  (evil-define-key 'normal typescript-mode-map (kbd "C-c C-c") 'ts-compile)
+  (evil-define-key 'normal typescript-mode-map (kbd "C-c C-x") 'ts-run))
+
 
 ;; --- Web ---
 (defun web-compile ()
@@ -433,11 +472,9 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
     (cd project-root)
     (run "yarn dev" project-root)))
 
-(add-hook 'web-mode-hook
-  (lambda ()
-    (define-key web-mode-map (kbd "<backtab>") 'indent-for-tab-command)
-    (define-key web-mode-map (kbd "C-c C-c") 'web-compile)
-    (define-key web-mode-map (kbd "C-c C-x") 'web-run)))
+(with-eval-after-load 'web-mode
+  (evil-define-key 'normal web-mode-map (kbd "C-c C-c") 'web-compile)
+  (evil-define-key 'normal web-mode-map (kbd "C-c C-x") 'web-run))
 
 
 ;; --- Java ---
@@ -460,39 +497,42 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
         (compile "mvn package"))
     (error "Not in a Projectile project")))
 
-(add-hook 'java-mode-hook
-  (lambda ()
-    (define-key java-mode-map (kbd "C-c C-w") 'whitespace-mode)
-    (define-key java-mode-map (kbd "C-c C-c") 'java-compile)))
+(with-eval-after-load 'java-mode
+  (evil-define-key 'normal java-mode-map (kbd "C-c C-w") 'whitespace-mode)
+  (evil-define-key 'normal java-mode-map (kbd "C-c C-c") 'java-compile))
 
 
 ;; --- C / C++ ---
+(defcustom c-compile-command "make -k" "Command run by `c-compile'." :type 'string)
+
 (defun c-compile ()
-  "Compile the current C / C++ project using Makefile."
+  "Compile from the nearest Makefile upward, using the standard *compilation* buffer."
   (interactive)
-  (if-let ((project-root (projectile-project-root)))
-      (let ((makefile-dir (find-dir-with-file "Makefile" project-root)))
-        (cd makefile-dir)
-        (compile "make"))
-    (error "Not in a Projectile project")))
+  (let* ((root (or (ignore-errors (projectile-project-root))
+                   (locate-dominating-file default-directory ".git")
+                   default-directory))
+         (make-dir (or (locate-dominating-file default-directory "Makefile")
+                       (and root (locate-dominating-file root "Makefile")))))
+    (unless make-dir (user-error "No Makefile found above %s" root))
+    (let ((default-directory make-dir)
+          (process-connection-type nil)
+          (compile-command c-compile-command))
+      (compile compile-command))))
 
-(add-hook 'c-mode-hook
-  (lambda ()
-    (define-key c-mode-map (kbd "C-c C-c") 'c-compile)))
+(with-eval-after-load 'cc-mode
+  (setq indent-space-size 4) ;; TODO: update to be on hook, or use pre-defined map
+  (evil-define-key 'normal c-mode-map (kbd "C-c C-c") 'c-compile))
 
-(add-hook 'c++-mode-hook
-  (lambda ()
-    (define-key c++-mode-map (kbd "C-c C-c") 'c-compile)))
+(with-eval-after-load 'c++-mode
+  (evil-define-key 'normal c++-mode-map (kbd "C-c C-c") 'c-compile))
 
 
 ;; --- Makefile ---
-(add-hook 'makefile-mode-hook
-  (lambda ()
-    (setq-local indent-space-size nil)))
+(with-eval-after-load 'makefile-mode
+  (setq-local indent-space-size nil))
 
-(add-hook 'makefile-gmake-mode-hook
-  (lambda ()
-    (setq-local indent-space-size nil)))
+(with-eval-after-load 'makefile-gmake-mode
+  (setq-local indent-space-size nil))
 
 
 ;; --- LaTeX ---
@@ -504,10 +544,9 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
   (interactive)
   (if (string= system-type "darwin") (shell-command (concat "open " (file-name-sans-extension buffer-file-name) ".pdf")) (TeX-view)))
 
-(add-hook 'tex-mode-hook
-  (lambda ()
-    (define-key tex-mode-map (kbd "C-c C-c") 'latex-compile)
-    (define-key tex-mode-map (kbd "C-c C-x") 'latex-open)))
+(with-eval-after-load 'tex-mode
+  (evil-define-key 'normal tex-mode-map (kbd "C-c C-c") 'latex-compile)
+  (evil-define-key 'normal tex-mode-map (kbd "C-c C-x") 'latex-open))
 
 
 ;; --- Solidity ---
@@ -520,7 +559,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
       (compile (format "solc %s" (file-relative-name file default-directory))))))
 
 (with-eval-after-load 'solidity-mode
-  (define-key solidity-mode-map (kbd "C-c C-c") 'solidity-compile))
+  (evil-define-key 'normal solidity-mode-map (kbd "C-c C-c") 'solidity-compile))
 
 
 ;; --- Magit Bindings ---
@@ -539,12 +578,6 @@ The default message includes the branch name and latest commit hash."
         (magit-run-git "stash" "push" "-m" message "--" file)
       (message "Current buffer is not visiting a file!"))))
 
-(global-set-key (kbd "C-c C-g") 'magit-status)
-(global-set-key (kbd "C-c C-p") 'magit-pull)
-(global-set-key (kbd "C-c C-a") 'magit-stage-buffer-file)
-(global-set-key (kbd "C-c C-u") 'magit-unstage-buffer-file)
-(global-set-key (kbd "C-c C-s") 'magit-stash-current-buffer-file)
-
 (with-eval-after-load 'magit
   (define-key magit-mode-map (kbd "^") 'evil-beginning-of-line)
   (define-key magit-mode-map (kbd "w") 'evil-forward-word-begin)
@@ -558,20 +591,140 @@ The default message includes the branch name and latest commit hash."
 
 
 ;; Ivy
-
 (with-eval-after-load 'ivy
-  (define-key ivy-minibuffer-map (kbd "C-j") 'ivy-next-line)
-  (define-key ivy-minibuffer-map (kbd "C-k") 'ivy-previous-line)
-  (define-key ivy-minibuffer-map (kbd "C-d") 'minibuffer-keyboard-quit))
+  (dolist (map '(ivy-minibuffer-map
+                 ivy-switch-buffer-map
+                 ivy-reverse-i-search-map))
+	(define-key (symbol-value map) (kbd "C-j") 'ivy-next-line)
+    (define-key (symbol-value map) (kbd "C-k") 'ivy-previous-line)
+    (define-key (symbol-value map) (kbd "C-d") 'minibuffer-keyboard-quit)))
 
 
 ;; Org
-(add-hook 'org-timeblock-mode-hook
-  (lambda ()
-	(evil-define-key 'normal org-timeblock-mode-map (kbd "h") 'org-timeblock-backward-column)
-	(evil-define-key 'normal org-timeblock-mode-map (kbd "l") 'org-timeblock-forward-column)
-	(evil-define-key 'normal org-timeblock-mode-map (kbd "C-h") 'org-timeblock-day-earlier)
-	(evil-define-key 'normal org-timeblock-mode-map (kbd "C-l") 'org-timeblock-day-later)
+(defun org-refile-not-into-todo ()
+  "Exclude TODO headings from refile targets."
+  (let ((todo (nth 2 (org-heading-components))))
+    (not (and todo (member todo org-todo-keywords-1)))))
 
-	(evil-define-key 'normal org-timeblock-mode-map (kbd "j") 'org-timeblock-forward-block)
-	(evil-define-key 'normal org-timeblock-mode-map (kbd "k") 'org-timeblock-backward-block)))
+(with-eval-after-load 'org
+  ;; calendar navigation bindings
+  (dolist (kv '(("C-h" . (calendar-backward-day 1))
+                 ("C-l" . (calendar-forward-day 1))
+                 ("C-k" . (calendar-backward-week 1))
+                 ("C-j" . (calendar-forward-week 1))
+                 ("M-h" . (calendar-backward-month 1))
+                 ("M-l" . (calendar-forward-month 1))
+                 ("M-k" . (calendar-backward-year 1))
+                 ("M-j" . (calendar-forward-year 1))))
+    (define-key org-read-date-minibuffer-local-map (kbd (car kv))
+      `(lambda () (interactive) (org-eval-in-calendar ',(cdr kv)))))
+
+  ;; org mode bindings
+  (evil-define-key* '(normal insert) org-mode-map (kbd "C-SPC") 'org-open-at-point)
+  (evil-define-key* 'normal org-mode-map (kbd "TAB") 'org-cycle)
+
+  (evil-define-key* 'normal org-mode-map (kbd "C-c C-r") 'org-refile)
+  (evil-define-key* 'normal org-mode-map (kbd "C-c C-a") 'org-archive-subtree)
+  (define-key org-mode-map (kbd "C-c C-a") 'org-archive-subtree)
+  (define-key org-mode-map (kbd "C-c C-r") 'org-refile))
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)))
+
+(setq org-directory "~/.emacs.d/org")
+(setq org-agenda-files (directory-files-recursively org-directory "\\.org$"))
+(setq org-agenda-skip-unavailable-files 't)
+(setq org-agenda-show-future-repeats nil)
+(setq org-archive-location (expand-file-name "archive/%s::" org-directory))
+(setq org-refile-targets
+  `((,(expand-file-name "agenda.org" org-directory) :maxlevel . 2)
+     (,(expand-file-name "inbox.org" org-directory) :maxlevel . 1)))
+(setq org-refile-target-verify-function 'org-refile-not-into-todo)
+(setq org-refile-use-outline-path t)
+(setq org-outline-path-complete-in-steps nil)
+(setq org-default-notes-file (concat org-directory "/notes.org"))
+(setq org-log-done 'time)
+(setq org-log-into-drawer t)
+(setq org-hide-drawer-startup t)
+
+;; Capture
+(defun org-capture-init ()
+  (setq header-line-format
+    (list
+      "Org Capture – "
+      "finish '" (propertize "C-c C-c" 'face 'help-key-binding) "', "
+      "refile '" (propertize "C-c C-r" 'face 'help-key-binding) "', "
+      "cancel '" (propertize "C-c C-k" 'face 'help-key-binding) "'"))
+  (evil-define-key* 'normal org-capture-mode-map (kbd "SPC b k") 'org-capture-kill))
+
+(add-hook 'org-capture-mode-hook 'org-capture-init)
+(setq org-capture-templates
+  `(
+	;; Quick task (deadline with no offset; will prompt for date)
+	("t" "Task" entry
+	  (file+headline ,(expand-file-name "inbox.org" org-directory) "Tasks")
+	  "** TODO %?\nDEADLINE: %t\n"
+	  :empty-lines 1)
+
+	 ;; Habit
+	("h" "Habit" entry
+	  (file+headline ,(expand-file-name "inbox.org" org-directory) "Habits")
+	  "** TODO %?\nSCHEDULED: %t\n:PROPERTIES:\n:STYLE:    habit\n:END:"
+	  :empty-lines 1)
+
+	;; Event
+	("e" "Event" entry
+	  (file+headline ,(expand-file-name "inbox.org" org-directory) "Event")
+	  "** %?\n<%<%Y-%m-%d %a> 09:00-17:00>\n"
+	  :empty-lines 1)
+
+	;; Note (with backlink to where you were)
+	("n" "Note" entry
+	  (file+headline ,(expand-file-name "inbox.org" org-directory) "Notes")
+	  "** %?\n:CREATED: %U\n%a"
+	  :empty-lines 1)
+
+	;; Idea (plain, no backlink)
+	("i" "Idea" entry
+	  (file+headline ,(expand-file-name "inbox.org" org-directory) "Ideas")
+	  "** %? :idea:\n:CREATED: %U\n"
+	  :empty-lines 1)
+
+	;; Office visit
+    ("o" "Office visit" plain
+      (file+olp ,(expand-file-name "office.org" org-directory) "Office Visits" "Office Visit")
+      "- <%<%Y-%m-%d %a 09:00-17:00>>"
+      :immediate-finish t
+      :empty-lines 0)
+
+	;; Grocery list
+	("g" "Grocery list" entry
+	  (file+headline ,(expand-file-name "groceries.org" org-directory) "Groceries")
+	  "** TODO Get Groceries :grocery:\nSCHEDULED: %t\n\n*** Whole Foods\t:store:wholefoods:\n- [ ] Spinach\n- [ ] Arugula\n- [ ] Feta Cheese%?"
+	  :empty-lines 1)))
+
+;; Habit
+(require 'org-habit)
+(add-to-list 'org-modules 'org-habit)
+
+(setq org-habit-graph-column 80)
+
+;; Journal
+(setq org-journal-dir (expand-file-name "journal" org-directory))
+(setq org-journal-date-format "%A, %B %d %Y")
+(setq org-journal-file-format "%Y%m%d.org")
+
+(require 'org-journal)
+
+;; Timeblock
+(with-eval-after-load 'org-timeblock
+  (evil-define-key 'normal org-timeblock-mode-map (kbd "h") 'org-timeblock-backward-column)
+  (evil-define-key 'normal org-timeblock-mode-map (kbd "l") 'org-timeblock-forward-column)
+  (evil-define-key 'normal org-timeblock-mode-map (kbd "j") 'org-timeblock-forward-block)
+  (evil-define-key 'normal org-timeblock-mode-map (kbd "k") 'org-timeblock-backward-block)
+
+  (evil-define-key 'normal org-timeblock-mode-map (kbd "C-h") 'org-timeblock-day-earlier)
+  (evil-define-key 'normal org-timeblock-mode-map (kbd "C-l") 'org-timeblock-day-later)
+
+  (evil-define-key 'normal org-timeblock-mode-map (kbd "g r") 'org-timeblock-redraw-buffers))

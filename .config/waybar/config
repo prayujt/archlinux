@@ -4,9 +4,8 @@
     "position": "top",
     "height": 30,
     "margin": "5 17 -8 17",
-    "modules-left": ["custom/hyprland", "hyprland/window"],
+    "modules-left": ["custom/hyprland", "hyprland/window", "custom/caps"],
     "modules-center": ["custom/news"],
-    //"modules-right": ["custom/portfolio", "pulseaudio", "clock"],
     "modules-right": ["custom/default-audio", "pulseaudio", "clock", "custom/notification"],
 
 
@@ -52,6 +51,13 @@
         "format": "{}",
         "exec": "~/.config/waybar/scripts/audio/cava",
         "tooltip": "false"
+    },
+
+    "custom/caps": {
+        "exec": "~/.config/waybar/scripts/caps/caps.sh",
+        "tooltip": "false",
+        "return-type": "json",
+        "format": "{}",
     },
 
     "custom/news": {
