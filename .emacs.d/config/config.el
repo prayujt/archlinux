@@ -80,25 +80,32 @@
   "Map of major modes to indentation sizes.")
 
 (setq indent-space-size-map
-      '((c-mode . 2)
-        (c++-mode . 2)
+      '((c-mode . 4)
+        (c++-mode . 4)
         (typescript-mode . 2)
         (python-mode . 2)
         (go-mode . 4)
         (lisp-mode . 2)
         (elisp-mode . 2)
         (emacs-lisp-mode . 2)
+        (makefile-mode . nil)
+        (makefile-gmake-mode . nil)
+        (terraform-mode . 2)
         (web-mode . 2)))
 
 (defun get-indent-space-size ()
-  "Get indentation size for the current major mode."
-  (or (cdr (assoc major-mode indent-space-size-map)) 2))
+  "Get indentation size for the current major mode.
+Returns nil if the mode should use tabs."
+  (cdr (assoc major-mode indent-space-size-map)))
 
 (defun insert-space-tab ()
-  "Insert spaces based on the current major mode's indentation size."
+  "Insert spaces based on the current major mode's indentation size.
+If indent size is nil, insert a tab character."
   (interactive)
   (let ((spaces (get-indent-space-size)))
-    (insert (make-string spaces ?\s))))
+    (if spaces
+        (insert (make-string spaces ?\s))
+      (insert "\t"))))
 
 (define-key evil-insert-state-map (kbd "TAB") 'insert-space-tab)
 (define-key evil-insert-state-map (kbd "<backtab>") 'indent-for-tab-command)
@@ -593,19 +600,10 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
       (compile compile-command))))
 
 (with-eval-after-load 'cc-mode
-  (setq indent-space-size 4) ;; TODO: update to be on hook, or use pre-defined map
   (evil-define-key 'normal c-mode-map (kbd "C-c C-c") 'c-compile))
 
 (with-eval-after-load 'c++-mode
   (evil-define-key 'normal c++-mode-map (kbd "C-c C-c") 'c-compile))
-
-
-;; --- Makefile ---
-(with-eval-after-load 'makefile-mode
-  (setq-local indent-space-size nil))
-
-(with-eval-after-load 'makefile-gmake-mode
-  (setq-local indent-space-size nil))
 
 
 ;; --- LaTeX ---
