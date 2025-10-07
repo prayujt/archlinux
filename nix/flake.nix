@@ -8,7 +8,12 @@
   outputs = { self, nixpkgs }: {
     packages.x86_64-linux =
       let
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        pkgs = import nixpkgs {
+          system = "x86_64-linux";
+          config = {
+            allowUnfree = true;
+          };
+        };
 
         pythonEnv = pkgs.python312.withPackages (ps: with ps; [
           pip
@@ -64,6 +69,13 @@
           ];
         };
 
+        terraformEnv = pkgs.buildEnv {
+          name = "terraform-env";
+          paths = with pkgs; [
+            terraform
+            terraform-ls
+          ];
+        };
 
         devToolsEnv = pkgs.buildEnv {
           name = "devtools-env";
@@ -82,10 +94,11 @@
         rust = rustEnv;
         solidity = solidityEnv;
         elixir = elixirEnv;
+        terraform = terraformEnv;
 
         default = pkgs.buildEnv {
           name = "user-env";
-          paths = [ pkgs.nix pythonEnv nodeEnv goEnv rustEnv solidityEnv elixirEnv devToolsEnv ];
+          paths = [ pkgs.nix pythonEnv nodeEnv goEnv rustEnv solidityEnv elixirEnv terraformEnv devToolsEnv ];
         };
       };
   };
