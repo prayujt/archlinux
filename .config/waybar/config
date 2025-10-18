@@ -65,10 +65,6 @@
         "exec": "news 75 0.06"
     },
 
-    "custom/news_update": {
-        "exec": "~/.config/waybar/scripts/news/update_news.sh"
-    },
-
     "custom/portfolio": {
         "format": " {}",
         "exec": "python ~/.config/waybar/scripts/stocks/stocks.py",
