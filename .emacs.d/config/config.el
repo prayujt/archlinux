@@ -240,6 +240,12 @@ If indent size is nil, insert a tab character."
 (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
 
 
+;; ---- Doc View ----
+(with-eval-after-load 'doc-view-mode
+  (define-key doc-view-mode-map (kbd "j") 'doc-view-next-page)
+  (define-key doc-view-mode-map (kbd "k") 'doc-view-previous-page))
+
+
 ;; ----- pgmacs -----
 (defun pgmacs-start ()
   "Prompt user for PostgreSQL connection and open it in pgmacs."
@@ -691,6 +697,8 @@ The default message includes the branch name and latest commit hash."
       `(lambda () (interactive) (org-eval-in-calendar ',(cdr kv)))))
 
   ;; org mode bindings
+  (evil-define-key* 'normal org-mode-map (kbd "SPC p o") 'org-latex-export-to-pdf)
+
   (evil-define-key* '(normal insert) org-mode-map (kbd "C-SPC") 'org-open-at-point)
   (evil-define-key* 'normal org-mode-map (kbd "TAB") 'org-cycle)
 
