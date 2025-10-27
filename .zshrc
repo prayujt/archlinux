@@ -110,3 +110,9 @@ eval "$(zoxide init zsh)"
 
 
 if [ -e /home/prayuj/.nix-profile/etc/profile.d/nix.sh ]; then . /home/prayuj/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
+
+if [[ -n "$IN_NIX_SHELL" && "$VIRTUAL_ENV" ]]; then
+  source .venv/bin/activate
+  hash -r
+fi
+

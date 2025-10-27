@@ -5,8 +5,6 @@
 (scroll-bar-mode -1) ;; disable scroll bar
 (electric-indent-mode -1) ;; disable weird indentation
 (electric-pair-mode) ;; enable pair matching
-(setq-default tab-width 4)
-(setq-default indent-tabs-mode nil)
 (setq native-comp-async-report-warnings-errors nil)
 
 ;; --- Smooth scrolling ---
@@ -76,6 +74,9 @@
 (setq evil-motion-state-cursor 'box)
 (setq evil-shift-width 2)
 
+(setq-default tab-width 4)
+(setq-default indent-tabs-mode nil)
+
 (defvar indent-space-size-map nil
   "Map of major modes to indentation sizes.")
 
@@ -83,7 +84,7 @@
       '((c-mode . 4)
         (c++-mode . 4)
         (typescript-mode . 2)
-        (python-mode . 2)
+        (python-mode . nil)
         (go-mode . 4)
         (lisp-mode . 2)
         (elisp-mode . 2)
@@ -148,6 +149,7 @@ If indent size is nil, insert a tab character."
 (setq calendar-width 5)
 
 (when (eq system-type 'darwin)
+  (set-face-attribute 'default nil :height 140)
   (setq exec-path (append '("/opt/homebrew/bin" "/Users/prayuj/.go/bin" "/Users/prayuj/.nvm/versions/node/v22.3.0/bin") exec-path))
   (setenv "PATH" (concat "/opt/homebrew/bin:/Users/prayuj/.go/bin:/Users/prayuj/.nvm/versions/node/v22.3.0/bin:" (getenv "PATH")))
   (setenv "GOPATH" "/Users/prayuj/.go"))
@@ -637,6 +639,11 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 
 (with-eval-after-load 'solidity-mode
   (evil-define-key 'normal solidity-mode-map (kbd "C-c C-c") 'solidity-compile))
+
+
+;; --- Terraform ---
+(with-eval-after-load 'terraform-mode
+  (setq terraform-format-on-save t))
 
 
 ;; --- Magit Bindings ---
