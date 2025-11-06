@@ -183,7 +183,50 @@ If indent size is nil, insert a tab character."
 (projectile-mode +1)
 
 (with-eval-after-load 'projectile
-  (add-to-list 'projectile-ignored-projects "~/"))
+  (setq projectile-indexing-method 'alien)
+  (add-to-list 'projectile-ignored-projects "~/")
+
+  (setq projectile-enable-caching t))
+
+;; custom cache file for compilation commands
+(defvar projectile-compilation-cmd-cache-file
+  (expand-file-name "projectile-compilation-cmds.eld" user-emacs-directory)
+  "File to store projectile compilation commands.")
+
+;; load compilation commands on startup
+(when (file-exists-p projectile-compilation-cmd-cache-file)
+  (setq projectile-compilation-cmd-map
+        (projectile-unserialize projectile-compilation-cmd-cache-file)))
+
+(defun projectile-compile-with-default (default-cmd &optional force-prompt)
+  "Run projectile compile with DEFAULT-CMD as the suggested default.
+Uses projectile's caching - if a command is already saved for this project,
+use that. Otherwise, prompt with DEFAULT-CMD pre-filled.
+With prefix argument (C-u), always prompt to change the command."
+  (interactive)
+  (let* ((project-root (projectile-acquire-root))
+         (default-directory project-root)
+         (cached-cmd (gethash project-root projectile-compilation-cmd-map))
+         (command (if (and cached-cmd (not current-prefix-arg))
+                      cached-cmd
+                    (projectile-maybe-read-command project-root
+                                                   (or cached-cmd default-cmd)
+                                                   "Compile command: "))))
+    (puthash project-root command projectile-compilation-cmd-map)
+    (projectile-serialize projectile-compilation-cmd-map projectile-compilation-cmd-cache-file)
+    (projectile-run-compilation command)))
+
+(defun projectile-configure-compile-command (default-cmd)
+  "Change the saved compile command for the current project."
+  (interactive)
+  (let* ((project-root (projectile-acquire-root))
+         (cached-cmd (gethash project-root projectile-compilation-cmd-map))
+         (command (projectile-maybe-read-command project-root
+                                                 (or cached-cmd default-cmd)
+                                                 "Compile command: ")))
+    (puthash project-root command projectile-compilation-cmd-map)
+    (projectile-serialize projectile-compilation-cmd-map projectile-compilation-cmd-cache-file)
+    (message "Compile command saved: %s" command)))
 
 (defun projectile-search-file ()
   "Run `projectile-find-file` only if the current directory is not `~/`."
@@ -194,12 +237,12 @@ If indent size is nil, insert a tab character."
     (call-interactively 'projectile-find-file)))
 
 
-;;(require 'minimap)
+(require 'minimap)
 ;;(minimap-mode 1)
 
-;;(setq minimap-window-location 'right)
-;;(setq minimap-update-delay 0.1)  ;; defaults to 0.5
-;;(setq minimap-highlight-line t)
+(setq minimap-window-location 'right)
+(setq minimap-update-delay 0.1)  ;; defaults to 0.5
+(setq minimap-highlight-line t)
 
 
 ;; ----- AI Assistants -----
@@ -234,9 +277,16 @@ If indent size is nil, insert a tab character."
   gptel-backend (gptel-make-anthropic "Claude" :stream t :key gptel-api-key))
 
 (with-eval-after-load 'gptel
-  (add-hook 'gptel-mode-hook
-    (lambda ()
-      (define-key gptel-mode-map (kbd "C-c C-c") 'gptel-send))))
+  (define-key gptel-mode-map (kbd "C-c C-x") 'gptel-context-confirm)
+  (define-key gptel-mode-map (kbd "C-c C-c") 'gptel-send))
+
+(with-eval-after-load 'gptel-context
+  (define-key gptel-context-buffer-mode-map (kbd "C-c C-j") 'gptel-context-next)
+  (define-key gptel-context-buffer-mode-map (kbd "C-c C-k") 'gptel-context-previous)
+  (define-key gptel-context-buffer-mode-map (kbd "C-c C-d") 'gptel-context-flag-deletion)
+  (define-key gptel-context-buffer-mode-map (kbd "C-c j") 'gptel-context-next)
+  (define-key gptel-context-buffer-mode-map (kbd "C-c k") 'gptel-context-previous)
+  (define-key gptel-context-buffer-mode-map (kbd "C-c d") 'gptel-context-flag-deletion))
 
 (add-hook 'gptel-post-response-functions 'gptel-end-of-response)
 (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
@@ -292,15 +342,26 @@ If indent size is nil, insert a tab character."
                    tls-param)))))))
 
 (with-eval-after-load 'pgmacs
+  (setq pgmacs-schemaspy-cmdline "docker run -v %D:/output --userns=keep-id --network=host docker.io/schemaspy/schemaspy:latest -t pgsql11 -host %h -port %P -u %u -p %p -db %d -imageformat svg")
+  (define-key pgmacs-row-list-map/table (kbd "g") nil)
+  (define-key pgmacs-row-list-map/table (kbd "w") 'evil-forward-word-begin)
   (define-key pgmacs-row-list-map/table (kbd "j") 'evil-next-line)
   (define-key pgmacs-row-list-map/table (kbd "k") 'evil-previous-line)
   (define-key pgmacs-row-list-map/table (kbd "h") 'evil-backward-char)
   (define-key pgmacs-row-list-map/table (kbd "l") 'evil-forward-char)
+  (define-key pgmacs-row-list-map/table (kbd "s") 'pgmacs-run-sql)
+  (define-key pgmacs-row-list-map/table (kbd "r") 'pgmacs-run-sql)
+  (define-key pgmacs-row-list-map/table (kbd "E") 'pgmacs--table-to-csv)
 
+  (define-key pgmacs-table-list-map/table (kbd "g") nil)
+  (define-key pgmacs-table-list-map/table (kbd "w") 'evil-forward-word-begin)
   (define-key pgmacs-table-list-map/table (kbd "j") 'evil-next-line)
   (define-key pgmacs-table-list-map/table (kbd "k") 'evil-previous-line)
   (define-key pgmacs-table-list-map/table (kbd "h") 'evil-backward-char)
-  (define-key pgmacs-table-list-map/table (kbd "l") 'evil-forward-char))
+  (define-key pgmacs-table-list-map/table (kbd "l") 'evil-forward-char)
+  (define-key pgmacs-table-list-map/table (kbd "s") 'pgmacs-run-sql)
+  (define-key pgmacs-table-list-map/table (kbd "r") 'pgmacs-run-sql)
+  (define-key pgmacs-table-list-map/table (kbd "E") 'pgmacs--table-to-csv))
 
 
 ;; ----- Language Modes -----
@@ -414,6 +475,7 @@ If indent size is nil, insert a tab character."
 
   (define-key evil-normal-state-map (kbd "SPC SPC") 'projectile-search-file)
   (define-key evil-normal-state-map (kbd "SPC p s") 'projectile-switch-project)
+  (define-key evil-normal-state-map (kbd "SPC p c") 'projectile-switch-project)
   (define-key evil-normal-state-map (kbd "SPC p i") 'projectile-invalidate-cache)
   (define-key evil-normal-state-map (kbd "SPC f f") 'counsel-find-file-here)
 
@@ -442,8 +504,10 @@ If indent size is nil, insert a tab character."
   (define-key evil-normal-state-map (kbd "SPC c a") 'gptel-context-add)
   (define-key evil-visual-state-map (kbd "SPC c a") 'gptel-context-add)
   (define-key evil-visual-state-map (kbd "C-c C-a") 'gptel-context-add)
+  (define-key evil-normal-state-map (kbd "SPC c r") 'gptel-rewrite)
+  (define-key evil-visual-state-map (kbd "SPC c r") 'gptel-rewrite)
 
-  (define-key evil-normal-state-map (kbd "SPC p c") 'pgmacs-start)
+  (define-key evil-normal-state-map (kbd "SPC d c") 'pgmacs-start)
 
   (define-key evil-normal-state-map (kbd "C-c C-g") 'magit-status)
   (define-key evil-normal-state-map (kbd "C-c C-p") 'magit-pull))
@@ -495,14 +559,9 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 
 ;; --- Go ---
 (defun go-compile ()
-  "Compile or test Go files from the Projectile project root."
+  "Compile Go project using projectile with make build as default."
   (interactive)
-  (let ((project-root (or (projectile-project-root)
-                          (error "Not in a Projectile project"))))
-    (let ((default-directory project-root))
-      (if (string-match-p "_test\\.go\\'" (file-name-nondirectory buffer-file-name))
-          (compile "make test")
-        (compile "make build")))))
+  (projectile-compile-with-default "make build"))
 
 (defun go-run ()
   "Run the current Go project with env"
@@ -525,10 +584,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 (defun ts-compile ()
   "Compile the current TypeScript project."
   (interactive)
-  (let ((project-root (or (projectile-project-root)
-                        (error "Not in a Projectile project"))))
-    (cd project-root)
-    (compile "yarn build")))
+  (projectile-compile-with-default "yarn build"))
 
 (defun ts-run ()
   "Run a development server for the current TypeScript project."
@@ -547,10 +603,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 (defun web-compile ()
   "Compile the current TypeScript project."
   (interactive)
-  (let ((project-root (or (projectile-project-root)
-                        (error "Not in a Projectile project"))))
-    (cd project-root)
-    (compile "yarn build")))
+  (projectile-compile-with-default "yarn build"))
 
 (defun web-run ()
   "Run a development server for the current TypeScript project."
@@ -579,11 +632,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 (defun java-compile ()
   "Compile the current Java project using Maven."
   (interactive)
-  (if-let ((project-root (projectile-project-root)))
-      (let ((pom-dir (find-dir-with-file "pom.xml" project-root)))
-        (cd pom-dir)
-        (compile "mvn package"))
-    (error "Not in a Projectile project")))
+  (projectile-compile-with-default "mvn package"))
 
 (with-eval-after-load 'java-mode
   (evil-define-key 'normal java-mode-map (kbd "C-c C-w") 'whitespace-mode)
@@ -596,16 +645,7 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 (defun c-compile ()
   "Compile from the nearest Makefile upward, using the standard *compilation* buffer."
   (interactive)
-  (let* ((root (or (ignore-errors (projectile-project-root))
-                   (locate-dominating-file default-directory ".git")
-                   default-directory))
-         (make-dir (or (locate-dominating-file default-directory "Makefile")
-                       (and root (locate-dominating-file root "Makefile")))))
-    (unless make-dir (user-error "No Makefile found above %s" root))
-    (let ((default-directory make-dir)
-          (process-connection-type nil)
-          (compile-command c-compile-command))
-      (compile compile-command))))
+  (projectile-compile-with-default "make -k"))
 
 (with-eval-after-load 'cc-mode
   (evil-define-key 'normal c-mode-map (kbd "C-c C-c") 'c-compile))
