@@ -1,8 +1,12 @@
 * {
-    border: none;
-    border-radius: 0;
-    font-family: JetBrains Mono;
-    min-height: 20px;
+  border: none;
+  border-radius: 0;
+  font-family:
+    "JetBrains Mono",
+    "Font Awesome 7 Brands",
+    "Font Awesome 7 Free",
+    "Font Awesome 7 Free Solid";
+  min-height: 20px;
 }
 
 window#waybar {

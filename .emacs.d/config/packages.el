@@ -39,6 +39,9 @@
 (unless (package-installed-p 'go-mode)
   (package-install 'go-mode))
 
+(unless (package-installed-p 'elixir-mode)
+  (package-install 'elixir-mode))
+
 (unless (package-installed-p 'markdown-mode)
   (package-install 'markdown-mode))
 

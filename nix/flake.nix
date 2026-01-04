@@ -28,6 +28,7 @@
           psycopg2
           openai
           python-dotenv
+          ytmusicapi
         ]);
 
         nodeEnv = pkgs.buildEnv {

@@ -1,5 +1,5 @@
 use hyprland::data::{Clients, Workspace};
-use hyprland::event_listener::EventListenerMutable as EventListener;
+use hyprland::event_listener::EventListener;
 use hyprland::prelude::*;
 use std::collections::HashMap;
 
@@ -7,27 +7,27 @@ fn main() -> hyprland::Result<()> {
     compute_windows();
     let mut event_listener = EventListener::new();
 
-    event_listener.add_active_window_change_handler(|_, _| {
+    event_listener.add_active_window_changed_handler(|_| {
         compute_windows();
     });
 
-    event_listener.add_workspace_change_handler(|_, _| {
+    event_listener.add_workspace_changed_handler(|_| {
         compute_windows();
     });
 
-    event_listener.add_active_monitor_change_handler(|_, _| {
+    event_listener.add_active_monitor_changed_handler(|_| {
         compute_windows();
     });
 
-    event_listener.add_window_open_handler(|_, _| {
+    event_listener.add_window_opened_handler(|_| {
         compute_windows();
     });
 
-    event_listener.add_window_close_handler(|_, _| {
+    event_listener.add_window_closed_handler(|_| {
         compute_windows();
     });
 
-    event_listener.add_window_moved_handler(|_, _| {
+    event_listener.add_window_moved_handler(|_| {
         compute_windows();
     });
 
@@ -103,9 +103,11 @@ fn compute_windows() {
             };
             if classes.contains(&"discord".to_string()) {
                 text += &format!(
-                    "<span color=\"{0}\" size=\"small\">{1}</span>",
+                    "<span color=\"{0}\">{1}</span>",
                     color, space
                 );
+            } else if classes.contains(&"Slack".to_string()) {
+                text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"Mailspring".to_string()) {
                 text += &format!("<span color=\"{0}\">{1}</span>", color, space);
             } else if classes.contains(&"zoom".to_string()) {

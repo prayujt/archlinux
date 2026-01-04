@@ -4,10 +4,12 @@ COMMAND=$1
 WORKSPACE=$2
 MONITOR=$(hyprctl monitors | awk -v RS="" '/focused: yes/ {print $2}')
 
+echo $MONITOR
 if [ $MONITOR == 'HDMI-A-1' ]
 then
     WORKSPACE=$((10+$WORKSPACE))
 fi
+echo $WORKSPACE
 
 if [ $COMMAND == 'focus' ]
 then

@@ -155,7 +155,7 @@ If indent size is nil, insert a tab character."
   (setenv "GOPATH" "/Users/prayuj/.go"))
 
 (when (eq system-type 'gnu/linux)
-  (setq exec-path (append '("/home/prayuj/.nix-profile/bin" "/home/prayuj/.local/bin") exec-path))
+  (setq exec-path (append '("/home/prayuj/.nix-profile/bin" "/home/prayuj/.local/bin" "/home/prayuj/.elixirls") exec-path))
   (setenv "PATH" (concat "/home/prayuj/.nix-profile/bin:/home/prayuj/.local/bin" (getenv "PATH")))
   (setenv "GOPATH" "/home/prayuj/.go"))
 
@@ -578,6 +578,16 @@ Automatically checks for a .env file in DIRECTORY and sources it if present."
 (add-hook 'go-mode-hook
   (lambda ()
 	(add-hook 'before-save-hook 'gofmt-before-save nil t)))
+
+
+;; --- Elixir ---
+(defun elixir-compile ()
+  "Compile Elixir project using projectile with make build as default."
+  (interactive)
+  (projectile-compile-with-default "make build"))
+
+(with-eval-after-load 'elixir-mode
+  (evil-define-key 'normal elixir-mode-map (kbd "C-c C-c") 'elixir-compile))
 
 
 ;; --- TypeScript ---
