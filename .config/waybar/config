@@ -74,7 +74,7 @@
 
     "custom/hyprland": {
         "format": "{}",
-        "exec": "hyprland_events 1"
+        "exec": "~/.cargo/bin/hyprland_events 1"
     },
 
     "custom/notification": {
@@ -117,7 +117,7 @@
 
     "custom/hyprland": {
         "format": "{}",
-        "exec": "hyprland_events 2"
+        "exec": "~/.cargo/bin/hyprland_events 2"
     },
 
     "custom/music": {
