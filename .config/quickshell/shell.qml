@@ -630,93 +630,21 @@ Scope {
                     }
                 }
 
-                // == portfolio pill (DP-3, far right) ==
-                Rectangle {
-                    id: portfolioPill
-                    visible: bar.isDp && root.portfolioValue > 0
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: 40
-                    width: pfRow.implicitWidth + 30
-                    color: (pfMouse.containsMouse || root.portfolioExpanded) ? root.surface : root.bgColor
-                    radius: 20
-
-                    Behavior on color { ColorAnimation { duration: 120 } }
-
-                    property bool up: root.portfolioChange >= 0
-                    property color changeColor: up ? root.gainColor : root.mutedColor
-
-                    Row {
-                        id: pfRow
-                        anchors.centerIn: parent
-                        spacing: 9
-
-                        // portfolio value
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.fmtMoney(root.portfolioValue)
-                            color: root.textColor
-                            font.family: root.fontFamily
-                            font.pixelSize: 14
-                            opacity: root.portfolioSample ? 0.55 : 1.0
-                        }
-
-                        // daily % only (no raw $ change) — neutral dim when closed
-                        Row {
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 4
-                            visible: root.marketOpen
-                            opacity: root.portfolioSample ? 0.55 : 1.0
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: portfolioPill.up ? "\u25b2" : "\u25bc"
-                                color: portfolioPill.changeColor
-                                font.family: root.fontFamily
-                                font.pixelSize: 9
-                            }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: Math.abs(root.portfolioChangePct).toFixed(2) + "%"
-                                color: portfolioPill.changeColor
-                                font.family: root.fontFamily
-                                font.pixelSize: 13
-                            }
-                        }
-
-                        // market closed -> neutral dash
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: !root.marketOpen
-                            text: "\u2013"
-                            color: root.subtext
-                            font.family: root.fontFamily
-                            font.pixelSize: 14
-                        }
-                    }
-
-                    MouseArea {
-                        id: pfMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.portfolioExpanded = !root.portfolioExpanded
-                    }
-                }
-
-                // == news headline pill (DP-3, left of portfolio) ==
+                // == news headline pill (DP-3) — fades out while the portfolio card is open ==
                 Rectangle {
                     id: newsPill
                     visible: bar.isDp && root.newsPanelOpen && root.headlines.length > 0
-                    anchors.right: portfolioPill.visible ? portfolioPill.left : parent.right
-                    anchors.rightMargin: portfolioPill.visible ? 8 : 0
+                    anchors.right: parent.right
+                    // hug the collapsed portfolio pill with an 8px gap (matches old spacing)
+                    anchors.rightMargin: portfolioCard.collapsedW + 25
                     anchors.verticalCenter: parent.verticalCenter
                     height: 40
                     width: 380
                     color: root.bgColor
                     radius: 20
                     clip: true
+                    opacity: root.portfolioExpanded ? 0 : 1
+                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
                     property int newsIndex: 0
                     // how far to scroll so the last char rests at the right edge (0 if it fits)
@@ -1609,17 +1537,17 @@ Scope {
 
             }
 
-            // == portfolio expansion card (drops below the pill) ==
+            // == portfolio widget — morphs between pill and expanded card (one element) ==
             Rectangle {
                 id: portfolioCard
-                visible: bar.isDp && (height > 1)
+                visible: bar.isDp && root.portfolioValue > 0
                 anchors.right: parent.right
                 anchors.rightMargin: 17
-                y: 52
-                width: 360
-                radius: 16
-                color: root.bgColor
+                y: 6
+                color: (!root.portfolioExpanded && pfOpen.containsMouse) ? root.surface : root.bgColor
                 clip: true
+
+                Behavior on color { ColorAnimation { duration: 120 } }
 
                 // positions + a trailing cash row
                 property var rows: {
@@ -1635,21 +1563,98 @@ Scope {
                     return (Math.max.apply(null, p) - Math.min.apply(null, p)) > 0.01
                 }
                 property real fullH: (showSpark ? 171 : 133) + listH
-                height: root.portfolioExpanded ? fullH : 0
 
+                // morph: pill (collapsedW x 40) <-> card (360 x fullH)
+                property real collapsedW: pfCollapsed.implicitWidth + 28
+                width: root.portfolioExpanded ? 360 : collapsedW
+                height: root.portfolioExpanded ? fullH : 40
+                radius: root.portfolioExpanded ? 16 : 20
+
+                // 0..1 progress used to cross-fade pill <-> card content
+                property real morphP: {
+                    var d = 360 - collapsedW
+                    return d > 0 ? Math.max(0, Math.min(1, (width - collapsedW) / d)) : 1
+                }
+
+                Behavior on width {
+                    NumberAnimation { duration: 300; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                }
                 Behavior on height {
-                    NumberAnimation { duration: 260; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                    NumberAnimation { duration: 300; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                }
+                Behavior on radius {
+                    NumberAnimation { duration: 300; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
                 }
 
                 property bool dayUp: root.portfolioChange >= 0
                 property bool totalUp: root.portfolioTotalPL >= 0
 
+                // opener — active only while collapsed (click the pill to expand)
+                MouseArea {
+                    id: pfOpen
+                    anchors.fill: parent
+                    enabled: !root.portfolioExpanded
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.portfolioExpanded = true
+                }
+
+                // collapsed face: value + daily % (fades out as the card opens)
+                Row {
+                    id: pfCollapsed
+                    anchors.right: parent.right
+                    anchors.rightMargin: 15
+                    anchors.top: parent.top
+                    height: 40
+                    spacing: 9
+                    opacity: 1 - Math.min(1, portfolioCard.morphP / 0.35)
+                    visible: opacity > 0.01
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.fmtMoney(root.portfolioValue)
+                        color: root.textColor
+                        font.family: root.fontFamily
+                        font.pixelSize: 14
+                        opacity: root.portfolioSample ? 0.55 : 1.0
+                    }
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+                        visible: root.marketOpen
+                        opacity: root.portfolioSample ? 0.55 : 1.0
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: portfolioCard.dayUp ? "\u25b2" : "\u25bc"
+                            color: portfolioCard.dayUp ? root.gainColor : root.mutedColor
+                            font.family: root.fontFamily
+                            font.pixelSize: 9
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Math.abs(root.portfolioChangePct).toFixed(2) + "%"
+                            color: portfolioCard.dayUp ? root.gainColor : root.mutedColor
+                            font.family: root.fontFamily
+                            font.pixelSize: 13
+                        }
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !root.marketOpen
+                        text: "\u2013"
+                        color: root.subtext
+                        font.family: root.fontFamily
+                        font.pixelSize: 14
+                    }
+                }
+
                 Column {
                     anchors.fill: parent
                     anchors.margins: 14
                     spacing: 8
-                    opacity: root.portfolioExpanded ? 1 : 0
-                    Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                    // reveal content in the last part of the unfold so it doesn't squish
+                    opacity: Math.max(0, (portfolioCard.morphP - 0.4) / 0.6)
+                    visible: opacity > 0.01
 
                     // header: label + total value
                     Item {
@@ -1671,6 +1676,13 @@ Scope {
                             font.family: root.fontFamily
                             font.pixelSize: 16
                             font.bold: true
+                        }
+                        // click the header to collapse
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -14
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.portfolioExpanded = false
                         }
                     }
 
