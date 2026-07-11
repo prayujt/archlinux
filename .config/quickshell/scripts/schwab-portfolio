@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""
+Read-only Schwab portfolio fetch for the quickshell widget.
+
+Outputs one line of JSON:
+  {"value":float,"change":float,"changePct":float,"cash":float,
+   "marketOpen":bool,"spark":[float,...],"positions":[{sym,value,dayPL,dayPct}],
+   "sample":bool}
+
+ONLY performs read actions:
+  - POST /v1/oauth/token   (token refresh — authentication, not trading)
+  - GET  /trader/v1/accounts?fields=positions   (read balances + positions)
+No order/trade endpoints are ever called.
+
+Until a refresh token exists (see schwab-auth) it emits sample data.
+"""
+import os
+import json
+import math
+import base64
+import datetime
+import urllib.request
+import urllib.parse
+
+try:
+    from zoneinfo import ZoneInfo
+    _ET = ZoneInfo('America/New_York')
+except Exception:
+    _ET = None
+
+ENV_FILE = os.path.expanduser('~/.config/quickshell/.env')
+TOKEN_FILE = os.path.expanduser('~/.config/quickshell/.schwab_tokens.json')
+HIST_FILE = os.path.expanduser('~/.config/quickshell/.schwab_history.json')
+
+
+def market_open():
+    now = datetime.datetime.now(_ET) if _ET else datetime.datetime.now()
+    if now.weekday() >= 5:          # Sat/Sun
+        return False
+    mins = now.hour * 60 + now.minute
+    return (9 * 60 + 30) <= mins <= (16 * 60)   # 9:30–16:00 ET
+
+
+def load_env():
+    d = {}
+    try:
+        with open(ENV_FILE) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                k, v = line.split('=', 1)
+                d[k.strip()] = v.strip().strip('"').strip("'")
+    except Exception:
+        pass
+    return d
+
+
+def push_history(total):
+    """Append today's portfolio value to a rolling per-day series for the sparkline."""
+    today = datetime.date.today().isoformat()
+    h = {}
+    try:
+        with open(HIST_FILE) as f:
+            h = json.load(f)
+    except Exception:
+        h = {}
+    if h.get('date') != today:
+        h = {'date': today, 'points': []}
+    h['points'].append(round(total, 2))
+    h['points'] = h['points'][-120:]
+    try:
+        with open(HIST_FILE, 'w') as f:
+            json.dump(h, f)
+    except Exception:
+        pass
+    return h['points']
+
+
+def sample_payload():
+    base = 101284.32
+    spark = [round(base + 900 * math.sin(i / 6.0) + i * 14, 2) for i in range(40)]
+    return {
+        "value": 106515.77,
+        "change": 843.13,
+        "changePct": 0.80,
+        "totalPL": 15234.50,
+        "sample": True,
+        "cash": 5231.45,
+        "marketOpen": market_open(),
+        "spark": spark,
+        "positions": [
+            {"sym": "VOO",  "value": 30500.00, "dayPL": 210.10, "dayPct": 0.69, "totalPL": 5200.00,  "totalPct": 20.57},
+            {"sym": "NVDA", "value": 22150.00, "dayPL": 410.20, "dayPct": 1.89, "totalPL": 9800.00,  "totalPct": 79.35},
+            {"sym": "AAPL", "value": 18420.00, "dayPL": -95.40, "dayPct": -0.52, "totalPL": 3200.00, "totalPct": 21.03},
+            {"sym": "MSFT", "value": 14300.00, "dayPL": 180.50, "dayPct": 1.28, "totalPL": 2600.00,  "totalPct": 22.22},
+            {"sym": "TSLA", "value": 9800.00,  "dayPL": -63.20, "dayPct": -0.64, "totalPL": -1400.00, "totalPct": -12.50},
+            {"sym": "AMZN", "value": 6114.32,  "dayPL": 200.93, "dayPct": 3.40, "totalPL": 900.00,   "totalPct": 17.26},
+        ],
+    }
+
+
+def emit(obj):
+    print(json.dumps(obj), flush=True)
+
+
+def main():
+    env = load_env()
+    cid = env.get('CLIENT_ID')
+    sec = env.get('CLIENT_SECRET')
+
+    tokens = {}
+    if os.path.exists(TOKEN_FILE):
+        try:
+            with open(TOKEN_FILE) as f:
+                tokens = json.load(f)
+        except Exception:
+            tokens = {}
+    refresh = tokens.get('refresh_token')
+
+    if not (cid and sec and refresh):
+        emit(sample_payload())
+        return
+
+    try:
+        # 1) refresh the short-lived access token
+        body = urllib.parse.urlencode({
+            'grant_type': 'refresh_token',
+            'refresh_token': refresh,
+        }).encode()
+        basic = base64.b64encode(f'{cid}:{sec}'.encode()).decode()
+        req = urllib.request.Request(
+            'https://api.schwabapi.com/v1/oauth/token',
+            data=body,
+            headers={
+                'Authorization': f'Basic {basic}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        )
+        tok = json.load(urllib.request.urlopen(req, timeout=15))
+        access = tok['access_token']
+        if tok.get('refresh_token') and tok['refresh_token'] != refresh:
+            tokens['refresh_token'] = tok['refresh_token']
+            try:
+                with open(TOKEN_FILE, 'w') as f:
+                    json.dump(tokens, f)
+            except Exception:
+                pass
+
+        # 2) read accounts (balances + positions) — READ ONLY
+        req2 = urllib.request.Request(
+            'https://api.schwabapi.com/trader/v1/accounts?fields=positions',
+            headers={'Authorization': f'Bearer {access}', 'Accept': 'application/json'},
+        )
+        accounts = json.load(urllib.request.urlopen(req2, timeout=15))
+
+        total = 0.0
+        change = 0.0
+        cash = 0.0
+        total_pl = 0.0
+        positions = []
+        for a in accounts:
+            sa = a.get('securitiesAccount', {})
+            bal = sa.get('currentBalances', {})
+            total += bal.get('liquidationValue', 0) or 0
+            cash += bal.get('cashBalance', 0) or 0
+            for p in sa.get('positions', []):
+                change += p.get('currentDayProfitLoss', 0) or 0
+                mv = p.get('marketValue', 0) or 0
+                tpl = (p.get('longOpenProfitLoss', 0) or 0) + (p.get('shortOpenProfitLoss', 0) or 0)
+                total_pl += tpl
+                cost = mv - tpl
+                tpct = (tpl / cost * 100.0) if cost else 0.0
+                inst = p.get('instrument', {})
+                positions.append({
+                    'sym': inst.get('symbol', '') or inst.get('cusip', ''),
+                    'value': mv,
+                    'dayPL': p.get('currentDayProfitLoss', 0) or 0,
+                    'dayPct': p.get('currentDayProfitLossPercentage', 0) or 0,
+                    'totalPL': tpl,
+                    'totalPct': tpct,
+                })
+
+        positions.sort(key=lambda x: x['value'], reverse=True)
+        spark = push_history(total)
+
+        prev = total - change
+        pct = (change / prev * 100.0) if prev else 0.0
+        emit({"value": total, "change": change, "changePct": pct,
+              "totalPL": total_pl, "sample": False, "cash": cash,
+              "marketOpen": market_open(), "spark": spark, "positions": positions})
+    except Exception as e:
+        p = sample_payload()
+        p['error'] = str(e)[:100]
+        emit(p)
+
+
+main()

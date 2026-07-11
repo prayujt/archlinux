@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# Cycle wallpapers every 10s across both monitors (preview).
+DIR="$HOME/Pictures/wallpapers"
+WALLS="$DIR/blue_city.png $DIR/tn_city1.jpg $DIR/tn_city2.jpg $DIR/tn_aurora1.png $DIR/tn_aurora2.png"
+MONITORS="DP-3 HDMI-A-1"
+
+while true; do
+  for w in $WALLS; do
+    for m in $MONITORS; do
+      hyprctl hyprpaper wallpaper "$m,$w" >/dev/null 2>&1
+    done
+    sleep 10
+  done
+done

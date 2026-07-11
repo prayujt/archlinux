@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+import time
+import json
+from soco import SoCo
+
+SONOS_IP = '192.168.1.50'
+speaker = SoCo(SONOS_IP)
+
+
+def to_secs(t):
+    if not t:
+        return 0
+    try:
+        parts = [int(p) for p in t.split(':')]
+    except ValueError:
+        return 0
+    s = 0
+    for p in parts:
+        s = s * 60 + p
+    return s
+
+
+while True:
+    try:
+        info = speaker.get_current_track_info()
+        state = speaker.get_current_transport_info()['current_transport_state']
+        out = {
+            'title': info.get('title', ''),
+            'artist': info.get('artist', ''),
+            'album': info.get('album', ''),
+            'albumArt': info.get('album_art', ''),
+            'position': to_secs(info.get('position', '')),
+            'duration': to_secs(info.get('duration', '')),
+            'state': state,
+            'volume': speaker.volume,
+            'muted': speaker.mute,
+        }
+        print(json.dumps(out), flush=True)
+    except Exception as e:
+        print(json.dumps({'title': '', 'state': 'STOPPED', 'error': str(e)}), flush=True)
+    time.sleep(1)
