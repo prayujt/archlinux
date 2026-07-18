@@ -18,15 +18,22 @@ alias record_screen='wf-recorder --muxer=v4l2 --codec=rawvideo --file=/dev/video
 alias ws='websocat'
 alias waybar_restart='killall -SIGUSR2 waybar'
 alias c='z'
-alias edugator='mysql -h database-edugator.cznhwcrim7oz.us-east-1.rds.amazonaws.com -D edugator -u admin -p'
 alias nd='nix develop -c zsh -l'
+alias claude='claude --allow-dangerously-skip-permissions'
+alias scrape='audio-scrape'
 
 alias editenv='nvim ~/nix/flake.nix'
 alias updateenv='nix profile upgrade --profile ~/.nix-profiles/user-env nix'
 alias cleanup='nix store gc && nix-collect-garbage -d'
 
-planewise() {
+alias planewise='ssh ubuntu@api.planewise.app -i ~/.tokens/planewise-ec2.pem'
+planewisedb() {
     PGPASSWORD=$(pass planewise/rds) psql -h planewise-psql.cjeqfhagckjg.us-east-1.rds.amazonaws.com -U planewise sslmode=require
+}
+
+alias edugator='ssh ubuntu@metrics.edugator.app -i ~/.tokens/metrics-keypair.pem'
+edugatordb() {
+    psql -h edugator-db.cznhwcrim7oz.us-east-1.rds.amazonaws.com -U edugator sslmode=require
 }
 
 open() {
@@ -73,6 +80,7 @@ export JAVA_HOME=/usr/lib/jvm/default
 export TERMINAL="alacritty"
 export LD_LIBRARY_PATH=/opt/cuda/lib
 export DOCKER_BUILDKIT=1
+export AUDIO_SCRAPER_HOST=https://audio-scraper.prayujt.com
 source ~/.keys
 
 export PATH=$PATH:/home/prayuj/.local/bin
@@ -90,6 +98,8 @@ export PATH=$PATH:/usr/local/sbin
 export PATH=$PATH:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl
 
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+export OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word

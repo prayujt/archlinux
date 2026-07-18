@@ -1,3 +1,5 @@
+(setq enable-local-eval t)
+
 ;; ----- Appearance -----
 (tool-bar-mode -1) ;; disable tool bar
 (menu-bar-mode -1) ;; disable menu bar
@@ -155,8 +157,8 @@ If indent size is nil, insert a tab character."
   (setenv "GOPATH" "/Users/prayuj/.go"))
 
 (when (eq system-type 'gnu/linux)
-  (setq exec-path (append '("/home/prayuj/.nix-profile/bin" "/home/prayuj/.local/bin" "/home/prayuj/.elixirls") exec-path))
-  (setenv "PATH" (concat "/home/prayuj/.nix-profile/bin:/home/prayuj/.local/bin" (getenv "PATH")))
+  (setq exec-path (append '("/home/prayuj/.nix-profile/bin" "/home/prayuj/.local/bin" "/home/prayuj/.elixirls" "/home/prayuj/.go/bin") exec-path))
+  (setenv "PATH" (concat "/home/prayuj/.nix-profile/bin:/home/prayuj/.local/bin:/home/prayuj/.go/bin:" (getenv "PATH")))
   (setenv "GOPATH" "/home/prayuj/.go"))
 
 
@@ -393,6 +395,8 @@ With prefix argument (C-u), always prompt to change the command."
 ;; ----- LSP Configs -----
 (require 'lsp-bridge)
 
+(add-to-list 'lsp-bridge-default-mode-hooks 'protobuf-mode-hook)
+
 (global-lsp-bridge-mode)
 
 (setq lsp-bridge-python-lsp-server 'pylsp)
@@ -400,7 +404,11 @@ With prefix argument (C-u), always prompt to change the command."
 (setq lsp-bridge-signature-help-enable t)    ;; enable signature help
 (setq lsp-bridge-enable-log nil) ;; ensure logging is disabled for performance
 
+;; use custom langserver definitions (e.g. buf for protobuf)
+(setq lsp-bridge-user-langserver-dir "~/.emacs.d/langserver")
+
 (add-to-list 'lsp-bridge-single-lang-server-mode-list '((web-mode) . "svelteserver"))
+(add-to-list 'lsp-bridge-single-lang-server-mode-list '((protobuf-mode) . "buf"))
 
 (with-eval-after-load 'lsp-bridge
   (evil-define-key 'insert lsp-bridge-mode-map

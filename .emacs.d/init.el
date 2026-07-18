@@ -30,7 +30,10 @@
  '(package-selected-packages nil)
  '(package-vc-selected-packages
     '((pgmacs :vc-backend Git :url "https://github.com/emarsden/pgmacs")
-       (pg :vc-backend Git :url "https://github.com/emarsden/pg-el"))))
+       (pg :vc-backend Git :url "https://github.com/emarsden/pg-el")))
+ '(safe-local-variable-directories
+    '("/home/prayuj/repos/planewise-backend/"
+       "/home/prayuj/repos/edugator-api/")))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

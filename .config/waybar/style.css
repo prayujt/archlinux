@@ -236,6 +236,16 @@ window#waybar.hidden {
 }
 
 
+#custom-sonos-volume {
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 0px 10px 10px 0px;
+    transition: none;
+    color: #e39d4d;
+    background: #383c4a;
+    margin: 0 0px;
+}
+
 #custom-default-audio {
     padding-left: 10px;
     padding-right: 10px;

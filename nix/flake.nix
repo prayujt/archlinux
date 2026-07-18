@@ -29,6 +29,7 @@
           openai
           python-dotenv
           ytmusicapi
+          soco
         ]);
 
         nodeEnv = pkgs.buildEnv {

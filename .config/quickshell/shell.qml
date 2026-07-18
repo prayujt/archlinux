@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
 
@@ -42,10 +43,28 @@ Scope {
     property int sonosVolume: 0
     property bool sonosMuted: false
     property bool sonosVolOsd: false
+    // true briefly while the OSD morphs open, so the fill bar snaps to the real
+    // value instead of animating up from a stale/zero value
+    property bool sonosVolSettling: false
     property string sonosState: "STOPPED"
-    property bool sonosPlaying: sonosState === "PLAYING"
+    // settable so play/pause can update the UI optimistically before the poll catches up
+    property bool sonosPlaying: false
+    // while locked, the poller won't overwrite sonosPlaying (avoids flip-back after a manual toggle)
+    property bool sonosPlayLock: false
+    Timer { id: sonosPlayLockTimer; interval: 2500; onTriggered: root.sonosPlayLock = false }
+    function sonosTogglePlay() {
+        root.sonosPlaying = !root.sonosPlaying
+        root.sonosPlayLock = true
+        sonosPlayLockTimer.restart()
+        sonosToggle.running = true
+    }
     property bool sonosHasTrack: (sonosState === "PLAYING" || sonosState === "PAUSED_PLAYBACK") && sonosTitle.length > 0
     property bool mediaExpanded: false
+    // true briefly when the media card opens, so the progress bar snaps to the
+    // current position instead of crawling there
+    property bool mediaSettling: false
+    onMediaExpandedChanged: if (mediaExpanded) { mediaSettling = true; mediaSettleTimer.restart() }
+    Timer { id: mediaSettleTimer; interval: 320; onTriggered: root.mediaSettling = false }
 
     // -- schwab portfolio state --
     property real portfolioValue: 0
@@ -58,8 +77,137 @@ Scope {
     property var portfolioPositions: []
     property var portfolioSpark: []
     property bool portfolioExpanded: false
+    property bool newsExpanded: false
+    property int newsSelected: 0
+
+    // -- telegram (ray) chat state --
+    property bool telegramOpen: false
+    property bool telegramReady: false
+    property string telegramError: ""
+    property bool tgTyping: false
+    property var tgSeen: ({})
+    // -- unified notification center (desktop notifications + ray messages) --
+    property bool notifOpen: false
+    property int notifSelected: 0
+    // newest first: { kind, app, summary, body, time, ref } — see notifModel below
+    // transient toast (latest notification) shown under the pill
+    property string notifToastApp: ""
+    property string notifToastText: ""
+    property bool notifToastShow: false
+    Timer { id: notifToastTimer; interval: 10000; onTriggered: root.notifToastShow = false }
+
+    ListModel { id: notifModel }
+
+    function oneLine(t) { return (t || "").replace(/\s+/g, " ").trim() }
+    function addNotifItem(entry) {
+        entry.time = Date.now()
+        notifModel.insert(0, entry)
+        while (notifModel.count > 50) notifModel.remove(notifModel.count - 1)
+    }
+    function showToast(app, text) {
+        root.notifToastApp = app
+        root.notifToastText = root.oneLine(text)
+        root.notifToastShow = true
+        notifToastTimer.restart()
+    }
+    function removeNotifAt(i) {
+        if (i < 0 || i >= notifModel.count) return
+        var e = notifModel.get(i)
+        if (e && e.ref) { try { e.ref.tracked = false } catch(err) {} }
+        notifModel.remove(i)   // fires ListView remove/displaced transitions
+        if (root.notifSelected >= notifModel.count)
+            root.notifSelected = Math.max(0, notifModel.count - 1)
+    }
+    function clearNotifs() {
+        for (var i = 0; i < notifModel.count; i++) {
+            var e = notifModel.get(i)
+            if (e && e.ref) { try { e.ref.tracked = false } catch(err) {} }
+        }
+        notifModel.clear()
+        root.notifSelected = 0
+        root.notifOpen = false
+    }
+    function activateNotif(i) {
+        if (i < 0 || i >= notifModel.count) return
+        var e = notifModel.get(i)
+        if (!e) return
+        if (e.kind === "ray") {
+            root.telegramOpen = true       // open the chat, consume the entry
+            removeNotifAt(i)
+            return
+        }
+        // app notification: invoke its default action if one exists, then clear it
+        if (e.ref) {
+            try {
+                var acts = e.ref.actions
+                if (acts && acts.length > 0) {
+                    var chosen = acts[0]
+                    for (var k = 0; k < acts.length; k++) {
+                        if (acts[k].identifier === "default") { chosen = acts[k]; break }
+                    }
+                    chosen.invoke()
+                }
+            } catch (err) {}
+        }
+        removeNotifAt(i)
+        root.notifOpen = false
+    }
+    function relTime(ms) {
+        var d = Math.max(0, Date.now() - ms)
+        var s = Math.floor(d / 1000)
+        if (s < 10) return "now"
+        if (s < 60) return s + "s"
+        var m = Math.floor(s / 60)
+        if (m < 60) return m + "m"
+        var h = Math.floor(m / 60)
+        if (h < 24) return h + "h"
+        return Math.floor(h / 24) + "d"
+    }
+
+    // become the desktop notification daemon and feed the center + toast
+    NotificationServer {
+        id: notifServer
+        keepOnReload: true
+        bodySupported: true
+        actionsSupported: true
+        imageSupported: true
+        onNotification: n => {
+            n.tracked = true
+            root.addNotifItem({ kind: "app", app: n.appName || "app",
+                                summary: root.oneLine(n.summary), body: root.oneLine(n.body), ref: n })
+            root.showToast(n.appName || "notification", n.summary || n.body || "")
+        }
+    }
+
+    // any keyboard-driven panel open on the center pill
+    readonly property bool anyPanel: launcherOpen || newsExpanded || telegramOpen || notifOpen || (mediaExpanded && sonosHasTrack)
+    // briefly grab keyboard focus on open (Exclusive) then relax to OnDemand so the
+    // rest of the desktop stays usable while the panel keeps focus until you click away
+    property bool kbGrab: false
+    onAnyPanelChanged: if (anyPanel) { kbGrab = true; kbGrabTimer.restart(); warpCursorToPanel() }
+    Timer { id: kbGrabTimer; interval: 450; onTriggered: root.kbGrab = false }
+    // snap the volume fill while the OSD morphs in, then re-enable smooth animation
+    onSonosVolOsdChanged: if (sonosVolOsd) { sonosVolSettling = true; volSettleTimer.restart() }
+    Timer { id: volSettleTimer; interval: 320; onTriggered: root.sonosVolSettling = false }
+
+    // warp the cursor onto the open panel so focus-follows-mouse doesn't yank focus
+    // back to whatever window was under the cursor when we relax to OnDemand
+    Process { id: cursorWarpProc }
+    function warpCursorToPanel() {
+        var s = null
+        for (var i = 0; i < Quickshell.screens.length; i++)
+            if (Quickshell.screens[i].name === "DP-3") s = Quickshell.screens[i]
+        if (!s) return
+        var cx = newsExpanded ? (s.x + s.width - 380) : (s.x + s.width / 2)
+        var cy = s.y + 70
+        cursorWarpProc.command = ["hyprctl", "dispatch", "movecursor",
+                                  Math.round(cx).toString(), Math.round(cy).toString()]
+        cursorWarpProc.running = true
+    }
 
     property string pillMode: launcherOpen ? "launcher"
+        : telegramOpen ? "telegram"
+        : notifOpen ? "notif"
         : (mediaExpanded && sonosHasTrack) ? "media"
         : sonosVolOsd ? "sonosvol"
         : volumeOsd ? "volume"
@@ -67,6 +215,18 @@ Scope {
 
     // collapse media card if track stops
     onSonosHasTrackChanged: if (!sonosHasTrack) mediaExpanded = false
+    // portfolio and news cards are mutually exclusive
+    onPortfolioExpandedChanged: if (portfolioExpanded) newsExpanded = false
+    onNewsExpandedChanged: if (newsExpanded) portfolioExpanded = false
+    // telegram takes over the center pill; close the launcher when it opens
+    onTelegramOpenChanged: {
+        if (telegramOpen) { launcherOpen = false; notifOpen = false; notifToastShow = false }
+    }
+    onNotifOpenChanged: if (notifOpen) { launcherOpen = false; telegramOpen = false; mediaExpanded = false }
+    onLauncherOpenChanged: if (launcherOpen) telegramOpen = false
+
+    // telegram message history (out=true is us, out=false is ray)
+    ListModel { id: tgModel }
 
     // workspace state
     property string activeWsStr: ""
@@ -266,18 +426,10 @@ Scope {
     Process {
         id: newsProc
         running: true
-        // -- News source: swap by commenting/uncommenting one `command:` below --
-
-        // BBC US & Canada (US-focused hard news):
-        // command: ["sh", "-c", "curl -s -A 'Mozilla/5.0' 'https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml' | python3 -c \"\nimport sys, xml.etree.ElementTree as ET, json\ntree = ET.parse(sys.stdin)\nns = {'media': 'http://search.yahoo.com/mrss/'}\nitems = []\nfor item in tree.findall('.//item')[:20]:\n    t = item.findtext('title', '')\n    d = item.findtext('description', '')\n    l = item.findtext('link', '').split('?')[0].replace('www.bbc.co.uk', 'www.bbc.com')\n    m = item.find('media:thumbnail', ns)\n    img = m.get('url', '') if m is not None else ''\n    items.append({'title': t, 'desc': d, 'image': img, 'link': l})\nprint(json.dumps(items))\n\""]
-
-        // NYT HomePage (US-centric; needs the section block-list to drop opinion/features):
-        // command: ["sh", "-c", "curl -s 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' | python3 -c \"\nimport sys, xml.etree.ElementTree as ET, json\ntree = ET.parse(sys.stdin)\nns = {'media': 'http://search.yahoo.com/mrss/'}\nblock = ('/opinion/','/insider/','/cooking/','/style/','/t-magazine/','/arts/','/books/','/movies/','/theater/','/travel/','/realestate/','/magazine/','/well/','/food/','/dining/','/fashion/','/podcasts/','/crosswords/','/games/','/wirecutter/','/review/','/interactive/')\nitems = []\nfor item in tree.findall('.//item'):\n    l = item.findtext('link', '')\n    if any(b in l for b in block):\n        continue\n    t = item.findtext('title', '')\n    d = item.findtext('description', '')\n    m = item.find('media:content', ns)\n    img = m.get('url', '') if m is not None else ''\n    items.append({'title': t, 'desc': d, 'image': img, 'link': l})\n    if len(items) >= 20:\n        break\nprint(json.dumps(items))\n\""]
-
-        // BBC World (active) — global hard news, heavy US coverage, minimal filtering:
-        command: ["sh", "-c", "curl -s -A 'Mozilla/5.0' 'https://feeds.bbci.co.uk/news/world/rss.xml' | python3 -c \"\nimport sys, xml.etree.ElementTree as ET, json\ntree = ET.parse(sys.stdin)\nns = {'media': 'http://search.yahoo.com/mrss/'}\nitems = []\nfor item in tree.findall('.//item')[:20]:\n    t = item.findtext('title', '')\n    d = item.findtext('description', '')\n    l = item.findtext('link', '').split('?')[0].replace('www.bbc.co.uk', 'www.bbc.com')\n    m = item.find('media:thumbnail', ns)\n    img = m.get('url', '') if m is not None else ''\n    items.append({'title': t, 'desc': d, 'image': img, 'link': l})\nprint(json.dumps(items))\n\""]
+        // NYT US Politics + Economy (hard news only; see scripts/news-fetch to change source)
+        command: ["/home/prayuj/.nix-profile/bin/python3", "/home/prayuj/.config/quickshell/scripts/news-fetch"]
         stdout: SplitParser {
-            splitMarker: ""
+            splitMarker: "\n"
             onRead: data => {
                 try {
                     let items = JSON.parse(data.trim())
@@ -302,7 +454,7 @@ Scope {
         command: ["sh", "-c", "rm -f /tmp/qs-news-toggle; mkfifo /tmp/qs-news-toggle; while true; do cat /tmp/qs-news-toggle; done"]
         stdout: SplitParser {
             onRead: data => {
-                if (data.trim() === "toggle") root.newsPanelOpen = !root.newsPanelOpen
+                if (data.trim() === "toggle") root.newsExpanded = !root.newsExpanded
             }
         }
     }
@@ -322,6 +474,18 @@ Scope {
         }
     }
 
+    // -- notification center toggle listener (FIFO, MOD+SHIFT+I) --
+    Process {
+        id: notifToggleProc
+        running: true
+        command: ["sh", "-c", "rm -f /tmp/qs-notif-toggle; mkfifo /tmp/qs-notif-toggle; while true; do cat /tmp/qs-notif-toggle; done"]
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.trim() === "toggle") root.notifOpen = !root.notifOpen
+            }
+        }
+    }
+
     // -- portfolio card toggle listener (FIFO) --
     Process {
         id: portfolioToggleProc
@@ -332,6 +496,109 @@ Scope {
                 if (data.trim() === "toggle") root.portfolioExpanded = !root.portfolioExpanded
             }
         }
+    }
+
+    // -- media card toggle listener (FIFO) — only meaningful while a track is playing --
+    Process {
+        id: mediaToggleProc
+        running: true
+        command: ["sh", "-c", "rm -f /tmp/qs-media-toggle; mkfifo /tmp/qs-media-toggle; while true; do cat /tmp/qs-media-toggle; done"]
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.trim() === "toggle" && root.sonosHasTrack)
+                    root.mediaExpanded = !root.mediaExpanded
+            }
+        }
+    }
+
+    // -- telegram (ray) daemon: streams history + live messages, reads /tmp/qs-tg-send --
+    Process {
+        id: telegramProc
+        running: true
+        command: ["/home/prayuj/.config/quickshell/.venv-tg/bin/python",
+                  "/home/prayuj/.config/quickshell/scripts/telegram-ray"]
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                try {
+                    let o = JSON.parse(data.trim())
+                    if (o.type === "history") {
+                        tgModel.clear()
+                        root.tgSeen = ({})
+                        for (let i = 0; i < o.messages.length; i++) {
+                            let m = o.messages[i]
+                            if (m.id !== undefined) root.tgSeen[m.id] = true
+                            tgModel.append({ mid: m.id === undefined ? -1 : m.id, out: m.out, text: m.text })
+                        }
+                        root.telegramReady = true
+                    } else if (o.type === "msg") {
+                        root.tgTyping = false
+                        // dedupe by message id so duplicates never spam the view
+                        if (o.id === undefined || !root.tgSeen[o.id]) {
+                            if (o.id !== undefined) root.tgSeen[o.id] = true
+                            tgModel.append({ mid: o.id === undefined ? -1 : o.id, out: o.out, text: o.text })
+                        }
+                        // add ray replies to the notification center; toast when chat is closed
+                        if (!o.out && o.text && o.text.length > 0) {
+                            root.addNotifItem({ kind: "ray", app: "ray", summary: root.oneLine(o.text), body: "" })
+                            if (!root.telegramOpen) root.showToast("ray", o.text)
+                        }
+                    } else if (o.type === "edit") {
+                        // ray is streaming: update the existing bubble in place
+                        root.tgTyping = false
+                        let found = false
+                        for (let j = tgModel.count - 1; j >= 0; j--) {
+                            if (tgModel.get(j).mid === o.id) {
+                                tgModel.setProperty(j, "text", o.text)
+                                found = true
+                                break
+                            }
+                        }
+                        if (!found) {
+                            if (o.id !== undefined) root.tgSeen[o.id] = true
+                            tgModel.append({ mid: o.id === undefined ? -1 : o.id, out: o.out, text: o.text })
+                        }
+                        // keep the toast in sync while ray streams, if it's showing
+                        if (!o.out && !root.telegramOpen && root.notifToastShow && o.text) {
+                            root.notifToastText = root.oneLine(o.text)
+                            notifToastTimer.restart()
+                        }
+                    } else if (o.type === "typing") {
+                        root.tgTyping = o.on === true
+                    } else if (o.type === "status") {
+                        root.telegramReady = o.ok === true
+                        root.telegramError = o.error || ""
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+
+    // restart the daemon if it dies
+    Timer {
+        interval: 15000; running: true; repeat: true
+        onTriggered: if (!telegramProc.running) telegramProc.running = true
+    }
+
+    // -- telegram toggle listener (FIFO, MOD+T) --
+    Process {
+        id: telegramToggleProc
+        running: true
+        command: ["sh", "-c", "rm -f /tmp/qs-telegram-toggle; mkfifo /tmp/qs-telegram-toggle; while true; do cat /tmp/qs-telegram-toggle; done"]
+        stdout: SplitParser {
+            onRead: data => {
+                if (data.trim() === "toggle") root.telegramOpen = !root.telegramOpen
+            }
+        }
+    }
+
+    // -- send a message to ray (writes one line to the daemon's FIFO) --
+    // `timeout` guarantees the write can never block/pile up if the daemon is down
+    Process { id: telegramSendProc }
+    function telegramSend(text) {
+        if (!text || text.length === 0) return
+        telegramSendProc.command = ["timeout", "2", "sh", "-c", "printf '%s\\n' \"$1\" > /tmp/qs-tg-send", "sh", text]
+        telegramSendProc.running = true
     }
 
     // -- open URL --
@@ -368,6 +635,8 @@ Scope {
                     root.sonosDur = m.duration || 0
                     root.sonosPos = m.position || 0
                     root.sonosState = m.state || "STOPPED"
+                    if (!root.sonosPlayLock)
+                        root.sonosPlaying = (m.state === "PLAYING")
                     if (m.volume !== undefined && !root.sonosVolOsd)
                         root.sonosVolume = m.volume
                 } catch(e) {}
@@ -473,12 +742,17 @@ Scope {
             implicitHeight: isDp ? 510 : 48
             color: "transparent"
             exclusiveZone: 48
-            WlrLayershell.keyboardFocus: isDp && root.launcherOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            // brief Exclusive grab on open (auto-focus) then OnDemand (releasable,
+            // doesn't monopolize the keyboard — other apps stay usable, click to refocus)
+            WlrLayershell.keyboardFocus: !(isDp && root.anyPanel) ? WlrKeyboardFocus.None
+                : (root.kbGrab ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand)
 
             mask: Region {
                 Region { item: barContent }
                 Region { item: pillBg }
                 Region { item: portfolioCard }
+                Region { item: newsCard }
+                Region { item: tgNotif }
             }
 
             Item {
@@ -630,135 +904,6 @@ Scope {
                     }
                 }
 
-                // == news headline pill (DP-3) — fades out while the portfolio card is open ==
-                Rectangle {
-                    id: newsPill
-                    visible: bar.isDp && root.newsPanelOpen && root.headlines.length > 0
-                    anchors.right: parent.right
-                    // hug the collapsed portfolio pill with an 8px gap (matches old spacing)
-                    anchors.rightMargin: portfolioCard.collapsedW + 25
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: 40
-                    width: 380
-                    color: root.bgColor
-                    radius: 20
-                    clip: true
-                    opacity: root.portfolioExpanded ? 0 : 1
-                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-
-                    property int newsIndex: 0
-                    // how far to scroll so the last char rests at the right edge (0 if it fits)
-                    property real scrollTo: Math.min(0, newsClip.width - newsText.implicitWidth - 4)
-
-                    onVisibleChanged: {
-                        if (visible) newsCycle.restart()
-                        else newsCycle.stop()
-                    }
-
-                    Connections {
-                        target: root
-                        function onHeadlinesChanged() {
-                            newsPill.newsIndex = 0
-                            if (newsPill.visible) newsCycle.restart()
-                        }
-                    }
-
-                    // pulsing dot
-                    Rectangle {
-                        id: newsDot
-                        anchors.left: parent.left
-                        anchors.leftMargin: 17
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 7
-                        height: 7
-                        radius: 3.5
-                        color: root.clockColor
-
-                        SequentialAnimation on opacity {
-                            running: newsPill.visible
-                            loops: Animation.Infinite
-                            NumberAnimation { to: 0.25; duration: 1100; easing.type: Easing.InOutSine }
-                            NumberAnimation { to: 1.0; duration: 1100; easing.type: Easing.InOutSine }
-                        }
-                    }
-
-                    // marquee viewport
-                    Item {
-                        id: newsClip
-                        anchors.left: newsDot.right
-                        anchors.leftMargin: 12
-                        anchors.right: parent.right
-                        anchors.rightMargin: 16
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: parent.height
-                        clip: true
-
-                        Text {
-                            id: newsText
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.headlines.length > 0 ? (root.headlines[newsPill.newsIndex].title || "") : ""
-                            color: root.textColor
-                            font.family: root.fontFamily
-                            font.pixelSize: 12
-
-                            property real slideY: 0
-                            transform: Translate { y: newsText.slideY }
-                        }
-                    }
-
-                    // one headline at a time: reveal start, scroll to reveal end,
-                    // pause, then slide up into the next headline
-                    SequentialAnimation {
-                        id: newsCycle
-                        loops: Animation.Infinite
-
-                        // show the beginning of the current headline
-                        ScriptAction { script: { newsText.x = 0; newsText.slideY = 0 } }
-                        PauseAnimation { duration: 1600 }
-
-                        // scroll left just far enough to bring the last character into view
-                        NumberAnimation {
-                            target: newsText; property: "x"
-                            to: newsPill.scrollTo
-                            duration: Math.max(1, Math.abs(newsPill.scrollTo) * 22)
-                            easing.type: Easing.InOutSine
-                        }
-
-                        // hold on the end for a beat
-                        PauseAnimation { duration: 1100 }
-
-                        // slide the current headline up and out
-                        NumberAnimation {
-                            target: newsText; property: "slideY"
-                            to: -18; duration: 220; easing.type: Easing.InCubic
-                        }
-
-                        // advance to the next headline, reset below
-                        ScriptAction {
-                            script: {
-                                if (root.headlines.length > 0)
-                                    newsPill.newsIndex = (newsPill.newsIndex + 1) % root.headlines.length
-                                newsText.x = 0
-                                newsText.slideY = 18
-                            }
-                        }
-
-                        // slide the next headline up into view
-                        NumberAnimation {
-                            target: newsText; property: "slideY"
-                            to: 0; duration: 220; easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            let h = root.headlines[newsPill.newsIndex]
-                            if (h && h.link) { root.pendingUrl = h.link; openUrl.running = true }
-                        }
-                    }
-                }
 
                 }
             }
@@ -776,14 +921,19 @@ Scope {
 
                 function modeW() {
                     if (root.pillMode === "launcher") return 400
+                    if (root.pillMode === "telegram") return 430
+                    if (root.pillMode === "notif") return 430
                     if (root.pillMode === "media") return 390
                     if (root.pillMode === "volume") return 220
                     if (root.pillMode === "sonosvol") return root.sonosHasTrack ? 300 : 240
-                    if (compactMedia) return 300
+                    // shrink to fit the title, capped at 300 (long titles stay elided)
+                    if (compactMedia) return Math.max(120, Math.min(300, 79 + npTitle.implicitWidth))
                     return 90
                 }
                 function modeH() {
                     if (root.pillMode === "launcher") return 500
+                    if (root.pillMode === "telegram") return 360
+                    if (root.pillMode === "notif") return 380
                     if (root.pillMode === "media") return 150
                     if (root.pillMode === "sonosvol") return 68
                     return 40
@@ -792,7 +942,7 @@ Scope {
                 width: modeW()
                 height: modeH()
                 color: root.bgColor
-                radius: (root.pillMode === "launcher" || root.pillMode === "media") ? 16 : 20
+                radius: (root.pillMode === "launcher" || root.pillMode === "media" || root.pillMode === "telegram" || root.pillMode === "notif") ? 16 : 20
 
                 property real targetW: modeW()
                 property real targetH: modeH()
@@ -845,7 +995,7 @@ Scope {
                     property bool volMode: root.pillMode === "sonosvol"
 
                     Behavior on opacity {
-                        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                     }
 
                     // album art — pinned to top so it never moves when the pill grows
@@ -976,6 +1126,7 @@ Scope {
                                 color: root.clockColor
 
                                 Behavior on width {
+                                    enabled: !root.sonosVolSettling
                                     NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
                                 }
                             }
@@ -1006,18 +1157,17 @@ Scope {
                     id: mediaCard
                     anchors.fill: parent
 
-                    // reveal tracks how far the card has actually expanded toward media size,
-                    // so content fades in as the boundary grows and out as it shrinks.
-                    // reaches full opacity at ~105px (well before the 150px target) so it
-                    // doesn't lag behind the expansion
+                    // reveal only once the pill has mostly grown, so the compact chip
+                    // (which fades out fast) is gone before the card content appears —
+                    // avoids the two layouts overlapping/flickering mid-morph
                     property real reveal: root.pillMode === "media"
-                        ? Math.max(0, Math.min(1, (pillBg.height - 44) / (105 - 44)))
+                        ? Math.max(0, Math.min(1, (pillBg.height - 96) / (140 - 96)))
                         : 0
                     opacity: reveal
                     visible: opacity > 0.01
 
                     Behavior on opacity {
-                        NumberAnimation { duration: 110; easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
                     }
 
                     // collapse when clicking empty card area (buttons sit on top)
@@ -1159,7 +1309,7 @@ Scope {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: sonosToggle.running = true
+                                    onClicked: root.sonosTogglePlay()
                                 }
                             }
 
@@ -1217,6 +1367,7 @@ Scope {
                                     color: root.clockColor
 
                                     Behavior on width {
+                                        enabled: !root.mediaSettling
                                         NumberAnimation { duration: 900; easing.type: Easing.Linear }
                                     }
                                 }
@@ -1231,6 +1382,44 @@ Scope {
                                 font.family: root.fontFamily
                                 font.pixelSize: 9
                             }
+                        }
+                    }
+
+                    // keyboard control while the media card is open:
+                    // Space = play/pause, Ctrl+L = next, Ctrl+H = previous, Esc = close
+                    Item {
+                        id: mediaKeys
+                        anchors.fill: parent
+                        focus: root.pillMode === "media"
+                        Keys.onPressed: event => {
+                            if (root.pillMode !== "media") return
+                            if (event.key === Qt.Key_Escape) {
+                                root.mediaExpanded = false; event.accepted = true
+                            } else if (event.key === Qt.Key_Space) {
+                                root.sonosTogglePlay(); event.accepted = true
+                            } else if (event.modifiers & Qt.ControlModifier) {
+                                if (event.key === Qt.Key_L) { sonosNext.running = true; event.accepted = true }
+                                else if (event.key === Qt.Key_H) { sonosPrev.running = true; event.accepted = true }
+                            }
+                        }
+                    }
+
+                    Timer {
+                        id: mediaFocusTimer
+                        interval: 60
+                        property int tries: 0
+                        onTriggered: {
+                            mediaKeys.forceActiveFocus()
+                            tries++
+                            if (!mediaKeys.activeFocus && tries < 6) mediaFocusTimer.restart()
+                            else tries = 0
+                        }
+                    }
+
+                    Connections {
+                        target: root
+                        function onMediaExpandedChanged() {
+                            if (root.mediaExpanded) mediaFocusTimer.start()
                         }
                     }
                 }
@@ -1491,11 +1680,433 @@ Scope {
                     }
                 }
 
+                // -- telegram (ray) chat face --
+                Item {
+                    id: tgFace
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    opacity: root.pillMode === "telegram" ? pillBg.morphCloseness : 0
+                    visible: opacity > 0.01
+
+                    // header: status dot + "ray"
+                    Item {
+                        id: tgHeader
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        height: 20
+
+                        Rectangle {
+                            id: tgDot
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 7; height: 7; radius: 3.5
+                            color: root.telegramReady ? root.gainColor : root.mutedColor
+                        }
+                        Text {
+                            anchors.left: tgDot.right
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "ray"
+                            color: root.textColor
+                            font.family: root.fontFamily
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+                        Text {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.telegramReady ? "" : (root.telegramError.length ? root.telegramError : "connecting\u2026")
+                            color: root.subtext
+                            font.family: root.fontFamily
+                            font.pixelSize: 9
+                            elide: Text.ElideLeft
+                            width: 180
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
+
+                    // input box (bottom)
+                    Rectangle {
+                        id: tgInputBox
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 34
+                        radius: 10
+                        color: root.surface
+
+                        TextInput {
+                            id: tgInput
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            verticalAlignment: Text.AlignVCenter
+                            color: root.textColor
+                            font.family: root.fontFamily
+                            font.pixelSize: 13
+                            clip: true
+
+                            Keys.onEscapePressed: root.telegramOpen = false
+                            Keys.onReturnPressed: {
+                                let t = tgInput.text
+                                if (t.trim().length > 0) {
+                                    root.telegramSend(t)
+                                    tgInput.text = ""
+                                }
+                            }
+                            Keys.onPressed: event => {
+                                if (event.modifiers & Qt.ControlModifier) {
+                                    if (event.key === Qt.Key_J) { tgList.flick(0, -700); event.accepted = true }
+                                    else if (event.key === Qt.Key_K) { tgList.flick(0, 700); event.accepted = true }
+                                }
+                            }
+                        }
+                        Text {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "message ray\u2026"
+                            color: root.subtext
+                            font.family: root.fontFamily
+                            font.pixelSize: 13
+                            visible: tgInput.text.length === 0
+                        }
+                    }
+
+                    // message list
+                    ListView {
+                        id: tgList
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: tgHeader.bottom
+                        anchors.topMargin: 8
+                        anchors.bottom: tgInputBox.top
+                        anchors.bottomMargin: 8
+                        clip: true
+                        spacing: 5
+                        model: tgModel
+                        boundsBehavior: Flickable.StopAtBounds
+                        cacheBuffer: 800
+
+                        onCountChanged: Qt.callLater(positionViewAtEnd)
+
+                        // typing indicator (animated dots) shown while ray is composing
+                        footer: Item {
+                            width: tgList.width
+                            height: root.tgTyping ? 26 : 0
+                            visible: root.tgTyping
+                            onVisibleChanged: if (visible) Qt.callLater(tgList.positionViewAtEnd)
+
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.topMargin: 3
+                                width: 44
+                                height: 20
+                                radius: 10
+                                color: root.surface
+
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    Repeater {
+                                        model: 3
+                                        Rectangle {
+                                            required property int index
+                                            width: 5; height: 5; radius: 2.5
+                                            color: root.subtext
+                                            SequentialAnimation on opacity {
+                                                running: root.tgTyping
+                                                loops: Animation.Infinite
+                                                PauseAnimation { duration: index * 160 }
+                                                NumberAnimation { to: 1.0; duration: 300; easing.type: Easing.InOutSine }
+                                                NumberAnimation { to: 0.3; duration: 300; easing.type: Easing.InOutSine }
+                                                PauseAnimation { duration: (2 - index) * 160 }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        delegate: Item {
+                            width: tgList.width
+                            implicitHeight: bubble.height + 4
+                            height: bubble.height + 4
+
+                            Rectangle {
+                                id: bubble
+                                x: model.out ? parent.width - width : 0
+                                width: Math.min(tgList.width * 0.8, msgText.implicitWidth + 22)
+                                height: msgText.implicitHeight + 14
+                                radius: 10
+                                color: model.out ? root.accent : root.surface
+
+                                Text {
+                                    id: msgText
+                                    x: 11
+                                    y: 7
+                                    width: Math.min(implicitWidth, tgList.width * 0.8 - 22)
+                                    text: model.text
+                                    wrapMode: Text.Wrap
+                                    color: model.out ? root.bgColor : root.textColor
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 12
+                                }
+                            }
+                        }
+                    }
+
+                    Timer {
+                        id: tgFocusTimer
+                        interval: 60
+                        property int tries: 0
+                        onTriggered: {
+                            tgInput.forceActiveFocus()
+                            tries++
+                            if (!tgInput.activeFocus && tries < 6) tgFocusTimer.restart()
+                            else tries = 0
+                        }
+                    }
+
+                    Connections {
+                        target: root
+                        function onTelegramOpenChanged() {
+                            if (root.telegramOpen) {
+                                tgInput.text = ""
+                                tgFocusTimer.start()
+                                tgList.positionViewAtEnd()
+                            }
+                        }
+                    }
+                }
+
+                // -- notification center face --
+                Item {
+                    id: notifFace
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    opacity: root.pillMode === "notif" ? pillBg.morphCloseness : 0
+                    visible: opacity > 0.01
+
+                    Item {
+                        id: notifHeader
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        height: 22
+                        Text {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Notifications"
+                            color: root.subtext
+                            font.family: root.fontFamily
+                            font.pixelSize: 11
+                        }
+                        Text {
+                            id: notifClear
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: notifModel.count > 0 ? "clear all" : ""
+                            color: clearMouse.containsMouse ? root.textColor : root.subtext
+                            font.family: root.fontFamily
+                            font.pixelSize: 10
+                            MouseArea {
+                                id: clearMouse
+                                anchors.fill: parent
+                                anchors.margins: -6
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.clearNotifs()
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: notifDiv
+                        anchors.top: notifHeader.bottom
+                        anchors.topMargin: 7
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        height: 1
+                        color: root.surface
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: notifModel.count === 0
+                        text: "No notifications"
+                        color: root.subtext
+                        font.family: root.fontFamily
+                        font.pixelSize: 12
+                    }
+
+                    ListView {
+                        id: notifList
+                        anchors.top: notifDiv.bottom
+                        anchors.topMargin: 6
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        clip: true
+                        spacing: 4
+                        model: notifModel
+                        currentIndex: root.notifSelected
+                        boundsBehavior: Flickable.StopAtBounds
+                        cacheBuffer: 600
+
+                        // clean card in/out morph
+                        add: Transition {
+                            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 160; easing.type: Easing.OutCubic }
+                        }
+                        remove: Transition {
+                            NumberAnimation { property: "opacity"; to: 0; duration: 150; easing.type: Easing.OutCubic }
+                            NumberAnimation { property: "height"; to: 0; duration: 190; easing.type: Easing.OutCubic }
+                        }
+                        removeDisplaced: Transition {
+                            NumberAnimation { properties: "y"; duration: 190; easing.type: Easing.OutCubic }
+                        }
+                        displaced: Transition {
+                            NumberAnimation { properties: "y"; duration: 190; easing.type: Easing.OutCubic }
+                        }
+
+                        delegate: Rectangle {
+                            required property var model
+                            required property int index
+                            property bool selected: index === root.notifSelected
+                            width: notifList.width
+                            height: 54
+                            radius: 8
+                            color: selected ? root.accent : cardMouse.containsMouse ? root.surface : "transparent"
+                            Behavior on color { ColorAnimation { duration: 90 } }
+
+                            Column {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 11
+                                anchors.right: parent.right
+                                anchors.rightMargin: 30
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 3
+
+                                Row {
+                                    width: parent.width
+                                    spacing: 7
+                                    Rectangle {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 6; height: 6; radius: 3
+                                        color: model.kind === "ray" ? root.clockColor : root.accent
+                                    }
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: model.app || "app"
+                                        color: parent.parent.parent.selected ? root.bgColor : root.textColor
+                                        font.family: root.fontFamily
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                    }
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: root.relTime(model.time)
+                                        color: parent.parent.parent.selected ? root.bgColor : root.subtext
+                                        font.family: root.fontFamily
+                                        font.pixelSize: 9
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: (model.summary || "") + (model.body ? " \u2014 " + model.body : "")
+                                    color: parent.parent.selected ? root.bgColor : root.subtext
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 12
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 2
+                                    wrapMode: Text.Wrap
+                                }
+                            }
+
+                            Text {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.top: parent.top
+                                anchors.topMargin: 8
+                                text: "\u00d7"
+                                color: parent.selected ? root.bgColor : root.subtext
+                                font.family: root.fontFamily
+                                font.pixelSize: 13
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -6
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.removeNotifAt(index)
+                                }
+                            }
+
+                            MouseArea {
+                                id: cardMouse
+                                anchors.fill: parent
+                                anchors.rightMargin: 26
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onEntered: root.notifSelected = index
+                                onClicked: root.activateNotif(index)
+                            }
+                        }
+                    }
+
+                    // keyboard: Ctrl+J/K select, Enter open, D/Backspace dismiss, Esc close
+                    Item {
+                        id: notifKeys
+                        anchors.fill: parent
+                        focus: root.pillMode === "notif"
+                        Keys.onPressed: event => {
+                            if (root.pillMode !== "notif") return
+                            if (event.key === Qt.Key_Escape) { root.notifOpen = false; event.accepted = true; return }
+                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                root.activateNotif(root.notifSelected); event.accepted = true; return
+                            }
+                            if (event.key === Qt.Key_D || event.key === Qt.Key_Backspace) {
+                                root.removeNotifAt(root.notifSelected); event.accepted = true; return
+                            }
+                            var ctrl = (event.modifiers & Qt.ControlModifier)
+                            var down = event.key === Qt.Key_Down || (ctrl && event.key === Qt.Key_J)
+                            var up = event.key === Qt.Key_Up || (ctrl && event.key === Qt.Key_K)
+                            if (down) { if (root.notifSelected < notifModel.count - 1) root.notifSelected++; event.accepted = true }
+                            else if (up) { if (root.notifSelected > 0) root.notifSelected--; event.accepted = true }
+                        }
+                    }
+
+                    Timer {
+                        id: notifFocusTimer
+                        interval: 60
+                        property int tries: 0
+                        onTriggered: {
+                            notifKeys.forceActiveFocus()
+                            tries++
+                            if (!notifKeys.activeFocus && tries < 6) notifFocusTimer.restart()
+                            else tries = 0
+                        }
+                    }
+
+                    Connections {
+                        target: root
+                        function onNotifOpenChanged() {
+                            if (root.notifOpen) { root.notifSelected = 0; notifFocusTimer.start() }
+                        }
+                        function onNotifSelectedChanged() {
+                            if (root.notifOpen) notifList.positionViewAtIndex(root.notifSelected, ListView.Contain)
+                        }
+                    }
+                }
+
                 // scroll to change volume (clock / volume modes only)
                 MouseArea {
                     anchors.fill: parent
                     visible: root.pillMode === "clock" || root.pillMode === "volume"
                     acceptedButtons: Qt.NoButton
+                    // show the pointer over the clickable now-playing chip
+                    cursorShape: pillBg.compactMedia ? Qt.PointingHandCursor : Qt.ArrowCursor
                     property int scrollAccum: 0
                     onWheel: event => {
                         scrollAccum += event.angleDelta.y
@@ -1537,10 +2148,394 @@ Scope {
 
             }
 
+            // == notification toast (below the pill) for any incoming notification ==
+            Rectangle {
+                id: tgNotif
+                // hide only when a center-pill panel would overlap; news/portfolio (right side) are fine
+                readonly property bool canShow: root.notifToastShow
+                    && !(root.launcherOpen || root.telegramOpen || root.notifOpen
+                         || (root.mediaExpanded && root.sonosHasTrack))
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: pillBg.y + pillBg.height + 8
+                width: Math.min(400, notifRow.implicitWidth + 28)
+                // morph down from the pill: grow height in/out
+                height: canShow ? 36 : 0
+                visible: bar.isDp && height > 0.5
+                radius: Math.min(18, height / 2)
+                color: notifMouse.containsMouse ? root.surface : root.bgColor
+                clip: true
+
+                Behavior on height {
+                    NumberAnimation { duration: 240; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                }
+                opacity: canShow ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                Row {
+                    id: notifRow
+                    anchors.left: parent.left
+                    anchors.leftMargin: 13
+                    anchors.right: parent.right
+                    anchors.rightMargin: 13
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 8
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 8; height: 8; radius: 4
+                        color: root.mutedColor
+                        SequentialAnimation on opacity {
+                            running: tgNotif.canShow
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.3; duration: 550; easing.type: Easing.InOutSine }
+                            NumberAnimation { to: 1.0; duration: 550; easing.type: Easing.InOutSine }
+                        }
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.notifToastApp
+                        color: root.textColor
+                        font.family: root.fontFamily
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, 300)
+                        text: root.notifToastText
+                        color: root.subtext
+                        font.family: root.fontFamily
+                        font.pixelSize: 12
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                    }
+                }
+
+                MouseArea {
+                    id: notifMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        root.notifToastShow = false
+                        if (root.notifToastApp === "ray") root.telegramOpen = true
+                        else root.notifOpen = true
+                    }
+                }
+            }
+
+            // == news widget — morphs between ticker pill and expanded headlines card ==
+            Rectangle {
+                id: newsCard
+                visible: bar.isDp
+                property bool newsLoaded: root.headlines.length > 0
+                anchors.right: parent.right
+                // hug the collapsed portfolio pill with an 8px gap
+                anchors.rightMargin: portfolioCard.collapsedW + 25
+                y: 6
+                color: (!root.newsExpanded && newsOpen.containsMouse) ? root.surface : root.bgColor
+                clip: true
+                opacity: root.portfolioExpanded ? 0 : 1  // yield to the portfolio card
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                property int newsIndex: 0
+                property real scrollTo: Math.min(0, tickerClip.width - tickerText.implicitWidth - 4)
+                // scroll time for this headline; short ones scroll little/none
+                property int scrollDur: Math.max(1, Math.round(Math.abs(scrollTo) * 22))
+                // pad the hold so short headlines linger a minimum time before swapping
+                property int holdPad: Math.max(1100, 3400 - scrollDur)
+                property real collapsedW: 380
+                property real listH: Math.min(root.headlines.length * 46, 6 * 46)
+                property real fullH: 67 + listH
+
+                // morph: ticker (collapsedW x 40) <-> card (440 x fullH)
+                width: root.newsExpanded ? 440 : collapsedW
+                height: root.newsExpanded ? fullH : 40
+                radius: root.newsExpanded ? 16 : 20
+
+                property real morphP: {
+                    var d = fullH - 40
+                    return d > 0 ? Math.max(0, Math.min(1, (height - 40) / d)) : 1
+                }
+
+                Behavior on width {
+                    NumberAnimation { duration: 300; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                }
+                Behavior on height {
+                    NumberAnimation { duration: 300; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                }
+                Behavior on radius {
+                    NumberAnimation { duration: 300; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                }
+
+                Connections {
+                    target: root
+                    function onHeadlinesChanged() { newsCard.newsIndex = 0 }
+                }
+
+                // opener — click the ticker to expand
+                MouseArea {
+                    id: newsOpen
+                    anchors.fill: parent
+                    enabled: !root.newsExpanded
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.newsExpanded = true
+                }
+
+                // ---- collapsed: ticker (pulsing dot + scrolling headline) ----
+                Item {
+                    id: tickerFace
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    height: 40
+                    opacity: 1 - Math.min(1, newsCard.morphP / 0.35)
+                    visible: opacity > 0.01
+
+                    Rectangle {
+                        id: newsDot
+                        anchors.left: parent.left
+                        anchors.leftMargin: 17
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 7; height: 7; radius: 3.5
+                        color: root.clockColor
+                        SequentialAnimation on opacity {
+                            running: newsCard.visible && !root.newsExpanded
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.25; duration: 1100; easing.type: Easing.InOutSine }
+                            NumberAnimation { to: 1.0; duration: 1100; easing.type: Easing.InOutSine }
+                        }
+                    }
+
+                    Item {
+                        id: tickerClip
+                        anchors.left: newsDot.right
+                        anchors.leftMargin: 12
+                        anchors.right: parent.right
+                        anchors.rightMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        height: parent.height
+                        clip: true
+
+                        // skeleton line until headlines load
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width * 0.8
+                            height: 12
+                            radius: 6
+                            color: root.surface
+                            visible: !newsCard.newsLoaded
+                            SequentialAnimation on opacity {
+                                running: !newsCard.newsLoaded
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.35; duration: 700; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 0.8; duration: 700; easing.type: Easing.InOutSine }
+                            }
+                        }
+
+                        Text {
+                            id: tickerText
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: newsCard.newsLoaded
+                            text: root.headlines.length > 0 ? (root.headlines[newsCard.newsIndex].title || "") : ""
+                            color: root.textColor
+                            font.family: root.fontFamily
+                            font.pixelSize: 12
+                            property real slideY: 0
+                            transform: Translate { y: tickerText.slideY }
+                        }
+                    }
+
+                    SequentialAnimation {
+                        id: newsCycle
+                        running: newsCard.visible && !root.newsExpanded && root.headlines.length > 1
+                        loops: Animation.Infinite
+                        ScriptAction { script: { tickerText.x = 0; tickerText.slideY = 0 } }
+                        PauseAnimation { duration: 1600 }
+                        NumberAnimation {
+                            target: tickerText; property: "x"
+                            to: newsCard.scrollTo
+                            duration: newsCard.scrollDur
+                            easing.type: Easing.InOutSine
+                        }
+                        PauseAnimation { duration: newsCard.holdPad }
+                        NumberAnimation { target: tickerText; property: "slideY"; to: -18; duration: 220; easing.type: Easing.InCubic }
+                        ScriptAction {
+                            script: {
+                                if (root.headlines.length > 0)
+                                    newsCard.newsIndex = (newsCard.newsIndex + 1) % root.headlines.length
+                                tickerText.x = 0
+                                tickerText.slideY = 18
+                            }
+                        }
+                        NumberAnimation { target: tickerText; property: "slideY"; to: 0; duration: 220; easing.type: Easing.OutCubic }
+                    }
+                }
+
+                // ---- expanded: headlines list ----
+                Column {
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: 8
+                    opacity: Math.max(0, (newsCard.morphP - 0.4) / 0.6)
+                    visible: opacity > 0.01
+
+                    // header (click to collapse)
+                    Item {
+                        width: parent.width
+                        height: 22
+                        Text {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "News"
+                            color: root.subtext
+                            font.family: root.fontFamily
+                            font.pixelSize: 11
+                        }
+                        Text {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "NYT"
+                            color: root.subtext
+                            font.family: root.fontFamily
+                            font.pixelSize: 9
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -14
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.newsExpanded = false
+                        }
+                    }
+
+                    Rectangle { width: parent.width; height: 1; color: root.surface }
+
+                    ListView {
+                        id: newsList
+                        width: parent.width
+                        height: newsCard.listH
+                        clip: true
+                        model: root.headlines
+                        currentIndex: root.newsSelected
+                        boundsBehavior: Flickable.StopAtBounds
+                        spacing: 0
+
+                        delegate: Rectangle {
+                            required property var modelData
+                            required property int index
+                            property bool selected: index === root.newsSelected
+                            width: ListView.view.width
+                            height: 46
+                            color: selected ? root.accent : hl.containsMouse ? root.surface : "transparent"
+                            radius: 8
+
+                            Behavior on color { ColorAnimation { duration: 100 } }
+
+                            Column {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
+
+                                Text {
+                                    width: parent.width
+                                    text: modelData.title || ""
+                                    color: parent.parent.selected ? root.bgColor : root.textColor
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 12
+                                    font.bold: parent.parent.selected
+                                    elide: Text.ElideRight
+                                }
+                                Text {
+                                    width: parent.width
+                                    text: modelData.desc || ""
+                                    color: parent.parent.selected ? root.bgColor : root.subtext
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 10
+                                    elide: Text.ElideRight
+                                    visible: text.length > 0
+                                }
+                            }
+
+                            MouseArea {
+                                id: hl
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onEntered: root.newsSelected = index
+                                onClicked: {
+                                    if (modelData.link) { root.pendingUrl = modelData.link; openUrl.running = true }
+                                    root.newsExpanded = false
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // keyboard nav for the expanded news card (Ctrl+J/K, arrows, Enter, Esc)
+                Item {
+                    id: newsKeys
+                    anchors.fill: parent
+                    focus: root.newsExpanded
+                    Keys.onPressed: event => {
+                        if (!root.newsExpanded) return
+                        if (event.key === Qt.Key_Escape) {
+                            root.newsExpanded = false; event.accepted = true; return
+                        }
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            let h = root.headlines[root.newsSelected]
+                            if (h && h.link) { root.pendingUrl = h.link; openUrl.running = true }
+                            root.newsExpanded = false; event.accepted = true; return
+                        }
+                        let ctrl = (event.modifiers & Qt.ControlModifier)
+                        let down = event.key === Qt.Key_Down || (ctrl && event.key === Qt.Key_J)
+                        let up = event.key === Qt.Key_Up || (ctrl && event.key === Qt.Key_K)
+                        if (down) {
+                            if (root.newsSelected < root.headlines.length - 1) root.newsSelected++
+                            event.accepted = true
+                        } else if (up) {
+                            if (root.newsSelected > 0) root.newsSelected--
+                            event.accepted = true
+                        }
+                    }
+                }
+
+                Timer {
+                    id: newsFocusTimer
+                    interval: 50
+                    property int tries: 0
+                    onTriggered: {
+                        newsKeys.forceActiveFocus()
+                        tries++
+                        if (!newsKeys.activeFocus && tries < 6) newsFocusTimer.restart()
+                        else tries = 0
+                    }
+                }
+
+                Connections {
+                    target: root
+                    function onNewsExpandedChanged() {
+                        if (root.newsExpanded) {
+                            root.newsSelected = 0
+                            newsFocusTimer.start()
+                        }
+                    }
+                    function onNewsSelectedChanged() {
+                        if (root.newsExpanded) newsList.positionViewAtIndex(root.newsSelected, ListView.Contain)
+                    }
+                }
+            }
+
             // == portfolio widget — morphs between pill and expanded card (one element) ==
             Rectangle {
                 id: portfolioCard
-                visible: bar.isDp && root.portfolioValue > 0
+                visible: bar.isDp
                 anchors.right: parent.right
                 anchors.rightMargin: 17
                 y: 6
@@ -1548,6 +2543,8 @@ Scope {
                 clip: true
 
                 Behavior on color { ColorAnimation { duration: 120 } }
+
+                property bool pfLoaded: root.portfolioValue > 0
 
                 // positions + a trailing cash row
                 property var rows: {
@@ -1565,7 +2562,8 @@ Scope {
                 property real fullH: (showSpark ? 171 : 133) + listH
 
                 // morph: pill (collapsedW x 40) <-> card (360 x fullH)
-                property real collapsedW: pfCollapsed.implicitWidth + 28
+                // hug the content once loaded; use the skeleton's width while loading
+                property real collapsedW: pfLoaded ? (pfCollapsed.implicitWidth + 28) : 128
                 width: root.portfolioExpanded ? 360 : collapsedW
                 height: root.portfolioExpanded ? fullH : 40
                 radius: root.portfolioExpanded ? 16 : 20
@@ -1599,6 +2597,34 @@ Scope {
                     onClicked: root.portfolioExpanded = true
                 }
 
+                // skeleton placeholder shown until the first value arrives
+                Row {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 15
+                    anchors.top: parent.top
+                    height: 40
+                    spacing: 8
+                    visible: !portfolioCard.pfLoaded && !root.portfolioExpanded
+
+                    SequentialAnimation on opacity {
+                        running: !portfolioCard.pfLoaded
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.35; duration: 700; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 0.8; duration: 700; easing.type: Easing.InOutSine }
+                    }
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 60; height: 12; radius: 6
+                        color: root.surface
+                    }
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 34; height: 12; radius: 6
+                        color: root.surface
+                    }
+                }
+
                 // collapsed face: value + daily % (fades out as the card opens)
                 Row {
                     id: pfCollapsed
@@ -1608,7 +2634,7 @@ Scope {
                     height: 40
                     spacing: 9
                     opacity: 1 - Math.min(1, portfolioCard.morphP / 0.35)
-                    visible: opacity > 0.01
+                    visible: portfolioCard.pfLoaded && opacity > 0.01
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter

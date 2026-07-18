@@ -1,6 +1,6 @@
 [{
     "layer": "top",
-    "output": "DP-1",
+    "output": "DP-3",
     "position": "top",
     "height": 30,
     "margin": "5 17 -8 17",
@@ -113,7 +113,7 @@
     "height": 30,
     "margin": "5 17 -8 17",
     "modules-left": ["custom/hyprland"],
-    "modules-center": ["custom/music-left", "custom/music", "custom/music-play-pause", "custom/music-right"],
+    "modules-center": ["custom/music-left", "custom/music", "custom/music-play-pause", "custom/music-right", "custom/sonos-volume"],
 
     "custom/hyprland": {
         "format": "{}",
@@ -122,22 +122,31 @@
 
     "custom/music": {
         "format": "{}",
-        "exec": "~/.config/waybar/scripts/music/title",
+        "exec": "~/.config/waybar/scripts/music/sonos-title",
     },
 
     "custom/music-left": {
         "format": "",
-        "on-click": "playerctl previous",
+        "on-click": "~/.config/waybar/scripts/music/sonos-ctl prev",
     },
 
     "custom/music-right": {
         "format": "",
-        "on-click": "playerctl next",
+        "on-click": "~/.config/waybar/scripts/music/sonos-ctl next",
     },
 
     "custom/music-play-pause": {
         "format": "{}",
-        "exec": "~/.config/waybar/scripts/music/status",
-        "on-click": "playerctl play-pause",
+        "exec": "~/.config/waybar/scripts/music/sonos-status",
+        "on-click": "~/.config/waybar/scripts/music/sonos-ctl toggle",
+    },
+
+
+    "custom/sonos-volume": {
+        "format": "{}",
+        "exec": "~/.config/waybar/scripts/music/sonos-volume",
+        "on-click": "~/.config/waybar/scripts/music/sonos-ctl mute",
+        "on-scroll-up": "~/.config/waybar/scripts/music/sonos-ctl vol-up",
+        "on-scroll-down": "~/.config/waybar/scripts/music/sonos-ctl vol-down",
     },
 }]

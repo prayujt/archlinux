@@ -1,3 +1,5 @@
 .env
 .schwab_tokens.json
 .schwab_history.json
+.venv-tg/
+.tg-session*

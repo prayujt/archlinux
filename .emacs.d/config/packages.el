@@ -57,6 +57,9 @@
 (unless (package-installed-p 'terraform-mode)
   (package-install 'terraform-mode))
 
+(unless (package-installed-p 'protobuf-mode)
+  (package-install 'protobuf-mode))
+
 (unless (file-exists-p "~/.emacs.d/packages/web-mode")
   (message "web-mode not found, please clone it into ~/.emacs.d/packages/web-mode"))
 
