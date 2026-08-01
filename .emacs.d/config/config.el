@@ -126,7 +126,7 @@ If indent size is nil, insert a tab character."
 (setq-default evil-escape-delay 0.1)
 
 (require 'evil-collection)
-(evil-collection-init '(dired magit))
+(evil-collection-init '(dired magit vterm))
 
 (require 'evil-org-agenda)
 (evil-org-agenda-set-keys)
@@ -185,10 +185,28 @@ If indent size is nil, insert a tab character."
 (projectile-mode +1)
 
 (with-eval-after-load 'projectile
-  (setq projectile-indexing-method 'alien)
+  ;; hybrid = alien's fast listing + projectile's own ignore filtering, so the
+  ;; lists below apply even to generated files that aren't gitignored
+  (setq projectile-indexing-method 'hybrid)
   (add-to-list 'projectile-ignored-projects "~/")
 
-  (setq projectile-enable-caching t))
+  (setq projectile-enable-caching t)
+
+  ;; directories to skip in SPC SPC file search
+  (dolist (dir '("node_modules" "dist" "build" "target" "vendor" "bin" "obj"
+                 "gen" "generated" ".gen" "__generated__"
+                 ".next" ".nuxt" ".svelte-kit" "__pycache__"
+                 ".venv" ".mypy_cache" ".pytest_cache" "coverage"))
+    (add-to-list 'projectile-globally-ignored-directories dir))
+
+  ;; generated / build-artifact file suffixes to skip (protobuf, grpc,
+  ;; minified, sourcemaps, etc.)
+  (dolist (suf '(".pb.go" ".pb.gw.go" "_grpc.pb.go"
+                 "_pb2.py" "_pb2_grpc.py" ".pb.cc" ".pb.h"
+                 ".pb.ts" ".pb.js" "_pb.js" ".pb.dart"
+                 ".g.dart" ".freezed.dart" ".gen.go"
+                 ".min.js" ".min.css" ".map"))
+    (add-to-list 'projectile-globally-ignored-file-suffixes suf)))
 
 ;; custom cache file for compilation commands
 (defvar projectile-compilation-cmd-cache-file
@@ -268,30 +286,96 @@ With prefix argument (C-u), always prompt to change the command."
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
 
-(require 'gptel)
-(require 'gptel-anthropic)
-(require 'gptel-context)
-(require 'gptel-request)
-(require 'gptel-rewrite)
+;; ----- Claude Code IDE -----
+(require 'claude-code-ide)
 
-(setq
-  gptel-model 'claude-3-7-sonnet-20250219
-  gptel-backend (gptel-make-anthropic "Claude" :stream t :key gptel-api-key))
+(setq claude-code-ide-cli-path "/usr/bin/claude")
+;; mirror the zsh alias: skip permission prompts
+(setq claude-code-ide-cli-extra-flags "--dangerously-skip-permissions")
 
-(with-eval-after-load 'gptel
-  (define-key gptel-mode-map (kbd "C-c C-x") 'gptel-context-confirm)
-  (define-key gptel-mode-map (kbd "C-c C-c") 'gptel-send))
+;; vterm terminal backend (smoothest terminal in Emacs)
+(setq claude-code-ide-terminal-backend 'vterm)
 
-(with-eval-after-load 'gptel-context
-  (define-key gptel-context-buffer-mode-map (kbd "C-c C-j") 'gptel-context-next)
-  (define-key gptel-context-buffer-mode-map (kbd "C-c C-k") 'gptel-context-previous)
-  (define-key gptel-context-buffer-mode-map (kbd "C-c C-d") 'gptel-context-flag-deletion)
-  (define-key gptel-context-buffer-mode-map (kbd "C-c j") 'gptel-context-next)
-  (define-key gptel-context-buffer-mode-map (kbd "C-c k") 'gptel-context-previous)
-  (define-key gptel-context-buffer-mode-map (kbd "C-c d") 'gptel-context-flag-deletion))
+;; full IDE integration: expose Emacs (xref, project, tree-sitter, imenu...)
+;; to Claude via MCP so it opens/edits real Emacs buffers
+(setq claude-code-ide-enable-mcp-server t)
+(claude-code-ide-emacs-tools-setup)
 
-(add-hook 'gptel-post-response-functions 'gptel-end-of-response)
-(add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
+;; apply Claude's edits silently (no auto ediff popup); the file buffers just
+;; refresh in place via auto-revert. Review diffs on demand with SPC c d / c l.
+(setq claude-code-ide-use-ide-diff nil)
+
+;; window placement for the Claude session
+(setq claude-code-ide-window-side 'right)
+(setq claude-code-ide-window-width 100)
+
+;; Terminal UX: the Claude buffer stays in evil insert state and behaves like a
+;; normal terminal. Our global evil insert binds (RET -> newline-and-indent,
+;; TAB -> insert-space-tab) would otherwise shadow the terminal, so send them
+;; straight to the process here. C-j/C-k scroll, M-hjkl / C-<tab> manage windows.
+(with-eval-after-load 'vterm
+  (evil-collection-define-key 'insert 'vterm-mode-map
+    (kbd "RET") 'vterm-send-return
+    (kbd "<return>") 'vterm-send-return
+    (kbd "TAB") 'vterm-send-tab
+    (kbd "<tab>") 'vterm-send-tab
+    ;; Esc interrupts Claude (sends escape to the terminal) instead of leaving
+    ;; insert state, matching Claude's normal interrupt behavior.
+    ;; Note: bind <escape> only, not ESC (ESC is the Meta prefix for M-h etc.)
+    (kbd "<escape>") 'vterm-send-escape
+    ;; here C-SPC opens the highlighted/at-point URL (elsewhere it's jump-to-def)
+    (kbd "C-SPC") 'browse-url-region-or-point
+    ;; scroll the terminal
+    (kbd "C-j") 'evil-scroll-line-down
+    (kbd "C-k") 'evil-scroll-line-up
+    ;; window management
+    (kbd "M-h") 'evil-window-left
+    (kbd "M-l") 'evil-window-right
+    (kbd "M-k") 'evil-window-up
+    (kbd "M-j") 'evil-window-down
+    (kbd "C-<tab>") 'other-window)
+  ;; C-SPC opens the URL in the Claude buffer from normal/visual state too
+  (evil-collection-define-key '(normal visual) 'vterm-mode-map
+    (kbd "C-SPC") 'browse-url-region-or-point))
+
+;; claude-code-ide keys its sessions by project.el's root, but we navigate by
+;; projectile. Make project.el resolve the same root projectile uses, so a
+;; session started in a project is found from *any* buffer in that project
+;; (fixes the brittle "No Claude Code session for this project" message).
+(defun claude-code-ide--projectile-project-root (dir)
+  "Return a project.el `transient' project for DIR using projectile's root."
+  (when-let ((root (and (fboundp 'projectile-project-root)
+                        (projectile-project-root dir))))
+    (cons 'transient root)))
+(with-eval-after-load 'project
+  (add-to-list 'project-find-functions
+               'claude-code-ide--projectile-project-root))
+
+;; on-demand review of Claude's applied edits (working tree vs HEAD)
+(defun claude-code-review-diff ()
+  "Review all uncommitted changes (e.g. Claude's edits) against HEAD."
+  (interactive)
+  (require 'magit)
+  (magit-diff-range "HEAD"))
+
+
+;; ----- Auto-revert: reflect external edits (e.g. Claude Code) live -----
+;; When Claude Code (or git, or any external process) writes a file on disk,
+;; the visiting buffer would otherwise go stale and warn "file changed on
+;; disk". Auto-revert reloads those buffers automatically.
+(global-auto-revert-mode 1)
+
+(setq global-auto-revert-non-file-buffers t) ;; also refresh dired, ibuffer, etc.
+(setq auto-revert-verbose nil)               ;; no minibuffer spam on every revert
+(setq auto-revert-use-notify t)              ;; use inotify -> near-instant updates
+(setq auto-revert-avoid-polling t)           ;; prefer file notifications over polling
+(setq auto-revert-interval 1)                ;; polling fallback: check every 1s
+(setq auto-revert-check-vc-info t)           ;; keep VC/modeline state fresh too
+(setq revert-without-query '(".*"))          ;; never prompt when reverting
+(setq auto-revert-remote-files nil)          ;; don't hammer TRAMP/remote files
+
+;; keep point/scroll stable across external edits (never jump or follow)
+(setq switch-to-buffer-preserve-window-point t)
 
 
 ;; ---- Doc View ----
@@ -459,6 +543,14 @@ With prefix argument (C-u), always prompt to change the command."
             default-directory)))  ;; fallback if no file
     (counsel-find-file)))
 
+(defun browse-url-region-or-point ()
+  "Open the highlighted region as a URL, or the URL at point, in the browser."
+  (interactive)
+  (if (use-region-p)
+      (browse-url (string-trim
+                   (buffer-substring-no-properties (region-beginning) (region-end))))
+    (browse-url-at-point)))
+
 (with-eval-after-load 'evil
   (define-key evil-normal-state-map (kbd "C-x b") 'counsel-switch-buffer)
   (define-key evil-normal-state-map (kbd "SPC f s") 'save-buffer)
@@ -507,13 +599,22 @@ With prefix argument (C-u), always prompt to change the command."
   (define-key evil-normal-state-map (kbd "C-c C-o") 'org-capture)
   (define-key evil-normal-state-map (kbd "SPC o t") 'org-timeblock)
 
-  (define-key evil-normal-state-map (kbd "C-c C-s") 'gptel-send)
-  (define-key evil-normal-state-map (kbd "SPC c c") 'gptel)
-  (define-key evil-normal-state-map (kbd "SPC c a") 'gptel-context-add)
-  (define-key evil-visual-state-map (kbd "SPC c a") 'gptel-context-add)
-  (define-key evil-visual-state-map (kbd "C-c C-a") 'gptel-context-add)
-  (define-key evil-normal-state-map (kbd "SPC c r") 'gptel-rewrite)
-  (define-key evil-visual-state-map (kbd "SPC c r") 'gptel-rewrite)
+  (define-key evil-normal-state-map (kbd "C-c C-s") 'claude-code-ide-send-prompt)
+  (define-key evil-normal-state-map (kbd "SPC c c") 'claude-code-ide-menu)
+  (define-key evil-normal-state-map (kbd "SPC c a") 'claude-code-ide-insert-at-mentioned)
+  (define-key evil-visual-state-map (kbd "SPC c a") 'claude-code-ide-insert-at-mentioned)
+  (define-key evil-visual-state-map (kbd "C-c C-a") 'claude-code-ide-insert-at-mentioned)
+  (define-key evil-normal-state-map (kbd "SPC c r") 'claude-code-ide-resume)
+  (define-key evil-visual-state-map (kbd "SPC c r") 'claude-code-ide-resume)
+  (define-key evil-normal-state-map (kbd "SPC c t") 'claude-code-ide-toggle)
+  (define-key evil-normal-state-map (kbd "SPC c b") 'claude-code-ide-switch-to-buffer)
+  (define-key evil-normal-state-map (kbd "SPC c l") 'claude-code-ide-list-sessions)
+  (define-key evil-normal-state-map (kbd "SPC c k") 'claude-code-ide-send-escape) ;; interrupt Claude from anywhere
+  ;; --- review Claude's changes via magit (current + past history) ---
+  (define-key evil-normal-state-map (kbd "SPC c d") 'claude-code-review-diff)   ;; all uncommitted changes vs HEAD
+  (define-key evil-normal-state-map (kbd "SPC c D") 'magit-diff-buffer-file)    ;; diff of current file
+  (define-key evil-normal-state-map (kbd "SPC c h") 'magit-log-current)         ;; project commit history
+  (define-key evil-normal-state-map (kbd "SPC c f") 'magit-log-buffer-file)     ;; history of current file
 
   (define-key evil-normal-state-map (kbd "SPC d c") 'pgmacs-start)
 

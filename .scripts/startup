@@ -1,6 +1,6 @@
 #!/bin/bash
-# Selects DP-1 as primary monitor
-xrandr --output "DP-1" --primary
+# Selects DP-3 as primary monitor
+xrandr --output "DP-3" --primary
 
 hyprpaper &
 mediapipe &
@@ -12,5 +12,7 @@ quickshell &
 ~/.config/hypr/setbrightness 2 50
 ~/.config/hypr/setbrightness 1 50
 
-hyprctl dispatch focusmonitor DP-1
+# open emacs on the main monitor (DP-3, workspace 1)
+hyprctl dispatch focusmonitor DP-3
+hyprctl dispatch workspace 1
 emacs &

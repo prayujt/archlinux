@@ -19,7 +19,7 @@ alias ws='websocat'
 alias waybar_restart='killall -SIGUSR2 waybar'
 alias c='z'
 alias nd='nix develop -c zsh -l'
-alias claude='claude --allow-dangerously-skip-permissions'
+alias claude='claude --dangerously-skip-permissions'
 alias scrape='audio-scrape'
 
 alias editenv='nvim ~/nix/flake.nix'
@@ -98,8 +98,6 @@ export PATH=$PATH:/usr/local/sbin
 export PATH=$PATH:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl
 
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
-
-export OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1
 
 #bindkey '^\t' autosuggest-accept
 bindkey '\t' forward-word

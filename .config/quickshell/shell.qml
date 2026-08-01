@@ -486,7 +486,8 @@ Scope {
         }
     }
 
-    // -- portfolio card toggle listener (FIFO) --
+    // -- portfolio card toggle listener (FIFO) --  // portfolio widget temporarily hidden
+    /*
     Process {
         id: portfolioToggleProc
         running: true
@@ -497,6 +498,7 @@ Scope {
             }
         }
     }
+    */
 
     // -- media card toggle listener (FIFO) — only meaningful while a track is playing --
     Process {
@@ -696,7 +698,8 @@ Scope {
         command: ["/home/prayuj/.nix-profile/bin/python3", "/home/prayuj/.config/waybar/scripts/music/sonos-ctl", "prev"]
     }
 
-    // -- schwab portfolio: read-only poll (sample data until authorized) --
+    // -- schwab portfolio: read-only poll (sample data until authorized) --  // portfolio widget temporarily hidden
+    /*
     Process {
         id: portfolioProc
         running: true
@@ -724,6 +727,7 @@ Scope {
         interval: 10000; running: true; repeat: true
         onTriggered: portfolioProc.running = true
     }
+    */
 
     // -- top bar per monitor --
     Variants {
@@ -750,7 +754,7 @@ Scope {
             mask: Region {
                 Region { item: barContent }
                 Region { item: pillBg }
-                Region { item: portfolioCard }
+                // Region { item: portfolioCard }  // portfolio widget temporarily hidden
                 Region { item: newsCard }
                 Region { item: tgNotif }
             }
@@ -2231,12 +2235,12 @@ Scope {
                 visible: bar.isDp
                 property bool newsLoaded: root.headlines.length > 0
                 anchors.right: parent.right
-                // hug the collapsed portfolio pill with an 8px gap
-                anchors.rightMargin: portfolioCard.collapsedW + 25
+                // sit in the corner (replaces the hidden portfolio pill)
+                anchors.rightMargin: 17
                 y: 6
                 color: (!root.newsExpanded && newsOpen.containsMouse) ? root.surface : root.bgColor
                 clip: true
-                opacity: root.portfolioExpanded ? 0 : 1  // yield to the portfolio card
+                opacity: 1
                 Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -2532,7 +2536,8 @@ Scope {
                 }
             }
 
-            // == portfolio widget — morphs between pill and expanded card (one element) ==
+            // == portfolio widget — morphs between pill and expanded card (one element) ==  // temporarily hidden
+            /*
             Rectangle {
                 id: portfolioCard
                 visible: bar.isDp
@@ -2900,6 +2905,7 @@ Scope {
                     }
                 }
             }
+            */
         }
     }
 

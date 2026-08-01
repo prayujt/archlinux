@@ -120,11 +120,19 @@
 
 (add-to-list 'load-path "~/.emacs.d/packages/copilot")
 
-;; GPTel
-(unless (file-exists-p "~/.emacs.d/packages/gptel")
-  (message "gtpel not found, please clone it into ~/.emacs.d/packages/gptel"))
+;; --- Claude Code IDE + deps ---
+(unless (package-installed-p 'websocket)
+  (package-install 'websocket))
 
-(add-to-list 'load-path "~/.emacs.d/packages/gptel")
+(unless (package-installed-p 'eat)
+  (package-install 'eat))
+
+(setq vterm-always-compile-module t) ;; auto-build the module, no prompt
+(unless (package-installed-p 'vterm)
+  (package-install 'vterm))
+
+(unless (package-installed-p 'claude-code-ide)
+  (package-vc-install "https://github.com/manzaltu/claude-code-ide.el" nil nil 'claude-code-ide))
 
 ;; --- LSP ---
 (unless (file-exists-p "~/.emacs.d/packages/lsp-bridge")
