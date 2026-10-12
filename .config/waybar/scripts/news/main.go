@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var apiKey = "[REDACTED-CREDENTIAL]"
+var apiKey = os.Getenv("NYT_API_KEY")
 
 type TopStoriesResponse struct {
 	Status      string    `json:"status"`
@@ -35,7 +35,7 @@ type Article struct {
 func fetchTopStories(section string) (TopStoriesResponse, error) {
 	var out TopStoriesResponse
 	if apiKey == "" {
-		return out, fmt.Errorf("NYTimes API key is empty; set the 'apiKey' variable at the top of the file")
+		return out, fmt.Errorf("missing NYT_API_KEY environment variable")
 	}
 
 	url := fmt.Sprintf("https://api.nytimes.com/svc/topstories/v2/%s.json?api-key=%s", section, apiKey)
