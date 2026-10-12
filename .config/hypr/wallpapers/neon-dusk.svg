@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#071d2e"/>
+      <stop offset=".5" stop-color="#0b1835"/>
+      <stop offset="1" stop-color="#132b2a"/>
+    </linearGradient>
+    <radialGradient id="cyan" cx=".06" cy=".2" r=".72">
+      <stop stop-color="#16dce1" stop-opacity=".72"/>
+      <stop offset=".5" stop-color="#126e91" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#126e91" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blue" cx=".5" cy=".32" r=".66">
+      <stop stop-color="#427aff" stop-opacity=".8"/>
+      <stop offset=".55" stop-color="#1c419e" stop-opacity=".46"/>
+      <stop offset="1" stop-color="#1c419e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lime" cx=".98" cy=".78" r=".62">
+      <stop stop-color="#a5de48" stop-opacity=".7"/>
+      <stop offset=".55" stop-color="#328763" stop-opacity=".4"/>
+      <stop offset="1" stop-color="#328763" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="amber" cx="1.06" cy="-.08" r=".51">
+      <stop stop-color="#f3c969" stop-opacity=".48"/>
+      <stop offset=".5" stop-color="#bca44a" stop-opacity=".17"/>
+      <stop offset="1" stop-color="#bca44a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="teal" cx=".03" cy="1.07" r=".69">
+      <stop stop-color="#0cc9af" stop-opacity=".55"/>
+      <stop offset=".6" stop-color="#0e6673" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#0e6673" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ribbon" x1="0" y1="1" x2="1" y2="0">
+      <stop stop-color="#4ee6e8" stop-opacity=".05"/>
+      <stop offset=".35" stop-color="#4ee6e8" stop-opacity=".3"/>
+      <stop offset=".65" stop-color="#7b9eff" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#b0e86f" stop-opacity=".1"/>
+    </linearGradient>
+    <filter id="soft" x="-.3" y="-.5" width="1.6" height="2">
+      <feGaussianBlur stdDeviation="100"/>
+    </filter>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#night)"/>
+  <rect width="3840" height="2160" fill="url(#cyan)"/>
+  <rect width="3840" height="2160" fill="url(#blue)"/>
+  <rect width="3840" height="2160" fill="url(#lime)"/>
+  <rect width="3840" height="2160" fill="url(#amber)"/>
+  <rect width="3840" height="2160" fill="url(#teal)"/>
+  <path d="M-400 1980 C700 2060 1250 1000 2120 1170 S3240 260 4200 550"
+        fill="none" stroke="url(#ribbon)" stroke-width="420" filter="url(#soft)"/>
+</svg>

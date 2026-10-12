@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+"""Read the current connection without changing its network service."""
+import json
+from pathlib import Path
+import subprocess
+
+
+def ip(*arguments):
+    return json.loads(subprocess.check_output(["ip", "-j", *arguments], text=True, timeout=3))
+
+
+wireless = [path.name for path in Path("/sys/class/net").iterdir()
+            if (path / "wireless").exists() or (path / "phy80211").exists()]
+status = {"connected": False, "wireless": False,
+          "interface": "", "address": "", "gateway": "", "speed": "", "error": ""}
+try:
+    routes = ip("-4", "route", "show", "default")
+    route = min(routes, key=lambda entry: entry.get("metric", 0)) if routes else {}
+    interface = route.get("dev", "")
+    if interface:
+        link = ip("address", "show", "dev", interface)[0]
+        addresses = [entry["local"] for entry in link.get("addr_info", [])
+                     if entry["family"] == "inet" and entry["scope"] == "global"]
+        status.update(connected=bool(addresses) and "LOWER_UP" in link["flags"],
+                      wireless=interface in wireless, interface=interface,
+                      address=route.get("prefsrc", addresses[0] if addresses else ""),
+                      gateway=route.get("gateway", ""))
+        try:
+            speed = int((Path("/sys/class/net") / interface / "speed").read_text())
+            if speed > 0:
+                status["speed"] = f"{speed / 1000:g} Gbps" if speed >= 1000 else f"{speed} Mbps"
+        except (OSError, ValueError):
+            pass
+except (OSError, subprocess.SubprocessError, ValueError, IndexError):
+    status["error"] = "Connection status unavailable"
+print(json.dumps(status))

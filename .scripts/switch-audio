@@ -1,0 +1,123 @@
+#!/bin/bash
+
+A50_SINK=$(pactl list short sinks | grep usb-Logitech_A50 | awk '{print $2}')
+FALLBACK_SINK="alsa_output.pci-0000_0b_00.4.analog-stereo"
+CURRENT_DEFAULT=$(pactl get-default-sink)
+TEST_WAV="/tmp/test.wav"
+
+# --- notifications helper (3s timeout) ---
+notify() {
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -t 3000 -a "Audio Switcher" -i "${3:-audio-card}" "$1" "$2"
+  else
+    echo "[notify] $1 — $2"
+  fi
+}
+
+# --- set default only if it's not already, and notify once ---
+set_default_once() {
+  local target="$1"
+  local title="$2"
+  local msg="$3"
+  local icon="${4:-audio-card}"
+  local cur
+  cur="$(pactl get-default-sink)"
+  if [[ "$cur" != "$target" ]]; then
+    pactl set-default-sink "$target"
+    move_all_streams "$target"
+    notify "$title" "$msg" "$icon"
+  fi
+}
+
+# Generate silent 0.5s WAV if missing
+if [[ ! -f "$TEST_WAV" ]]; then
+  sox -n -r 44100 -c 2 "$TEST_WAV" synth 0.5 sine 440 vol 0.0 >/dev/null 2>&1
+fi
+
+# Function: Get state of a sink (RUNNING/IDLE/SUSPENDED)
+get_sink_state() {
+  pactl list short sinks | awk -v s="$1" '$2==s {print $NF}'
+}
+
+# Function: Move all audio streams
+move_all_streams() {
+  local sink="$1"
+  for input in $(pactl list short sink-inputs | awk '{print $1}'); do
+    pactl move-sink-input "$input" "$sink"
+  done
+}
+
+# Play the silent tone to a sink
+play_test_sound() {
+  local sink="$1"
+  [[ -f "$TEST_WAV" ]] || sox -n -r 44100 -c 2 "$TEST_WAV" synth 0.5 sine 440 vol 0.0 >/dev/null 2>&1
+  paplay --device="$sink" "$TEST_WAV" >/dev/null 2>&1 &
+}
+
+# --- If A50 sink missing, force fallback ONCE (no spam) ---
+if [[ -z "$A50_SINK" ]]; then
+  set_default_once \
+    "$FALLBACK_SINK" \
+    "Audio: Fallback" \
+    "A50 disconnected. Default set to speakers." \
+    "audio-speakers"
+  exit 0
+fi
+
+# Make sure fallback exists
+if [[ -z "$FALLBACK_SINK" ]]; then
+  msg="Fallback sink missing. Cannot switch."
+  echo "$msg"
+  notify "Audio: No Action" "$msg" "dialog-warning"
+  exit 0
+fi
+
+A50_STATE=$(get_sink_state "$A50_SINK")
+FALLBACK_STATE=$(get_sink_state "$FALLBACK_SINK")
+
+# If both idle and default already A50 -> do nothing (quiet)
+if [[ "$A50_STATE" == "IDLE" && "$FALLBACK_STATE" == "IDLE" && "$CURRENT_DEFAULT" == "$A50_SINK" ]]; then
+  echo "Headphones already default, no change needed"
+  exit 0
+fi
+
+# Case 1: Headphones already running
+if [[ "$A50_STATE" == "RUNNING" ]]; then
+  echo "Headphones already running"
+  exit 0
+fi
+
+# Case 2: Speakers running, A50 idle -> test A50 silently
+if [[ "$FALLBACK_STATE" == "RUNNING" ]]; then
+  echo "Speakers are running. Testing A50 silently..."
+  notify "Audio: Testing A50" "Speakers active; probing A50…" "audio-speakers"
+  play_test_sound "$A50_SINK"
+  sleep 0.2
+  A50_STATE=$(get_sink_state "$A50_SINK")
+
+  if [[ "$A50_STATE" == "RUNNING" ]]; then
+    pactl set-default-sink "$A50_SINK"
+    move_all_streams "$A50_SINK"
+    notify "Audio: Switched" "Switched to A50 (was speakers)." "audio-headphones"
+  else
+    notify "Audio: No Switch" "A50 not active; keeping speakers." "audio-speakers"
+  fi
+  exit 0
+fi
+
+# Case 3: Both idle (but default is NOT A50) -> test A50
+echo "Both sinks idle. Testing A50..."
+notify "Audio: Testing A50" "Both idle; probing A50…" "audio-card"
+play_test_sound "$A50_SINK"
+sleep 0.2
+A50_STATE=$(get_sink_state "$A50_SINK")
+
+if [[ "$A50_STATE" == "RUNNING" ]]; then
+  pactl set-default-sink "$A50_SINK"
+  move_all_streams "$A50_SINK"
+  notify "Audio: Switched" "A50 responsive. Default set to A50." "audio-headphones"
+else
+  pactl set-default-sink "$FALLBACK_SINK"
+  move_all_streams "$FALLBACK_SINK"
+  notify "Audio: Fallback" "A50 not responsive. Default set to speakers." "audio-speakers"
+fi

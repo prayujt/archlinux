@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+import time
+from soco import SoCo
+
+SONOS_IP = '192.168.1.50'
+
+speaker = SoCo(SONOS_IP)
+
+while True:
+    try:
+        vol = speaker.volume
+        muted = speaker.mute
+        if muted:
+            print(f"\uf6a9 {vol}%", flush=True)
+        elif vol > 50:
+            print(f"\uf028 {vol}%", flush=True)
+        elif vol > 0:
+            print(f"\uf027 {vol}%", flush=True)
+        else:
+            print(f"\uf026 0%", flush=True)
+    except Exception:
+        print("\uf026 --", flush=True)
+    time.sleep(1)

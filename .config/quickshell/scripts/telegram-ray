@@ -1,0 +1,241 @@
+#!/usr/bin/env python3
+"""
+Headless Telegram <-> ray bridge for the quickshell chat widget.
+
+- Emits JSON lines on stdout:
+    {"type":"history","messages":[{"out":bool,"text":str,"id":int}, ...]}
+    {"type":"msg","out":bool,"text":str,"id":int}
+    {"type":"status","ok":bool,"error":str}
+- Image messages include hasImage; a later image event supplies a local image URI.
+- Reads JSON {type: "send", text, image} commands (or legacy plain text) from
+  /tmp/qs-tg-send. Emits send-result after Telegram accepts or rejects a message.
+
+Requires a session created by telegram-auth. Read/normal messaging only.
+"""
+import os
+import json
+import asyncio
+import threading
+import tempfile
+import logging
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+
+from telethon import TelegramClient, events
+
+ENV_FILE = os.path.expanduser("~/.config/quickshell/.env")
+SESSION = os.path.expanduser("~/.config/quickshell/.tg-session")
+SEND_FIFO = "/tmp/qs-tg-send"
+PID_FILE = "/tmp/qs-telegram-ray.pid"
+MEDIA_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "quickshell/telegram/media"
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
+
+
+def ensure_single_instance():
+    """Kill any previous daemon so only one instance ever runs on the session."""
+    try:
+        with open(PID_FILE) as f:
+            old = int(f.read().strip())
+        if old != os.getpid():
+            try:
+                os.kill(old, 9)
+            except ProcessLookupError:
+                pass
+    except Exception:
+        pass
+    try:
+        with open(PID_FILE, "w") as f:
+            f.write(str(os.getpid()))
+    except Exception:
+        pass
+
+
+def load_env():
+    d = {}
+    try:
+        with open(ENV_FILE) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                d[k.strip()] = v.strip().strip('"').strip("'")
+    except Exception:
+        pass
+    return d
+
+
+def emit(obj):
+    print(json.dumps(obj), flush=True)
+
+
+def image_media(message):
+    if message.photo:
+        return message.photo
+    document = message.document
+    if document and (document.mime_type or "").startswith("image/"):
+        return document
+    return None
+
+
+def message_payload(message):
+    return {"out": bool(message.out), "text": message.message or "", "id": message.id,
+            "hasImage": image_media(message) is not None, "image": "", "imageError": ""}
+
+
+async def load_image(client, message):
+    media = image_media(message)
+    if media is None:
+        return
+    path = MEDIA_DIR / f"{message.chat_id}_{message.id}_{media.id}{message.file.ext or '.jpg'}"
+    temporary = None
+    try:
+        MEDIA_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+        if not path.is_file():
+            with tempfile.NamedTemporaryFile(dir=MEDIA_DIR, delete=False) as output:
+                temporary = Path(output.name)
+                await client.download_media(message, file=output)
+                if output.tell() == 0:
+                    raise ValueError("Image download was empty")
+            temporary.replace(path)
+        emit({"type": "image", "id": message.id, "image": path.as_uri(), "error": ""})
+    except Exception as e:
+        emit({"type": "image", "id": message.id, "image": "", "error": str(e)[:100]})
+    finally:
+        if temporary:
+            temporary.unlink(missing_ok=True)
+
+
+def parse_send(line):
+    try:
+        command = json.loads(line)
+    except ValueError:
+        command = None
+    if isinstance(command, dict) and command.get("type") == "send":
+        return command.get("text", ""), command.get("image", "")
+    return line, ""
+
+
+async def send_message(client, entity, line):
+    try:
+        text, image = parse_send(line)
+        if image:
+            url = urlsplit(image)
+            if url.scheme != "file" or url.netloc not in ("", "localhost"):
+                raise ValueError("Choose a local image file")
+            path = Path(unquote(url.path))
+            if not path.is_file() or path.suffix.lower() not in IMAGE_SUFFIXES:
+                raise ValueError("Choose a PNG, JPEG, WebP, GIF, or BMP image")
+            message = await client.send_file(entity, str(path), caption=text, parse_mode=None,
+                                            force_document=path.suffix.lower() not in {".jpg", ".jpeg", ".png"})
+        else:
+            message = await client.send_message(entity, text)
+        payload = message_payload(message)
+        if image:
+            payload.update(hasImage=True, image=image)
+        emit({"type": "msg", **payload})
+        emit({"type": "send-result", "ok": True, "error": ""})
+    except Exception as e:
+        emit({"type": "send-result", "ok": False, "error": "Send failed: " + str(e)[:100]})
+
+
+async def run():
+    env = load_env()
+    api_id = env.get("API_ID")
+    api_hash = env.get("API_HASH")
+    ray = env.get("TG_RAY")
+    if not (api_id and api_hash and ray):
+        emit({"type": "status", "ok": False, "error": "missing API_ID/API_HASH/TG_RAY"})
+        return
+
+    client = TelegramClient(SESSION, int(api_id), api_hash)
+    try:
+        async with asyncio.timeout(30):
+            emit({"type": "status", "ok": False, "error": "Connecting to Telegram\u2026"})
+            await client.connect()
+            emit({"type": "status", "ok": False, "error": "Checking Telegram session\u2026"})
+            if not await client.is_user_authorized():
+                raise ValueError("not authorized (run telegram-auth)")
+            entity = await client.get_entity(ray)
+    except Exception:
+        await client.disconnect()
+        raise
+    emit({"type": "status", "ok": True, "error": ""})
+
+    # recent history (oldest first)
+    hist = []
+    async for m in client.iter_messages(entity, limit=25):
+        hist.append(m)
+    hist.reverse()
+    emit({"type": "history", "messages": [message_payload(m) for m in hist]})
+
+    async def load_history_images():
+        for m in hist:
+            await load_image(client, m)
+
+    history_images = asyncio.create_task(load_history_images())
+
+    # Include images sent from another Telegram client as well as ray's replies.
+    @client.on(events.NewMessage(chats=entity))
+    async def on_msg(ev):
+        emit({"type": "typing", "on": False})
+        emit({"type": "msg", **message_payload(ev.message)})
+        await load_image(client, ev.message)
+
+    # ray streams its answer by editing the message -> update the same bubble in place
+    @client.on(events.MessageEdited(chats=entity))
+    async def on_edit(ev):
+        emit({"type": "edit", **message_payload(ev.message)})
+        await load_image(client, ev.message)
+
+    # typing indicator (ray composing a reply)
+    @client.on(events.UserUpdate)
+    async def on_typing(ev):
+        if getattr(ev, "user_id", None) != entity.id and getattr(ev, "chat_id", None) != entity.id:
+            return
+        if getattr(ev, "typing", False):
+            emit({"type": "typing", "on": True})
+        elif getattr(ev, "cancel", False):
+            emit({"type": "typing", "on": False})
+
+    loop = asyncio.get_event_loop()
+
+    def fifo_reader():
+        # recreate the FIFO fresh so any stale/blocked writers are dropped
+        try:
+            os.remove(SEND_FIFO)
+        except FileNotFoundError:
+            pass
+        except Exception:
+            pass
+        try:
+            os.mkfifo(SEND_FIFO)
+        except FileExistsError:
+            pass
+        except Exception:
+            pass
+        # open O_RDWR so writers never block and we never get EOF (no reopen churn)
+        try:
+            fd = os.open(SEND_FIFO, os.O_RDWR)
+            f = os.fdopen(fd)
+        except Exception:
+            return
+        for line in f:
+            text = line.rstrip("\n")
+            if text:
+                asyncio.run_coroutine_threadsafe(send_message(client, entity, text), loop)
+
+    threading.Thread(target=fifo_reader, daemon=True).start()
+    await client.run_until_disconnected()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.WARNING)
+    logging.getLogger("telethon.network.mtprotosender").setLevel(logging.INFO)
+    ensure_single_instance()
+    try:
+        asyncio.run(run())
+    except TimeoutError:
+        emit({"type": "status", "ok": False, "error": "Telegram connection timed out; retrying\u2026"})
+    except Exception as e:
+        emit({"type": "status", "ok": False, "error": str(e)[:100]})

@@ -5,33 +5,66 @@ import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 
 Scope {
     id: root
 
     readonly property string fontFamily: "GeistMono Nerd Font Mono"
+    readonly property int barHeight: 40
+    readonly property int pillHeight: 32
+    readonly property int barInset: 4
 
-    // -- colors (tokyo night) --
-    readonly property color bgColor: "#1a1b26"     // deep navy (pill fill)
-    readonly property color textColor: "#c0caf5"   // pale blue-white
-    readonly property color subtext: "#7a82ab"     // muted indigo
-    readonly property color accent: "#7aa2f7"      // blue (focus, titles, selection)
-    readonly property color clockColor: "#7dcfff"  // cyan (clock, media, sonos)
-    readonly property color volumeColor: "#ff9e64" // warm orange (device volume)
-    readonly property color mutedColor: "#f7768e"  // red-pink (losses)
-    readonly property color gainColor: "#9ece6a"   // green (gains)
-    readonly property color surface: "#292e42"     // raised navy (tracks, hover, placeholders)
+    // -- colors (neon current) --
+    readonly property color bgColor: "#101a2b"     // midnight blue (panel fill)
+    readonly property color textColor: "#e7f2ff"   // ice white
+    readonly property color subtext: "#99adc5"     // muted steel blue
+    readonly property color accent: "#7b9eff"      // electric blue (focus, selection)
+    readonly property color clockColor: "#4ee6e8"  // neon cyan (clock, media, sonos)
+    readonly property color volumeColor: "#f3c969" // amber (device volume)
+    readonly property color mutedColor: "#f28b68"  // copper (losses)
+    readonly property color gainColor: "#b0e86f"   // acid green (gains)
+    readonly property color surface: "#202e43"     // raised blue (tracks, hover)
+    readonly property color inkColor: "#10182b"    // text on bright gradients
+    readonly property color outline: "#355578"
+
+    component NeonGradient: Gradient {
+        id: neon
+        property real intensity: 1
+        readonly property real tintOpacity: 0.12 + 0.88 * intensity
+        orientation: Gradient.Horizontal
+        GradientStop {
+            position: 0
+            color: Qt.tint(root.bgColor, Qt.rgba(root.clockColor.r, root.clockColor.g, root.clockColor.b, neon.tintOpacity))
+        }
+        GradientStop {
+            position: 0.5
+            color: Qt.tint(root.bgColor, Qt.rgba(root.accent.r, root.accent.g, root.accent.b, neon.tintOpacity))
+        }
+        GradientStop {
+            position: 1
+            color: Qt.tint(root.bgColor, Qt.rgba(root.gainColor.r, root.gainColor.g, root.gainColor.b, neon.tintOpacity))
+        }
+    }
 
     // -- shared state --
     property string time: ""
     property string volume: ""
     property bool muted: false
     property string activeWindow: ""
-    property bool newsPanelOpen: true
+    property bool newsPanelOpen: false // Temporarily hide only the top-bar news module.
+    onNewsPanelOpenChanged: if (!newsPanelOpen) newsExpanded = false
     property bool launcherOpen: false
     property string launcherSearch: ""
     property int selectedIndex: 0
     property bool volumeOsd: false
+    property bool networkOpen: false
+    property var networkStatus: ({connected: false, wireless: false,
+        interface: "", address: "", gateway: "", speed: "", error: ""})
+    onNetworkOpenChanged: if (networkOpen) {
+        launcherOpen = false; telegramOpen = false; notifOpen = false; mediaExpanded = false
+        networkStatusProc.running = true
+    }
 
     // -- sonos media state --
     property string sonosTitle: ""
@@ -63,7 +96,7 @@ Scope {
     // true briefly when the media card opens, so the progress bar snaps to the
     // current position instead of crawling there
     property bool mediaSettling: false
-    onMediaExpandedChanged: if (mediaExpanded) { mediaSettling = true; mediaSettleTimer.restart() }
+    onMediaExpandedChanged: if (mediaExpanded) { networkOpen = false; mediaSettling = true; mediaSettleTimer.restart() }
     Timer { id: mediaSettleTimer; interval: 320; onTriggered: root.mediaSettling = false }
 
     // -- schwab portfolio state --
@@ -82,8 +115,14 @@ Scope {
 
     // -- telegram (ray) chat state --
     property bool telegramOpen: false
+    property bool telegramFullscreen: false
     property bool telegramReady: false
     property string telegramError: ""
+    property string telegramAttachment: ""
+    property string telegramSendError: ""
+    property bool telegramSending: false
+    property bool telegramPicking: false
+    signal telegramSent()
     property bool tgTyping: false
     property var tgSeen: ({})
     // -- unified notification center (desktop notifications + ray messages) --
@@ -180,30 +219,10 @@ Scope {
     }
 
     // any keyboard-driven panel open on the center pill
-    readonly property bool anyPanel: launcherOpen || newsExpanded || telegramOpen || notifOpen || (mediaExpanded && sonosHasTrack)
-    // briefly grab keyboard focus on open (Exclusive) then relax to OnDemand so the
-    // rest of the desktop stays usable while the panel keeps focus until you click away
-    property bool kbGrab: false
-    onAnyPanelChanged: if (anyPanel) { kbGrab = true; kbGrabTimer.restart(); warpCursorToPanel() }
-    Timer { id: kbGrabTimer; interval: 450; onTriggered: root.kbGrab = false }
+    readonly property bool anyPanel: networkOpen || launcherOpen || (newsPanelOpen && newsExpanded) || telegramOpen || notifOpen || (mediaExpanded && sonosHasTrack)
     // snap the volume fill while the OSD morphs in, then re-enable smooth animation
     onSonosVolOsdChanged: if (sonosVolOsd) { sonosVolSettling = true; volSettleTimer.restart() }
     Timer { id: volSettleTimer; interval: 320; onTriggered: root.sonosVolSettling = false }
-
-    // warp the cursor onto the open panel so focus-follows-mouse doesn't yank focus
-    // back to whatever window was under the cursor when we relax to OnDemand
-    Process { id: cursorWarpProc }
-    function warpCursorToPanel() {
-        var s = null
-        for (var i = 0; i < Quickshell.screens.length; i++)
-            if (Quickshell.screens[i].name === "DP-3") s = Quickshell.screens[i]
-        if (!s) return
-        var cx = newsExpanded ? (s.x + s.width - 380) : (s.x + s.width / 2)
-        var cy = s.y + 70
-        cursorWarpProc.command = ["hyprctl", "dispatch", "movecursor",
-                                  Math.round(cx).toString(), Math.round(cy).toString()]
-        cursorWarpProc.running = true
-    }
 
     property string pillMode: launcherOpen ? "launcher"
         : telegramOpen ? "telegram"
@@ -220,10 +239,11 @@ Scope {
     onNewsExpandedChanged: if (newsExpanded) portfolioExpanded = false
     // telegram takes over the center pill; close the launcher when it opens
     onTelegramOpenChanged: {
-        if (telegramOpen) { launcherOpen = false; notifOpen = false; notifToastShow = false }
+        if (telegramOpen) { networkOpen = false; launcherOpen = false; notifOpen = false; notifToastShow = false }
+        else telegramFullscreen = false
     }
-    onNotifOpenChanged: if (notifOpen) { launcherOpen = false; telegramOpen = false; mediaExpanded = false }
-    onLauncherOpenChanged: if (launcherOpen) telegramOpen = false
+    onNotifOpenChanged: if (notifOpen) { networkOpen = false; launcherOpen = false; telegramOpen = false; mediaExpanded = false }
+    onLauncherOpenChanged: if (launcherOpen) { networkOpen = false; telegramOpen = false }
 
     // telegram message history (out=true is us, out=false is ray)
     ListModel { id: tgModel }
@@ -447,44 +467,39 @@ Scope {
         onTriggered: newsProc.running = true
     }
 
-    // -- news panel toggle listener (FIFO) --
-    Process {
-        id: newsToggleProc
-        running: true
-        command: ["sh", "-c", "rm -f /tmp/qs-news-toggle; mkfifo /tmp/qs-news-toggle; while true; do cat /tmp/qs-news-toggle; done"]
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.trim() === "toggle") root.newsExpanded = !root.newsExpanded
-            }
+    // Panel shortcuts use this instance's IPC rather than shared FIFO paths.
+    IpcHandler {
+        id: panelActions
+        target: "panels"
+        function launcher(): void {
+            root.launcherOpen = !root.launcherOpen
+            if (!root.launcherOpen) root.launcherSearch = ""
+        }
+        function news(): void { if (root.newsPanelOpen) root.newsExpanded = !root.newsExpanded; }
+        function notifications(): void { root.notifOpen = !root.notifOpen; }
+        function media(): void { if (root.sonosHasTrack) root.mediaExpanded = !root.mediaExpanded; }
+        function telegram(): void { root.toggleTelegram(false); }
+        function telegramFullscreen(): void { root.toggleTelegram(true); }
+        function status(): string {
+            return JSON.stringify({launcher: root.launcherOpen, news: root.newsExpanded,
+                newsEnabled: root.newsPanelOpen, network: root.networkOpen,
+                notifications: root.notifOpen, media: root.mediaExpanded,
+                hasTrack: root.sonosHasTrack, telegram: root.telegramOpen,
+                telegramFullscreen: root.telegramFullscreen});
         }
     }
 
-    // -- launcher toggle listener (FIFO) --
     Process {
-        id: launcherToggleProc
+        id: networkStatusProc
         running: true
-        command: ["sh", "-c", "rm -f /tmp/qs-launcher-toggle; mkfifo /tmp/qs-launcher-toggle; while true; do cat /tmp/qs-launcher-toggle; done"]
+        command: ["/usr/bin/python3", "/home/prayuj/.config/quickshell/scripts/network-status"]
         stdout: SplitParser {
             onRead: data => {
-                if (data.trim() === "toggle") {
-                    root.launcherOpen = !root.launcherOpen
-                    if (!root.launcherOpen) root.launcherSearch = ""
-                }
+                try { root.networkStatus = JSON.parse(data) } catch (e) {}
             }
         }
     }
-
-    // -- notification center toggle listener (FIFO, MOD+SHIFT+I) --
-    Process {
-        id: notifToggleProc
-        running: true
-        command: ["sh", "-c", "rm -f /tmp/qs-notif-toggle; mkfifo /tmp/qs-notif-toggle; while true; do cat /tmp/qs-notif-toggle; done"]
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.trim() === "toggle") root.notifOpen = !root.notifOpen
-            }
-        }
-    }
+    Timer { interval: 10000; running: true; repeat: true; onTriggered: networkStatusProc.running = true }
 
     // -- portfolio card toggle listener (FIFO) --  // portfolio widget temporarily hidden
     /*
@@ -500,17 +515,10 @@ Scope {
     }
     */
 
-    // -- media card toggle listener (FIFO) — only meaningful while a track is playing --
-    Process {
-        id: mediaToggleProc
-        running: true
-        command: ["sh", "-c", "rm -f /tmp/qs-media-toggle; mkfifo /tmp/qs-media-toggle; while true; do cat /tmp/qs-media-toggle; done"]
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.trim() === "toggle" && root.sonosHasTrack)
-                    root.mediaExpanded = !root.mediaExpanded
-            }
-        }
+    function telegramMessage(message) {
+        return { mid: message.id === undefined ? -1 : message.id, out: message.out,
+            text: message.text || "", hasImage: message.hasImage === true,
+            image: message.image || "", imageError: message.imageError || "" }
     }
 
     // -- telegram (ray) daemon: streams history + live messages, reads /tmp/qs-tg-send --
@@ -519,6 +527,16 @@ Scope {
         running: true
         command: ["/home/prayuj/.config/quickshell/.venv-tg/bin/python",
                   "/home/prayuj/.config/quickshell/scripts/telegram-ray"]
+        onExited: {
+            root.telegramReady = false
+            if (root.telegramSending) {
+                root.telegramSending = false
+                root.telegramSendError = "Connection closed. Your draft is saved; try again."
+            }
+        }
+        stderr: SplitParser {
+            onRead: data => console.warn("Telegram bridge:", data)
+        }
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {
@@ -530,7 +548,7 @@ Scope {
                         for (let i = 0; i < o.messages.length; i++) {
                             let m = o.messages[i]
                             if (m.id !== undefined) root.tgSeen[m.id] = true
-                            tgModel.append({ mid: m.id === undefined ? -1 : m.id, out: m.out, text: m.text })
+                            tgModel.append(root.telegramMessage(m))
                         }
                         root.telegramReady = true
                     } else if (o.type === "msg") {
@@ -538,12 +556,13 @@ Scope {
                         // dedupe by message id so duplicates never spam the view
                         if (o.id === undefined || !root.tgSeen[o.id]) {
                             if (o.id !== undefined) root.tgSeen[o.id] = true
-                            tgModel.append({ mid: o.id === undefined ? -1 : o.id, out: o.out, text: o.text })
+                            tgModel.append(root.telegramMessage(o))
                         }
                         // add ray replies to the notification center; toast when chat is closed
-                        if (!o.out && o.text && o.text.length > 0) {
-                            root.addNotifItem({ kind: "ray", app: "ray", summary: root.oneLine(o.text), body: "" })
-                            if (!root.telegramOpen) root.showToast("ray", o.text)
+                        if (!o.out && (o.text || o.hasImage)) {
+                            let summary = o.text || "Image"
+                            root.addNotifItem({ kind: "ray", app: "ray", summary: root.oneLine(summary), body: "" })
+                            if (!root.telegramOpen) root.showToast("ray", summary)
                         }
                     } else if (o.type === "edit") {
                         // ray is streaming: update the existing bubble in place
@@ -552,21 +571,42 @@ Scope {
                         for (let j = tgModel.count - 1; j >= 0; j--) {
                             if (tgModel.get(j).mid === o.id) {
                                 tgModel.setProperty(j, "text", o.text)
+                                tgModel.setProperty(j, "hasImage", o.hasImage === true)
                                 found = true
                                 break
                             }
                         }
                         if (!found) {
                             if (o.id !== undefined) root.tgSeen[o.id] = true
-                            tgModel.append({ mid: o.id === undefined ? -1 : o.id, out: o.out, text: o.text })
+                            tgModel.append(root.telegramMessage(o))
                         }
                         // keep the toast in sync while ray streams, if it's showing
                         if (!o.out && !root.telegramOpen && root.notifToastShow && o.text) {
                             root.notifToastText = root.oneLine(o.text)
                             notifToastTimer.restart()
                         }
+                    } else if (o.type === "image") {
+                        for (let j = tgModel.count - 1; j >= 0; j--) {
+                            if (tgModel.get(j).mid === o.id) {
+                                tgModel.setProperty(j, "image", o.image || "")
+                                tgModel.setProperty(j, "imageError", o.error || "")
+                                break
+                            }
+                        }
+                    } else if (o.type === "send-result") {
+                        root.telegramSending = false
+                        root.telegramSendError = o.error || ""
+                        if (o.ok) {
+                            root.telegramAttachment = ""
+                            root.telegramSent()
+                        }
                     } else if (o.type === "typing") {
                         root.tgTyping = o.on === true
+                        // Telegram typing statuses expire server-side (~6s) and the
+                        // cancel event is often not delivered, so auto-clear on a timer
+                        // that refreshes with each new typing:true.
+                        if (o.on === true) tgTypingTimeout.restart()
+                        else tgTypingTimeout.stop()
                     } else if (o.type === "status") {
                         root.telegramReady = o.ok === true
                         root.telegramError = o.error || ""
@@ -576,30 +616,42 @@ Scope {
         }
     }
 
+    // clear a stale typing indicator if ray stops without a cancel event arriving
+    Timer { id: tgTypingTimeout; interval: 7000; onTriggered: root.tgTyping = false }
+
     // restart the daemon if it dies
     Timer {
         interval: 15000; running: true; repeat: true
         onTriggered: if (!telegramProc.running) telegramProc.running = true
     }
 
-    // -- telegram toggle listener (FIFO, MOD+T) --
-    Process {
-        id: telegramToggleProc
-        running: true
-        command: ["sh", "-c", "rm -f /tmp/qs-telegram-toggle; mkfifo /tmp/qs-telegram-toggle; while true; do cat /tmp/qs-telegram-toggle; done"]
-        stdout: SplitParser {
-            onRead: data => {
-                if (data.trim() === "toggle") root.telegramOpen = !root.telegramOpen
-            }
+    function toggleTelegram(fullscreen) {
+        if (telegramOpen && telegramFullscreen === fullscreen) {
+            telegramOpen = false
+        } else {
+            telegramFullscreen = fullscreen
+            telegramOpen = true
         }
     }
 
     // -- send a message to ray (writes one line to the daemon's FIFO) --
     // `timeout` guarantees the write can never block/pile up if the daemon is down
-    Process { id: telegramSendProc }
+    Process {
+        id: telegramSendProc
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                root.telegramSending = false
+                root.telegramSendError = "Could not reach Telegram. Your draft is saved; try again."
+            }
+        }
+    }
     function telegramSend(text) {
-        if (!text || text.length === 0) return
-        telegramSendProc.command = ["timeout", "2", "sh", "-c", "printf '%s\\n' \"$1\" > /tmp/qs-tg-send", "sh", text]
+        if (telegramSending || (!text.trim() && !telegramAttachment)) return
+        if (!telegramReady) { telegramSendError = "Telegram is connecting. Try again in a moment."; return }
+        telegramSendError = ""
+        telegramSending = true
+        let message = JSON.stringify({ type: "send", text: text, image: telegramAttachment })
+        telegramSendProc.command = ["timeout", "2", "sh", "-c", "printf '%s\\n' \"$1\" > /tmp/qs-tg-send", "sh", message]
         telegramSendProc.running = true
     }
 
@@ -729,6 +781,48 @@ Scope {
     }
     */
 
+    // -- click-outside catcher for the telegram chat --
+    // Fullscreen Overlay-layer surface on DP-3, mapped only while the chat is open. Its
+    // input region is the whole screen MINUS the pill footprint, so a click anywhere off
+    // the pill closes the chat, while clicks on the pill fall through the hole to the bar
+    // underneath. Kept as a separate surface so the bar never resizes (no exclusiveZone
+    // loss, no stretch). Unmapped when closed, so it's completely inert.
+    PanelWindow {
+        id: tgDismissOverlay
+        visible: root.telegramOpen && !root.telegramFullscreen && !root.telegramPicking
+        screen: {
+            for (var i = 0; i < Quickshell.screens.length; i++)
+                if (Quickshell.screens[i].name === "DP-3") return Quickshell.screens[i]
+            return null
+        }
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "qs-tg-dismiss"
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        anchors { top: true; bottom: true; left: true; right: true }
+        exclusiveZone: -1
+        color: "transparent"
+
+        // telegram pill footprint: 430x360 (modeW/modeH), aligned with the bar.
+        // Region is full-screen-minus-pill when open, empty when closed (belt-and-braces
+        // with `visible` so the overlay can never capture clicks while the chat is closed).
+        mask: Region {
+            width: root.telegramOpen ? tgDismissOverlay.width : 0
+            height: root.telegramOpen ? tgDismissOverlay.height : 0
+            Region {
+                intersection: Intersection.Subtract
+                x: (tgDismissOverlay.width - 430) / 2
+                y: root.barInset
+                width: 430
+                height: 360
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onPressed: root.telegramOpen = false
+        }
+    }
+
     // -- top bar per monitor --
     Variants {
         model: Quickshell.screens
@@ -743,19 +837,26 @@ Scope {
             property int wsEnd: isDp ? 10 : 20
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: isDp ? 510 : 48
+            // Keep room for the pill's fullscreen morph; the mask passes other clicks through.
+            implicitHeight: isDp ? modelData.height : root.barHeight
             color: "transparent"
-            exclusiveZone: 48
-            // brief Exclusive grab on open (auto-focus) then OnDemand (releasable,
-            // doesn't monopolize the keyboard — other apps stay usable, click to refocus)
-            WlrLayershell.keyboardFocus: !(isDp && root.anyPanel) ? WlrKeyboardFocus.None
-                : (root.kbGrab ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand)
+            exclusiveZone: root.barHeight
+            WlrLayershell.layer: isDp && root.telegramPicking ? WlrLayer.Bottom
+                : isDp && (root.telegramFullscreen || pillBg.height > 510)
+                ? WlrLayer.Overlay : WlrLayer.Top
+            // Keep keyboard-driven panels focused until they close. With Hyprland's
+            // focus-follows-mouse enabled, OnDemand focus is otherwise immediately stolen
+            // by whichever regular window is under the pointer.
+            WlrLayershell.keyboardFocus: !(isDp && root.anyPanel) || root.telegramPicking ? WlrKeyboardFocus.None
+                : WlrKeyboardFocus.Exclusive
 
             mask: Region {
+                width: bar.isDp && root.networkOpen ? bar.width : 0
+                height: bar.isDp && root.networkOpen ? bar.height : 0
                 Region { item: barContent }
                 Region { item: pillBg }
                 // Region { item: portfolioCard }  // portfolio widget temporarily hidden
-                Region { item: newsCard }
+                Region { item: root.newsPanelOpen ? newsCard : null }
                 Region { item: tgNotif }
             }
 
@@ -764,13 +865,14 @@ Scope {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                height: 48
+                height: root.barHeight
 
                 Item {
                     anchors.fill: parent
                     anchors.leftMargin: 17
                     anchors.rightMargin: 17
                     anchors.topMargin: 4
+                    anchors.bottomMargin: 4
 
                 // == LEFT section ==
                 Row {
@@ -781,10 +883,13 @@ Scope {
 
                     // workspaces
                     Rectangle {
-                        height: 40
+                        height: root.pillHeight
                         width: wsRow.width + 20
                         color: root.bgColor
-                        radius: 12
+                        gradient: NeonGradient { intensity: 0 }
+                        border.width: 1
+                        border.color: root.outline
+                        radius: 10
                         clip: true
 
                         Behavior on width {
@@ -807,8 +912,8 @@ Scope {
                                     property bool isFocused: root.focusedWs === wsId
                                     property bool show: exists || isFocused
 
-                                    width: show ? 30 : 0
-                                    height: 30
+                                    width: show ? 24 : 0
+                                    height: 24
                                     clip: true
                                     visible: width > 0
 
@@ -817,9 +922,12 @@ Scope {
                                     }
 
                                     Rectangle {
+                                        id: workspaceButton
                                         anchors.fill: parent
                                         radius: 8
                                         color: parent.isFocused ? root.surface : "transparent"
+                                        gradient: workspaceButton.parent.isFocused ? workspaceGradient : null
+                                        NeonGradient { id: workspaceGradient }
 
                                         Behavior on color {
                                             ColorAnimation { duration: 150 }
@@ -828,16 +936,17 @@ Scope {
                                         Text {
                                             anchors.centerIn: parent
                                             text: parent.parent.displayNum.toString()
-                                            color: parent.parent.isFocused ? root.accent : root.subtext
+                                            color: parent.parent.isFocused ? root.inkColor : root.subtext
                                             font.family: root.fontFamily
-                                            font.pixelSize: 14
+                                            font.pixelSize: 12
                                             font.bold: parent.parent.isFocused
                                         }
                                     }
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        onClicked: Hyprland.dispatch("workspace " + parent.wsId)
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: Hyprland.dispatch("hl.dsp.focus({ workspace = " + parent.wsId + " })")
                                     }
                                 }
                             }
@@ -847,10 +956,13 @@ Scope {
                     // active window (DP-3 only)
                     Rectangle {
                         id: windowPill
-                        height: 40
+                        height: root.pillHeight
                         width: visible ? windowTextDisplay.implicitWidth + 24 : 0
                         color: root.bgColor
-                        radius: 12
+                        gradient: NeonGradient {}
+                        border.width: 1
+                        border.color: Qt.rgba(1, 1, 1, 0.25)
+                        radius: 10
                         clip: true
                         visible: bar.isDp && root.activeWindow !== ""
 
@@ -875,9 +987,9 @@ Scope {
                             id: windowTextDisplay
                             anchors.centerIn: parent
                             text: windowPill.displayedTitle
-                            color: root.accent
+                            color: root.inkColor
                             font.family: root.fontFamily
-                            font.pixelSize: 13
+                            font.pixelSize: 12
 
                             property real slideY: 0
                             transform: Translate { y: windowTextDisplay.slideY }
@@ -888,20 +1000,20 @@ Scope {
 
                             NumberAnimation {
                                 target: windowTextDisplay; property: "slideY"
-                                from: 0; to: -40
+                                from: 0; to: -root.pillHeight
                                 duration: 150; easing.type: Easing.InCubic
                             }
 
                             ScriptAction {
                                 script: {
                                     windowPill.displayedTitle = windowPill.pendingTitle
-                                    windowTextDisplay.slideY = 40
+                                    windowTextDisplay.slideY = root.pillHeight
                                 }
                             }
 
                             NumberAnimation {
                                 target: windowTextDisplay; property: "slideY"
-                                from: 40; to: 0
+                                from: root.pillHeight; to: 0
                                 duration: 150; easing.type: Easing.OutCubic
                             }
                         }
@@ -917,7 +1029,8 @@ Scope {
                 id: pillBg
                 visible: bar.isDp
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: 6
+                y: root.telegramFullscreen ? 0 : root.barInset
+                z: root.telegramFullscreen || height > 510 ? 2 : 0
                 clip: true
 
                 // compact now-playing shown in the collapsed pill while music plays
@@ -925,28 +1038,35 @@ Scope {
 
                 function modeW() {
                     if (root.pillMode === "launcher") return 400
-                    if (root.pillMode === "telegram") return 430
+                    if (root.pillMode === "telegram") return root.telegramFullscreen ? bar.width : 430
                     if (root.pillMode === "notif") return 430
                     if (root.pillMode === "media") return 390
                     if (root.pillMode === "volume") return 220
                     if (root.pillMode === "sonosvol") return root.sonosHasTrack ? 300 : 240
                     // shrink to fit the title, capped at 300 (long titles stay elided)
                     if (compactMedia) return Math.max(120, Math.min(300, 79 + npTitle.implicitWidth))
-                    return 90
+                    return 80
                 }
                 function modeH() {
                     if (root.pillMode === "launcher") return 500
-                    if (root.pillMode === "telegram") return 360
+                    if (root.pillMode === "telegram") return root.telegramFullscreen ? bar.height : 360
                     if (root.pillMode === "notif") return 380
                     if (root.pillMode === "media") return 150
                     if (root.pillMode === "sonosvol") return 68
-                    return 40
+                    return root.pillHeight
                 }
 
                 width: modeW()
                 height: modeH()
                 color: root.bgColor
-                radius: (root.pillMode === "launcher" || root.pillMode === "media" || root.pillMode === "telegram" || root.pillMode === "notif") ? 16 : 20
+                gradient: NeonGradient {
+                    intensity: root.pillMode === "volume" ? 0 : Math.max(0, Math.min(1, (60 - pillBg.height) / 20))
+                }
+                border.width: 1
+                border.color: root.outline
+                readonly property color foregroundColor: height < 50 && root.pillMode !== "volume" ? root.inkColor : root.textColor
+                radius: root.telegramFullscreen ? 0
+                    : (root.pillMode === "launcher" || root.pillMode === "media" || root.pillMode === "telegram" || root.pillMode === "notif") ? 16 : root.pillHeight / 2
 
                 property real targetW: modeW()
                 property real targetH: modeH()
@@ -958,22 +1078,25 @@ Scope {
                 }
 
                 Behavior on width {
-                    NumberAnimation { duration: 280; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                    NumberAnimation { duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
                 }
                 Behavior on height {
-                    NumberAnimation { duration: 280; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                    NumberAnimation { duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
                 }
                 Behavior on radius {
-                    NumberAnimation { duration: 280; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                    NumberAnimation { duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
+                }
+                Behavior on y {
+                    NumberAnimation { duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
                 }
 
                 // -- clock face --
                 Text {
                     anchors.centerIn: parent
                     text: Qt.formatDateTime(new Date(), "HH:mm")
-                    color: root.clockColor
+                    color: pillBg.foregroundColor
                     font.family: root.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: 12
                     opacity: (root.pillMode === "clock" && !pillBg.compactMedia) ? pillBg.morphCloseness : 0
                     visible: opacity > 0.01
 
@@ -1007,9 +1130,9 @@ Scope {
                         id: npArt
                         anchors.left: parent.left
                         anchors.top: parent.top
-                        anchors.topMargin: 6
-                        width: 28
-                        height: 28
+                        anchors.topMargin: root.barInset
+                        width: 24
+                        height: 24
                         radius: 6
                         color: root.surface
                         clip: true
@@ -1044,9 +1167,9 @@ Scope {
                         anchors.rightMargin: 8
                         anchors.verticalCenter: npArt.verticalCenter
                         text: root.sonosHasTrack ? root.sonosTitle : "Sonos"
-                        color: root.textColor
+                        color: pillBg.foregroundColor
                         font.family: root.fontFamily
-                        font.pixelSize: 13
+                        font.pixelSize: 12
                         elide: Text.ElideRight
                     }
 
@@ -1066,7 +1189,7 @@ Scope {
                                 required property int index
                                 width: 3
                                 radius: 1.5
-                                color: root.clockColor
+                                color: pillBg.height < 50 ? root.inkColor : root.clockColor
                                 anchors.verticalCenter: parent.verticalCenter
                                 height: 6
 
@@ -1687,10 +1810,61 @@ Scope {
                 // -- telegram (ray) chat face --
                 Item {
                     id: tgFace
-                    anchors.fill: parent
-                    anchors.margins: 12
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: root.telegramFullscreen ? 28 : 12
+                    anchors.bottomMargin: root.telegramFullscreen ? 28 : 12
+                    width: Math.max(0, Math.min(1120, parent.width - (root.telegramFullscreen ? 64 : 24)))
                     opacity: root.pillMode === "telegram" ? pillBg.morphCloseness : 0
                     visible: opacity > 0.01
+                    enabled: root.pillMode === "telegram"
+
+                    Keys.onEscapePressed: root.telegramOpen = false
+
+                    readonly property bool canSend: !root.telegramSending && !tgPaste.running
+                        && (!root.telegramAttachment || tgAttachmentImage.status === Image.Ready)
+                    function sendMessage() {
+                        if (canSend) root.telegramSend(tgInput.text)
+                    }
+
+                    Process {
+                        id: tgImagePicker
+                        command: ["/home/prayuj/.config/quickshell/.venv-tg/bin/python",
+                                  "/home/prayuj/.config/quickshell/scripts/telegram-image", "--pick"]
+                        onRunningChanged: {
+                            if (!bar.isDp) return
+                            root.telegramPicking = running
+                            if (!running) tgFocusTimer.restart()
+                        }
+                        stdout: SplitParser {
+                            onRead: data => {
+                                let result = JSON.parse(data)
+                                if (result.error) root.telegramSendError = result.error
+                                else if (result.image) {
+                                    root.telegramAttachment = result.image
+                                    root.telegramSendError = ""
+                                }
+                            }
+                        }
+                    }
+
+                    Process {
+                        id: tgPaste
+                        command: ["/home/prayuj/.config/quickshell/.venv-tg/bin/python",
+                                  "/home/prayuj/.config/quickshell/scripts/telegram-image"]
+                        stdout: SplitParser {
+                            onRead: data => {
+                                let result = JSON.parse(data)
+                                if (result.error) root.telegramSendError = result.error
+                                else if (result.image) {
+                                    root.telegramAttachment = result.image
+                                    root.telegramSendError = ""
+                                } else tgInput.paste()
+                            }
+                        }
+                        onExited: tgFocusTimer.restart()
+                    }
 
                     // header: status dot + "ray"
                     Item {
@@ -1698,7 +1872,7 @@ Scope {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        height: 20
+                        height: root.telegramFullscreen ? 36 : 20
 
                         Rectangle {
                             id: tgDot
@@ -1714,20 +1888,131 @@ Scope {
                             text: "ray"
                             color: root.textColor
                             font.family: root.fontFamily
-                            font.pixelSize: 13
+                            font.pixelSize: root.telegramFullscreen ? 20 : 13
                             font.bold: true
                         }
                         Text {
-                            anchors.right: parent.right
+                            anchors.right: tgActions.left
+                            anchors.rightMargin: 16
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.telegramReady ? "" : (root.telegramError.length ? root.telegramError : "connecting\u2026")
                             color: root.subtext
                             font.family: root.fontFamily
-                            font.pixelSize: 9
+                            font.pixelSize: root.telegramFullscreen ? 12 : 9
                             elide: Text.ElideLeft
                             width: 180
                             horizontalAlignment: Text.AlignRight
                         }
+                        Row {
+                            id: tgActions
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 18
+
+                            Text {
+                                text: root.telegramFullscreen ? "compact" : "expand"
+                                color: tgExpandMouse.containsMouse ? root.textColor : root.subtext
+                                font.family: root.fontFamily
+                                font.pixelSize: root.telegramFullscreen ? 12 : 10
+                                MouseArea {
+                                    id: tgExpandMouse
+                                    anchors.fill: parent
+                                    anchors.margins: -6
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.telegramFullscreen = !root.telegramFullscreen
+                                }
+                            }
+                            Text {
+                                text: "\u00d7"
+                                color: tgCloseMouse.containsMouse ? root.textColor : root.subtext
+                                font.family: root.fontFamily
+                                font.pixelSize: root.telegramFullscreen ? 16 : 13
+                                MouseArea {
+                                    id: tgCloseMouse
+                                    anchors.fill: parent
+                                    anchors.margins: -6
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.telegramOpen = false
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: tgAttachmentPreview
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: tgInputBox.top
+                        anchors.bottomMargin: visible ? 8 : 0
+                        visible: root.telegramAttachment.length > 0
+                        height: visible ? (root.telegramFullscreen ? 112 : 72) : 0
+                        radius: 10
+                        color: root.surface
+
+                        Image {
+                            id: tgAttachmentImage
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 6
+                            width: height
+                            source: root.telegramAttachment
+                            sourceSize.width: 240
+                            sourceSize.height: 240
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                        }
+                        Text {
+                            anchors.left: tgAttachmentImage.right
+                            anchors.leftMargin: 12
+                            anchors.right: tgRemoveAttachment.left
+                            anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: tgAttachmentImage.status === Image.Error ? "Can't read this image"
+                                : "Image attached · Enter to send"
+                            wrapMode: Text.Wrap
+                            color: root.subtext
+                            font.family: root.fontFamily
+                            font.pixelSize: root.telegramFullscreen ? 13 : 10
+                        }
+                        Text {
+                            id: tgRemoveAttachment
+                            anchors.right: parent.right
+                            anchors.rightMargin: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "\u00d7"
+                            color: root.subtext
+                            font.pixelSize: 20
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -8
+                                enabled: !root.telegramSending
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.telegramAttachment = ""
+                                    root.telegramSendError = ""
+                                    tgInput.forceActiveFocus()
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        id: tgComposerStatus
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: tgAttachmentPreview.top
+                        anchors.bottomMargin: text ? 6 : 0
+                        height: text ? (root.telegramFullscreen ? 32 : 26) : 0
+                        text: root.telegramSending ? "Sending\u2026" : tgPaste.running ? "Reading clipboard\u2026" : root.telegramSendError
+                        color: root.telegramSendError ? root.mutedColor : root.subtext
+                        font.family: root.fontFamily
+                        font.pixelSize: root.telegramFullscreen ? 12 : 10
+                        wrapMode: Text.Wrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
                     }
 
                     // input box (bottom)
@@ -1736,44 +2021,82 @@ Scope {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        height: 34
+                        height: root.telegramFullscreen ? 56 : 34
                         radius: 10
                         color: root.surface
 
+                        Text {
+                            id: tgAttachButton
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 36
+                            text: "+"
+                            horizontalAlignment: Text.AlignHCenter
+                            font.pixelSize: 24
+                            color: root.accent
+                            opacity: enabled ? 1 : 0.4
+                            enabled: !root.telegramSending && !tgPaste.running
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: tgImagePicker.running = true
+                            }
+                        }
+                        Text {
+                            id: tgSendButton
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: root.telegramFullscreen ? 64 : 48
+                            text: "send"
+                            horizontalAlignment: Text.AlignHCenter
+                            font.family: root.fontFamily
+                            font.pixelSize: root.telegramFullscreen ? 13 : 11
+                            color: root.accent
+                            opacity: enabled ? 1 : 0.4
+                            enabled: tgFace.canSend && (tgInput.text.trim().length > 0 || root.telegramAttachment.length > 0)
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.topMargin: -8
+                                anchors.bottomMargin: -8
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: tgFace.sendMessage()
+                            }
+                        }
+
                         TextInput {
                             id: tgInput
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
+                            anchors.left: tgAttachButton.right
+                            anchors.right: tgSendButton.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.rightMargin: 8
                             verticalAlignment: Text.AlignVCenter
                             color: root.textColor
                             font.family: root.fontFamily
-                            font.pixelSize: 13
+                            font.pixelSize: root.telegramFullscreen ? 16 : 13
                             clip: true
+                            readOnly: root.telegramSending
 
                             Keys.onEscapePressed: root.telegramOpen = false
-                            Keys.onReturnPressed: {
-                                let t = tgInput.text
-                                if (t.trim().length > 0) {
-                                    root.telegramSend(t)
-                                    tgInput.text = ""
-                                }
-                            }
+                            Keys.onReturnPressed: tgFace.sendMessage()
+                            Keys.onEnterPressed: tgFace.sendMessage()
                             Keys.onPressed: event => {
                                 if (event.modifiers & Qt.ControlModifier) {
-                                    if (event.key === Qt.Key_J) { tgList.flick(0, -700); event.accepted = true }
+                                    if (event.key === Qt.Key_V) {
+                                        if (!root.telegramSending && !tgPaste.running) tgPaste.running = true
+                                        event.accepted = true
+                                    } else if (event.key === Qt.Key_J) { tgList.flick(0, -700); event.accepted = true }
                                     else if (event.key === Qt.Key_K) { tgList.flick(0, 700); event.accepted = true }
                                 }
                             }
                         }
                         Text {
-                            anchors.left: parent.left
-                            anchors.leftMargin: 12
+                            anchors.left: tgInput.left
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "message ray\u2026"
+                            text: root.telegramAttachment ? "add a caption\u2026" : "message ray\u2026"
                             color: root.subtext
                             font.family: root.fontFamily
-                            font.pixelSize: 13
+                            font.pixelSize: root.telegramFullscreen ? 16 : 13
                             visible: tgInput.text.length === 0
                         }
                     }
@@ -1784,16 +2107,54 @@ Scope {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: tgHeader.bottom
-                        anchors.topMargin: 8
-                        anchors.bottom: tgInputBox.top
-                        anchors.bottomMargin: 8
+                        anchors.topMargin: root.telegramFullscreen ? 24 : 8
+                        anchors.bottom: tgComposerStatus.top
+                        anchors.bottomMargin: root.telegramFullscreen ? 20 : 8
                         clip: true
-                        spacing: 5
+                        spacing: root.telegramFullscreen ? 12 : 5
                         model: tgModel
                         boundsBehavior: Flickable.StopAtBounds
                         cacheBuffer: 800
 
-                        onCountChanged: Qt.callLater(positionViewAtEnd)
+                        property bool followTail: true
+                        onMovementStarted: followTail = false
+                        onMovementEnded: followTail = atYEnd
+                        function scrollToEnd() {
+                            followTail = true
+                            forceLayout()
+                            positionViewAtEnd()
+                        }
+                        onCountChanged: Qt.callLater(scrollToEnd)
+                        onWidthChanged: if (root.telegramOpen) Qt.callLater(scrollToEnd)
+                        onHeightChanged: if (root.telegramOpen) Qt.callLater(scrollToEnd)
+
+                        // Move 160px per wheel notch in either chat size, with a short glide.
+                        NumberAnimation {
+                            id: tgWheelScroll
+                            target: tgList
+                            property: "contentY"
+                            duration: 120
+                            easing.type: Easing.OutCubic
+                            onStarted: tgList.followTail = false
+                            onFinished: tgList.followTail = tgList.atYEnd
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            onWheel: event => {
+                                let delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y * 3
+                                    : event.angleDelta.y / 120 * 160
+                                if (delta === 0) return
+                                let start = tgWheelScroll.running ? tgWheelScroll.to : tgList.contentY
+                                let end = tgList.originY + Math.max(0, tgList.contentHeight - tgList.height)
+                                tgList.cancelFlick()
+                                tgWheelScroll.stop()
+                                tgWheelScroll.from = tgList.contentY
+                                tgWheelScroll.to = Math.max(tgList.originY, Math.min(end, start - delta))
+                                tgWheelScroll.start()
+                                event.accepted = true
+                            }
+                        }
 
                         // typing indicator (animated dots) shown while ray is composing
                         footer: Item {
@@ -1835,6 +2196,7 @@ Scope {
                         }
 
                         delegate: Item {
+                            required property var model
                             width: tgList.width
                             implicitHeight: bubble.height + 4
                             height: bubble.height + 4
@@ -1842,21 +2204,55 @@ Scope {
                             Rectangle {
                                 id: bubble
                                 x: model.out ? parent.width - width : 0
-                                width: Math.min(tgList.width * 0.8, msgText.implicitWidth + 22)
-                                height: msgText.implicitHeight + 14
+                                width: model.hasImage ? Math.min(tgList.width * 0.8, root.telegramFullscreen ? 582 : 322)
+                                    : Math.min(tgList.width * 0.8, msgText.implicitWidth + 22)
+                                height: imageFrame.height + (model.text ? msgText.implicitHeight + (model.hasImage ? 8 : 0) : 0) + 14
                                 radius: 10
                                 color: model.out ? root.accent : root.surface
 
+                                Item {
+                                    id: imageFrame
+                                    x: 11
+                                    y: 7
+                                    width: parent.width - 22
+                                    height: model.hasImage ? Math.min(root.telegramFullscreen ? 360 : 160,
+                                        messageImage.status === Image.Ready && messageImage.sourceSize.width > 0
+                                        ? width * messageImage.sourceSize.height / messageImage.sourceSize.width : 160) : 0
+                                    visible: model.hasImage
+                                    Image {
+                                        id: messageImage
+                                        objectName: "telegramMessageImage"
+                                        anchors.fill: parent
+                                        source: model.image
+                                        sourceSize.width: 1120
+                                        sourceSize.height: 720
+                                        fillMode: Image.PreserveAspectFit
+                                        asynchronous: true
+                                        onStatusChanged: if (tgList.followTail) Qt.callLater(tgList.scrollToEnd)
+                                    }
+                                    Text {
+                                        anchors.centerIn: parent
+                                        width: parent.width
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: model.imageError || messageImage.status === Image.Error
+                                            ? "Image unavailable" : "Loading image\u2026"
+                                        visible: messageImage.status !== Image.Ready
+                                        color: model.out ? root.bgColor : root.subtext
+                                        font.family: root.fontFamily
+                                        font.pixelSize: 12
+                                    }
+                                }
                                 Text {
                                     id: msgText
                                     x: 11
-                                    y: 7
-                                    width: Math.min(implicitWidth, tgList.width * 0.8 - 22)
+                                    y: imageFrame.y + imageFrame.height + (model.hasImage ? 8 : 0)
+                                    width: parent.width - 22
                                     text: model.text
+                                    textFormat: Text.PlainText
                                     wrapMode: Text.Wrap
                                     color: model.out ? root.bgColor : root.textColor
                                     font.family: root.fontFamily
-                                    font.pixelSize: 12
+                                    font.pixelSize: root.telegramFullscreen ? 16 : 12
                                 }
                             }
                         }
@@ -1867,6 +2263,7 @@ Scope {
                         interval: 60
                         property int tries: 0
                         onTriggered: {
+                            if (!bar.isDp || !root.telegramOpen || root.telegramPicking) { tries = 0; return }
                             tgInput.forceActiveFocus()
                             tries++
                             if (!tgInput.activeFocus && tries < 6) tgFocusTimer.restart()
@@ -1877,11 +2274,16 @@ Scope {
                     Connections {
                         target: root
                         function onTelegramOpenChanged() {
-                            if (root.telegramOpen) {
-                                tgInput.text = ""
+                            if (bar.isDp && root.telegramOpen) {
                                 tgFocusTimer.start()
-                                tgList.positionViewAtEnd()
+                                Qt.callLater(tgList.positionViewAtEnd)
                             }
+                        }
+                        function onTelegramFullscreenChanged() {
+                            if (bar.isDp && root.telegramOpen) tgFocusTimer.restart()
+                        }
+                        function onTelegramSent() {
+                            if (bar.isDp) tgInput.text = ""
                         }
                     }
                 }
@@ -2167,6 +2569,9 @@ Scope {
                 visible: bar.isDp && height > 0.5
                 radius: Math.min(18, height / 2)
                 color: notifMouse.containsMouse ? root.surface : root.bgColor
+                gradient: NeonGradient { intensity: notifMouse.containsMouse ? 0.12 : 0 }
+                border.width: 1
+                border.color: root.outline
                 clip: true
 
                 Behavior on height {
@@ -2229,16 +2634,286 @@ Scope {
                 }
             }
 
+            // == utility bar — replaces the temporarily hidden news ticker ==
+            Rectangle {
+                id: utilityBar
+                visible: bar.isDp && !root.newsPanelOpen
+                anchors.right: parent.right
+                anchors.rightMargin: 17
+                y: root.barInset
+                width: utilityRow.width + 16
+                height: root.pillHeight
+                radius: 10
+                color: root.bgColor
+                gradient: NeonGradient { intensity: 0 }
+                border.width: 1
+                border.color: root.outline
+                Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+
+                property var hoverTarget: null
+                property bool hoverActive: false
+                property bool hintReady: false
+                Timer {
+                    id: utilityHoverExit
+                    interval: 80
+                    onTriggered: {
+                        utilityBar.hoverActive = false
+                        utilityBar.hintReady = false
+                        utilityHintDelay.stop()
+                    }
+                }
+                Timer {
+                    id: utilityHintDelay
+                    interval: 550
+                    onTriggered: utilityBar.hintReady = true
+                }
+                Rectangle {
+                    x: utilityRow.x + (utilityBar.hoverTarget?.x || 0)
+                    y: utilityRow.y
+                    width: utilityBar.hoverTarget?.width || 0
+                    height: utilityRow.height
+                    radius: 7
+                    color: root.surface
+                    opacity: utilityBar.hoverActive ? 1 : 0
+                    enabled: false
+                    Behavior on x {
+                        enabled: utilityBar.hoverActive
+                        NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on width {
+                        enabled: utilityBar.hoverActive
+                        NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on opacity { NumberAnimation { duration: 80 } }
+                }
+
+                Row {
+                    id: utilityRow
+                    anchors.centerIn: parent
+                    height: 24
+                    spacing: 4
+
+                    Repeater {
+                        model: ["volume", "network", "notifications", "media", "ray"]
+
+                        Rectangle {
+                            id: utilityAction
+                            required property string modelData
+                            property bool selected: modelData === "notifications" ? root.notifOpen
+                                : modelData === "network" ? root.networkOpen
+                                : modelData === "media" ? root.mediaExpanded
+                                : modelData === "ray" ? root.telegramOpen : false
+                            property string label: modelData === "volume" ? (root.muted ? "Muted" : root.volume || "—")
+                                : modelData === "notifications" && notifModel.count > 0 ? Math.min(notifModel.count, 99).toString()
+                                : modelData === "ray" ? "Ray" : ""
+                            property string icon: modelData === "volume" ? (root.muted ? "\uf026" : "\uf028")
+                                : modelData === "network" ? "\uf1eb"
+                                : modelData === "notifications" ? "\uf0f3"
+                                : modelData === "media" ? "\uf001" : "\uf1d8"
+                            property string hint: modelData === "volume" ? "Volume · click to mute · scroll to adjust"
+                                : modelData === "network" ? (root.networkStatus.wireless ? "Wi-Fi" : "Ethernet")
+                                    + (root.networkStatus.connected ? " · Connected" + (root.networkStatus.speed ? " · " + root.networkStatus.speed : "") : " · Disconnected")
+                                : modelData === "notifications" ? "Notifications · Super + Shift + I"
+                                : modelData === "media" ? "Now playing · Super + Shift + Space"
+                                : "Ray · click to chat · Shift/right-click for fullscreen"
+                            visible: modelData !== "media" || root.sonosHasTrack
+                            width: actionContents.width + 18
+                            height: 24
+                            radius: 7
+                            color: selected ? Qt.rgba(root.clockColor.r, root.clockColor.g, root.clockColor.b, 0.14) : "transparent"
+
+                            Row {
+                                id: actionContents
+                                anchors.centerIn: parent
+                                spacing: 8
+                                Text {
+                                    text: utilityAction.icon
+                                    color: utilityAction.modelData === "volume" && root.muted ? root.mutedColor
+                                        : utilityAction.selected ? root.clockColor : root.textColor
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 14
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: utilityAction.label
+                                    visible: text.length > 0
+                                    color: utilityAction.selected ? root.clockColor : root.subtext
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 11
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            MouseArea {
+                                id: actionMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                acceptedButtons: utilityAction.modelData === "ray" ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
+                                onEntered: {
+                                    utilityHoverExit.stop()
+                                    var freshHover = !utilityBar.hoverActive
+                                    utilityBar.hoverTarget = utilityAction
+                                    utilityBar.hoverActive = true
+                                    if (freshHover) utilityHintDelay.restart()
+                                }
+                                onExited: if (utilityBar.hoverTarget === utilityAction) utilityHoverExit.restart()
+                                onClicked: mouse => {
+                                    if (utilityAction.modelData === "volume")
+                                        Quickshell.execDetached(["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"])
+                                    else if (utilityAction.modelData === "network") root.networkOpen = !root.networkOpen
+                                    else if (utilityAction.modelData === "notifications") panelActions.notifications()
+                                    else if (utilityAction.modelData === "media") panelActions.media()
+                                    else root.toggleTelegram(mouse.button === Qt.RightButton || !!(mouse.modifiers & Qt.ShiftModifier))
+                                }
+                                onWheel: wheel => {
+                                    if (utilityAction.modelData !== "volume") { wheel.accepted = false; return }
+                                    var delta = wheel.angleDelta.y || wheel.pixelDelta.y
+                                    if (delta) Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", delta > 0 ? "+5%" : "-5%"])
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+                // A passive shared hint never creates a popup that can steal hover.
+                Rectangle {
+                    x: utilityBar.width - width
+                    y: utilityBar.height + 8
+                    width: utilityHintText.implicitWidth + 20
+                    height: utilityHintText.implicitHeight + 18
+                    radius: 8
+                    color: root.bgColor
+                    border.color: root.outline
+                    opacity: utilityBar.hoverActive && utilityBar.hintReady && !root.anyPanel ? 1 : 0
+                    visible: opacity > 0.001
+                    enabled: false
+                    Behavior on opacity { NumberAnimation { duration: 80 } }
+                    Text {
+                        id: utilityHintText
+                        anchors.centerIn: parent
+                        text: utilityBar.hoverTarget?.hint || ""
+                        font.family: root.fontFamily
+                        font.pixelSize: 11
+                        color: root.textColor
+                    }
+                }
+
+                Popup {
+                    id: networkPopup
+                    parent: utilityBar
+                    visible: bar.isDp && root.networkOpen
+                    x: utilityBar.width - width
+                    y: utilityBar.height + 8
+                    width: 288
+                    padding: 16
+                    modal: true
+                    focus: true
+                    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+                    onClosed: root.networkOpen = false
+                    Overlay.modal: Rectangle { color: "transparent" }
+                    enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
+                    exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 100 } }
+                    background: Rectangle { color: root.bgColor; border.color: root.outline; radius: 14 }
+
+                    contentItem: ColumnLayout {
+                        spacing: 16
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Text {
+                                text: root.networkStatus.wireless ? "WI-FI" : "ETHERNET"
+                                font.family: root.fontFamily
+                                font.pixelSize: 11
+                                font.letterSpacing: 2
+                                color: root.clockColor
+                                Layout.fillWidth: true
+                            }
+                            Rectangle {
+                                implicitWidth: 24; implicitHeight: 24; radius: 7
+                                color: networkRefreshMouse.containsMouse ? root.surface : "transparent"
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\uf021"
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 13
+                                    color: root.subtext
+                                    opacity: networkStatusProc.running ? 0.4 : 1
+                                }
+                                MouseArea {
+                                    id: networkRefreshMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: networkStatusProc.running = true
+                                }
+                            }
+                        }
+                        RowLayout {
+                            spacing: 12
+                            Text {
+                                text: root.networkStatus.wireless ? "\uf1eb" : "\udb80\ude00"
+                                font.family: root.fontFamily
+                                font.pixelSize: 20
+                                color: root.networkStatus.connected ? root.gainColor : root.subtext
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 5
+                                Text {
+                                    text: root.networkStatus.error || (root.networkStatus.connected ? "Connected" : "Disconnected")
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 13
+                                    color: root.textColor
+                                }
+                                Text {
+                                    text: root.networkStatus.interface + (root.networkStatus.speed ? " · " + root.networkStatus.speed : "")
+                                    visible: text.length > 0
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 10
+                                    color: root.subtext
+                                }
+                            }
+                        }
+                        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: root.outline; opacity: 0.65 }
+                        GridLayout {
+                            columns: 2
+                            columnSpacing: 16
+                            rowSpacing: 10
+                            Layout.fillWidth: true
+                            Repeater {
+                                model: ["IP address", root.networkStatus.address || "—", "Router", root.networkStatus.gateway || "—"]
+                                Text {
+                                    required property int index
+                                    required property string modelData
+                                    text: modelData
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 11
+                                    color: index % 2 ? root.textColor : root.subtext
+                                    Layout.fillWidth: index % 2 === 0
+                                    Layout.alignment: index % 2 ? Qt.AlignRight : Qt.AlignLeft
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // == news widget — morphs between ticker pill and expanded headlines card ==
             Rectangle {
                 id: newsCard
-                visible: bar.isDp
+                visible: bar.isDp && root.newsPanelOpen
                 property bool newsLoaded: root.headlines.length > 0
                 anchors.right: parent.right
                 // sit in the corner (replaces the hidden portfolio pill)
                 anchors.rightMargin: 17
                 y: 6
                 color: (!root.newsExpanded && newsOpen.containsMouse) ? root.surface : root.bgColor
+                gradient: NeonGradient {
+                    intensity: (1 - newsCard.morphP) * (newsOpen.containsMouse ? 0.85 : 1)
+                }
+                border.width: 1
+                border.color: root.outline
                 clip: true
                 opacity: 1
                 Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -2305,7 +2980,7 @@ Scope {
                         anchors.leftMargin: 17
                         anchors.verticalCenter: parent.verticalCenter
                         width: 7; height: 7; radius: 3.5
-                        color: root.clockColor
+                        color: root.inkColor
                         SequentialAnimation on opacity {
                             running: newsCard.visible && !root.newsExpanded
                             loops: Animation.Infinite
@@ -2346,7 +3021,7 @@ Scope {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: newsCard.newsLoaded
                             text: root.headlines.length > 0 ? (root.headlines[newsCard.newsIndex].title || "") : ""
-                            color: root.textColor
+                            color: root.inkColor
                             font.family: root.fontFamily
                             font.pixelSize: 12
                             property real slideY: 0

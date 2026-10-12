@@ -1,0 +1,10 @@
+[SddmGreeterTheme]
+Name=Neon Dusk
+Description=A quiet clock and login on the Samsung, with a daily news brief on the second display.
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=neon-dusk
+Theme-API=2.0
+QtVersion=6

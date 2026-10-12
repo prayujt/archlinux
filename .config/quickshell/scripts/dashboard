@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+dashboard_config="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/dashboard/shell.qml"
+if quickshell ipc -p "$dashboard_config" call dashboard open >/dev/null 2>&1; then
+    exit 0
+fi
+/usr/bin/python "$(dirname "$dashboard_config")/data.py" init
+exec quickshell -d -n -p "$dashboard_config"

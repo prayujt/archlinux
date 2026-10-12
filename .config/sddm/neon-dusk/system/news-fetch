@@ -1,0 +1,225 @@
+#!/usr/bin/python
+"""Cache the desktop widget's public NYT feeds and images for the SDDM greeter."""
+import concurrent.futures
+import hashlib
+import html
+import json
+import math
+import os
+from pathlib import Path
+import re
+import sys
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from urllib.parse import quote, urlsplit
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
+from zoneinfo import ZoneInfo
+import xml.etree.ElementTree as ET
+
+CACHE = Path("/var/cache/sddm-news")
+FEEDS = (
+    ("Politics", "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml"),
+    ("Economy", "https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml"),
+)
+BLOCK = (
+    "/opinion/", "/insider/", "/cooking/", "/style/", "/t-magazine/", "/arts/",
+    "/books/", "/movies/", "/theater/", "/travel/", "/realestate/", "/magazine/",
+    "/well/", "/food/", "/dining/", "/fashion/", "/podcasts/", "/crosswords/",
+    "/games/", "/wirecutter/", "/review/", "/interactive/", "/live/",
+)
+NS = {"media": "http://search.yahoo.com/mrss/", "dc": "http://purl.org/dc/elements/1.1/"}
+NEW_YORK = ZoneInfo("America/New_York")
+MARKETS = (
+    ("^GSPC", "S&P 500", "index"),
+    ("^IXIC", "Nasdaq Composite", "index"),
+    ("^DJI", "Dow Jones", "index"),
+    ("^RUT", "Russell 2000", "index"),
+    ("BTC-USD", "Bitcoin", "crypto"),
+    ("ETH-USD", "Ethereum", "crypto"),
+)
+
+
+def fetch(url, limit):
+    request = Request(url, headers={"User-Agent": "Mozilla/5.0 NeonDuskGreeter/1.0"})
+    with urlopen(request, timeout=4) as response:
+        data = response.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError("Response exceeds cache limit")
+    return data
+
+
+def write_json(path, document):
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+    os.chmod(temporary, 0o644)
+    temporary.replace(path)
+
+
+def feed_data(section, url):
+    path = CACHE / ("feed-" + section.lower() + ".json")
+    try:
+        previous = json.loads(path.read_text())
+    except (OSError, ValueError):
+        previous = {}
+    headers = {"User-Agent": "NeonDuskGreeter/1.0"}
+    if previous.get("etag"):
+        headers["If-None-Match"] = previous["etag"]
+    if previous.get("modified"):
+        headers["If-Modified-Since"] = previous["modified"]
+    try:
+        with urlopen(Request(url, headers=headers), timeout=4) as response:
+            data = response.read(2 * 1024 * 1024 + 1)
+            if len(data) > 2 * 1024 * 1024:
+                raise ValueError("Feed exceeds cache limit")
+            ET.fromstring(data)
+            write_json(path, {"xml": data.decode("utf-8"),
+                             "etag": response.headers.get("ETag", ""),
+                             "modified": response.headers.get("Last-Modified", "")})
+            return data
+    except HTTPError as error:
+        if error.code == 304 and previous.get("xml"):
+            return previous["xml"]
+        raise
+
+
+def number(value):
+    result = float(value)
+    if not math.isfinite(result) or result <= 0:
+        raise ValueError("Invalid market price")
+    return result
+
+
+def index_quote(data, spec, now):
+    symbol, name, kind = spec
+    chart = data["chart"]["result"][0]
+    meta = chart["meta"]
+    bars = []
+    for timestamp, close in zip(chart["timestamp"], chart["indicators"]["quote"][0]["close"]):
+        if close is not None:
+            day = datetime.fromtimestamp(timestamp, NEW_YORK).date()
+            if day <= now.astimezone(NEW_YORK).date() and day.weekday() < 5:
+                bars.append((day, number(close)))
+    bars.sort()
+    if len(bars) < 2:
+        raise ValueError("Not enough daily closes")
+    today = now.astimezone(NEW_YORK).date()
+    session, price = bars[-1]
+    market_time = datetime.fromtimestamp(meta["regularMarketTime"], NEW_YORK)
+    if today.weekday() < 5 and market_time.date() == today:
+        session, price = today, number(meta["regularMarketPrice"])
+    previous = next(close for day, close in reversed(bars) if day < session)
+    change = price - previous
+    return {"symbol": symbol, "name": name, "kind": kind,
+            "price": price, "change": change, "percent": change / previous * 100,
+            "sessionDate": session.isoformat(), "asOf": now.isoformat(),
+            "source": "Yahoo Finance"}
+
+
+def market_quote(spec, now):
+    symbol, name, kind = spec
+    if kind == "index":
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/" + quote(symbol, safe="")
+        return index_quote(json.loads(fetch(url + "?range=1mo&interval=1d", 1024 * 1024)), spec, now)
+    data = json.loads(fetch("https://api.exchange.coinbase.com/products/" + symbol + "/stats", 65536))
+    price, previous = number(data["last"]), number(data["open"])
+    change = price - previous
+    return {"symbol": symbol, "name": name, "kind": kind,
+            "price": price, "change": change, "percent": change / previous * 100,
+            "sessionDate": "", "asOf": now.isoformat(), "source": "Coinbase"}
+
+
+def refresh_markets():
+    path = CACHE / "markets.json"
+    try:
+        previous = {item["symbol"]: item for item in json.loads(path.read_text())["items"]}
+    except (OSError, ValueError, KeyError):
+        previous = {}
+    now = datetime.now(timezone.utc)
+    items = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+        tasks = [executor.submit(market_quote, spec, now) for spec in MARKETS]
+        for spec, task in zip(MARKETS, tasks):
+            try:
+                items.append(task.result())
+            except Exception as error:
+                print("Market quote unavailable:", spec[0], type(error).__name__, file=sys.stderr)
+                if spec[0] in previous:
+                    items.append(previous[spec[0]])
+    if items:
+        write_json(path, {"items": items})
+
+
+def plain(text):
+    return html.unescape(re.sub(r"<[^>]*>", "", text or "")).strip()
+
+
+def image_for(story):
+    url = story.pop("imageUrl", "")
+    story["image"] = ""
+    if urlsplit(url).hostname not in ("static01.nyt.com", "static02.nyt.com"):
+        return story
+    image = CACHE / "images" / (hashlib.sha256(url.encode()).hexdigest()[:24] + ".jpg")
+    try:
+        if not image.exists():
+            data = fetch(url, 12 * 1024 * 1024)
+            if not data.startswith(b"\xff\xd8"):
+                raise ValueError("Feed image is not a JPEG")
+            temporary = image.with_suffix(".tmp")
+            temporary.write_bytes(data)
+            os.chmod(temporary, 0o644)
+            temporary.replace(image)
+        story["image"] = image.as_uri()
+    except Exception as error:
+        print("News image unavailable:", type(error).__name__, file=sys.stderr)
+    return story
+
+
+def main():
+    (CACHE / "images").mkdir(parents=True, exist_ok=True)
+    refresh_markets()
+    stories, seen = [], set()
+    for section, feed in FEEDS:
+        try:
+            root = ET.fromstring(feed_data(section, feed))
+            for item in root.findall(".//item"):
+                link = item.findtext("link", "").split("?")[0]
+                title = plain(item.findtext("title"))
+                if not title or link in seen or any(part in link for part in BLOCK):
+                    continue
+                seen.add(link)
+                media = item.find("media:content", NS)
+                try:
+                    published = parsedate_to_datetime(item.findtext("pubDate", "")).timestamp()
+                except (ValueError, TypeError):
+                    published = 0
+                stories.append({
+                    "title": title, "desc": plain(item.findtext("description")),
+                    "link": link, "section": section,
+                    "author": plain(item.findtext("dc:creator", "", NS)),
+                    "credit": plain(item.findtext("media:credit", "", NS)),
+                    "published": published,
+                    "imageUrl": media.get("url", "") if media is not None else "",
+                })
+        except Exception as error:
+            print("News feed unavailable:", section, type(error).__name__, file=sys.stderr)
+    if not stories:
+        print("Keeping the previous news cache.", file=sys.stderr)
+        return 0
+    stories.sort(key=lambda story: story["published"], reverse=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        stories = list(executor.map(image_for, stories[:16]))
+    document = {"updated": datetime.now(timezone.utc).isoformat(), "items": stories}
+    write_json(CACHE / "news.json", document)
+    # Retain a day of images so a displayed previous edition never loses its photos.
+    cutoff = datetime.now(timezone.utc).timestamp() - 86400
+    current = {story["image"] for story in stories}
+    for image in (CACHE / "images").glob("*.jpg"):
+        if image.as_uri() not in current and image.stat().st_mtime < cutoff:
+            image.unlink()
+    print(f"Cached {len(stories)} stories, {sum(bool(s['image']) for s in stories)} images.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

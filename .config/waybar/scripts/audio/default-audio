@@ -1,0 +1,30 @@
+#!/bin/bash
+
+sink="$(pactl get-default-sink 2>/dev/null)"
+pretty_icon="🔈"
+pretty_name="$sink"
+
+case "$sink" in
+  alsa_output.usb-Logitech_A50-00.iec958-stereo)
+    pretty_icon="🎧"
+    pretty_name="A50"
+    ;;
+  alsa_output.usb-Logitech_A50-00.analog-stereo)
+    pretty_icon="🎧"
+    pretty_name="A50"
+    ;;
+  alsa_output.pci-0000_0b_00.4.analog-stereo)
+    pretty_icon="🔊"
+    pretty_name="Speakers"
+    ;;
+  alsa_output.pci-0000_09_00.1.hdmi-stereo)
+    pretty_icon="🖥️"
+    pretty_name="HDMI"
+    ;;
+  "" )
+    pretty_icon="⚠️"
+    pretty_name="No default"
+    ;;
+esac
+
+echo "$pretty_icon $pretty_name"

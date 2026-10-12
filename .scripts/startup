@@ -7,12 +7,9 @@ mediapipe &
 eww daemon
 discord --start-minimized --enable-features=UseOzonePlatform --ozone-platform=wayland /opt/discord/resources/app.asar & > /dev/null
 slack --startup &
-quickshell &
+quickshell -n &
+/usr/bin/python ~/.config/quickshell/dashboard/data.py init
+quickshell -d -n -p ~/.config/quickshell/dashboard/shell.qml
 ~/.scripts/pulseaudio | wob -c ~/.config/wob/wob.ini &
 ~/.config/hypr/setbrightness 2 50
 ~/.config/hypr/setbrightness 1 50
-
-# open emacs on the main monitor (DP-3, workspace 1)
-hyprctl dispatch focusmonitor DP-3
-hyprctl dispatch workspace 1
-emacs &

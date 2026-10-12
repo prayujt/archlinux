@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+import time
+from soco import SoCo
+
+SONOS_IP = '192.168.1.50'
+
+speaker = SoCo(SONOS_IP)
+
+while True:
+    try:
+        track = speaker.get_current_track_info()
+        title = track.get('title', '')
+        artist = track.get('artist', '')
+        if title:
+            print(f"{title} - {artist}" if artist else title, flush=True)
+        else:
+            print("No music playing", flush=True)
+    except Exception:
+        print("Sonos unavailable", flush=True)
+    time.sleep(1)

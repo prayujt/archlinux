@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh login screen news and markets about every ten seconds
+
+[Timer]
+OnBootSec=5s
+OnUnitInactiveSec=10s
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

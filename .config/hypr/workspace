@@ -13,7 +13,7 @@ echo $WORKSPACE
 
 if [ $COMMAND == 'focus' ]
 then
-    hyprctl dispatch workspace $WORKSPACE > /dev/null
+    hyprctl dispatch "hl.dsp.focus({ workspace = $WORKSPACE })" > /dev/null
 else
-    hyprctl dispatch movetoworkspace $WORKSPACE > /dev/null
+    hyprctl dispatch "hl.dsp.window.move({ workspace = $WORKSPACE })" > /dev/null
 fi

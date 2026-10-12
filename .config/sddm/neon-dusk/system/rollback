@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+systemctl disable sddm.service
+systemctl disable --now sddm-news.timer
+systemctl enable ly@tty1.service
+printf '%s\n' 'Ly will handle the next boot. Run sudo reboot when ready.'

@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+world_config="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/workspace-world/shell.qml"
+if quickshell ipc -p "$world_config" call world toggle >/dev/null 2>&1; then
+    exit 0
+fi
+
+# Use matching, app-local libraries while an NVIDIA update awaits a reboot.
+if [ -r /proc/driver/nvidia/version ]; then
+    nvidia_version="$(sed -n 's/.*x86_64  *\([0-9][0-9.]*\).*/\1/p' /proc/driver/nvidia/version)"
+    nvidia_runtime="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/workspace-world/nvidia/$nvidia_version"
+    if [ -f "$nvidia_runtime/usr/lib/libEGL_nvidia.so.$nvidia_version" ]; then
+        export LD_LIBRARY_PATH="$nvidia_runtime/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        export __EGL_VENDOR_LIBRARY_FILENAMES="$nvidia_runtime/usr/share/glvnd/egl_vendor.d/10_nvidia.json"
+    fi
+fi
+exec quickshell -d -n -p "$world_config"

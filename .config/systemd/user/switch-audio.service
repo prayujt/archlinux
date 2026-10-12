@@ -1,0 +1,6 @@
+[Unit]
+Description=Automatically switch audio sinks (A50 vs speakers)
+
+[Service]
+Type=oneshot
+ExecStart=/home/prayuj/.scripts/switch-audio

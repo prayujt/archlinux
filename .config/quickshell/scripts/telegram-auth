@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""
+One-time Telegram login for the ray chat widget. Run in a terminal:
+
+    ~/.config/quickshell/.venv-tg/bin/python ~/.config/quickshell/scripts/telegram-auth
+
+Reads API_ID / API_HASH from ~/.config/quickshell/.env, then does an interactive
+phone-number + code (and 2FA password if set) login and saves the session to
+~/.config/quickshell/.tg-session so the widget can run headless afterwards.
+"""
+import os
+from telethon.sync import TelegramClient
+
+ENV_FILE = os.path.expanduser("~/.config/quickshell/.env")
+SESSION = os.path.expanduser("~/.config/quickshell/.tg-session")
+
+
+def load_env():
+    d = {}
+    with open(ENV_FILE) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            d[k.strip()] = v.strip().strip('"').strip("'")
+    return d
+
+
+def main():
+    env = load_env()
+    api_id = env.get("API_ID")
+    api_hash = env.get("API_HASH")
+    if not (api_id and api_hash):
+        raise SystemExit("Add API_ID and API_HASH to " + ENV_FILE)
+
+    with TelegramClient(SESSION, int(api_id), api_hash) as client:
+        me = client.get_me()
+        print("Logged in as", (me.username or me.first_name))
+        print("Session saved to", SESSION + ".session")
+        ray = env.get("TG_RAY")
+        if ray:
+            try:
+                ent = client.get_entity(ray)
+                print("Found ray:", getattr(ent, "username", None) or getattr(ent, "title", ray))
+            except Exception as e:
+                print("Could not resolve TG_RAY =", ray, "->", e)
+        else:
+            print("Tip: set TG_RAY=<ray's @username> in .env")
+
+
+main()

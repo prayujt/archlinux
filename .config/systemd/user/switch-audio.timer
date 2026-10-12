@@ -1,0 +1,11 @@
+[Unit]
+Description=Run audio switcher every 5 seconds
+
+[Timer]
+OnBootSec=5
+OnUnitInactiveSec=5s
+AccuracySec=1s
+Unit=switch-audio.service
+
+[Install]
+WantedBy=default.target

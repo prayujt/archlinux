@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+"""Choose an image or stage one from the clipboard for the chat composer."""
+import json
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+import sys
+from urllib.parse import unquote, urlsplit
+
+IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp",
+               "image/gif": ".gif", "image/bmp": ".bmp"}
+
+
+def pick_image():
+    result = subprocess.run(["zenity", "--file-selection", "--title=Attach an image to ray",
+                             "--file-filter=Images | *.png *.jpg *.jpeg *.webp *.gif *.bmp"],
+                            capture_output=True)
+    if result.returncode == 1:
+        return {"image": ""}
+    if result.returncode:
+        raise ValueError("Could not open the image picker")
+    path = Path(os.fsdecode(result.stdout.removesuffix(b"\n")))
+    return {"image": path.resolve().as_uri()}
+
+
+def paste_image():
+    types = subprocess.run(["wl-paste", "--list-types"], capture_output=True, timeout=3)
+    if types.returncode:
+        return {"image": ""}
+    offered = types.stdout.decode().splitlines()
+    for mime, suffix in IMAGE_TYPES.items():
+        if mime not in offered:
+            continue
+        directory = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "quickshell/telegram/drafts"
+        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with tempfile.NamedTemporaryFile(dir=directory, suffix=suffix, delete=False) as output:
+            path = Path(output.name)
+            try:
+                subprocess.run(["wl-paste", "--no-newline", "--type", mime],
+                               stdout=output, stderr=subprocess.PIPE, check=True, timeout=10)
+                if output.tell() == 0:
+                    raise ValueError("Clipboard image was empty")
+            except Exception:
+                path.unlink(missing_ok=True)
+                raise
+        return {"image": path.as_uri()}
+    if "text/uri-list" in offered:
+        result = subprocess.run(["wl-paste", "--no-newline", "--type", "text/uri-list"],
+                                capture_output=True, check=True, timeout=3)
+        for line in result.stdout.decode().splitlines():
+            url = urlsplit(line)
+            if url.scheme == "file" and url.netloc in ("", "localhost"):
+                path = Path(unquote(url.path))
+                if path.is_file() and path.suffix.lower() in set(IMAGE_TYPES.values()) | {".jpeg"}:
+                    return {"image": path.as_uri()}
+    return {"image": ""}
+
+
+if __name__ == "__main__":
+    try:
+        print(json.dumps(pick_image() if "--pick" in sys.argv else paste_image()))
+    except Exception as e:
+        print(json.dumps({"error": str(e)[:120]}))
