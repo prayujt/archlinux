@@ -17,7 +17,8 @@ alias wallpaper='killall hyprpaper; hyprpaper &; disown'
 alias record_screen='wf-recorder --muxer=v4l2 --codec=rawvideo --file=/dev/video4 -x yuv420p'
 alias ws='websocat'
 alias waybar_restart='killall -SIGUSR2 waybar'
-alias c='z'
+alias codex='codex --yolo'
+alias c='codex'
 alias nd='nix develop -c zsh -l'
 alias claude='claude --dangerously-skip-permissions'
 alias scrape='audio-scrape'
@@ -81,7 +82,6 @@ export TERMINAL="alacritty"
 export LD_LIBRARY_PATH=/opt/cuda/lib
 export DOCKER_BUILDKIT=1
 export AUDIO_SCRAPER_HOST=https://audio-scraper.prayujt.com
-source ~/.keys
 
 export PATH=$PATH:/home/prayuj/.local/bin
 export PATH=$PATH:/opt/cuda
@@ -110,6 +110,9 @@ export ZSH_AUTOSUGGEST_STRATEGY=(
   completion
 )
 
+# Load secrets
+source ~/.secrets
+
 # Load zsh plugins
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
@@ -124,3 +127,65 @@ if [[ -n "$IN_NIX_SHELL" && "$VIRTUAL_ENV" ]]; then
   hash -r
 fi
 
+# Map existing credentials to Bitwarden CLI variable names.
+export BW_CLIENTID="${BW_CLIENT_ID}"
+export BW_CLIENTSECRET="${BW_CLIENT_SECRET}"
+
+# Bitwarden CLI helpers
+alias bwlogin='bw login --apikey'
+
+_bw_session() (
+  setopt noxtrace
+  umask 077
+  local bw_dir="$HOME/.config/bitwarden-cli"
+  local bw_session="${BW_SESSION-}" bw_lock_fd bw_tmp
+  mkdir -p "$bw_dir" || return
+  chmod 700 "$bw_dir" || return
+  exec {bw_lock_fd}>"$bw_dir/session.lock" || return
+  command flock "$bw_lock_fd" || return
+
+  [[ -s "$bw_dir/session" ]] && bw_session="$(<"$bw_dir/session")"
+  if [[ -z "$bw_session" ]] || ! BW_SESSION="$bw_session" command bw unlock --check --nointeraction >/dev/null 2>&1; then
+    command bw login --check --nointeraction >/dev/null 2>&1 || return
+    if [[ -f "$bw_dir/master-password" ]]; then
+      bw_session="$(command bw unlock --passwordfile "$bw_dir/master-password" --raw --nointeraction)" || return
+    elif [[ "$1" == auto ]]; then
+      return 1
+    else
+      bw_session="$(command bw unlock --raw)" || return
+    fi
+  fi
+
+  bw_tmp="$(command mktemp "$bw_dir/session.XXXXXX")" || return
+  print -r -- "$bw_session" > "$bw_tmp"
+  command mv -f "$bw_tmp" "$bw_dir/session" || return
+  print -r -- "$bw_session"
+)
+
+bwunlock() {
+  setopt localoptions noxtrace
+  local bw_session
+  bw_session="$(_bw_session)" || return
+  export BW_SESSION="$bw_session"
+}
+
+_bw_unlock_ready() {
+  setopt localoptions noxtrace
+  local bw_fd="$1" bw_session
+  if IFS= read -r -u "$bw_fd" bw_session && [[ -n "$bw_session" ]]; then
+    export BW_SESSION="$bw_session"
+  fi
+  zle -F "$bw_fd"
+  exec {bw_fd}<&-
+  unset _bw_unlock_fd
+}
+
+_bw_unlock_start() {
+  setopt localoptions noxtrace
+  [[ -o interactive && -t 0 ]] || return
+  [[ -n "${_bw_unlock_fd-}" ]] && return
+  exec {_bw_unlock_fd}< <(_bw_session auto 2>/dev/null)
+  zle -F "$_bw_unlock_fd" _bw_unlock_ready
+}
+
+_bw_unlock_start
