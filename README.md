@@ -13,8 +13,8 @@ public news/market feed collector are in `.config/sddm/neon-dusk/`; the dashboar
 reads their cache from `/var/cache/sddm-news/`.
 
 The audio switcher and its user service/timer are included alongside the
-Alacritty, wallpaper, and Waybar helper files. Installing or enabling the SDDM
-system files is a separate administrative step.
+Alacritty, Spaceship prompt, wallpaper, and Waybar helper files. Installing or
+enabling the SDDM system files is a separate administrative step.
 
 # Private configuration #
 

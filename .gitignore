@@ -26,6 +26,7 @@
 !/.config/ranger/
 !/.config/rofi/
 !/.config/sddm/
+!/.config/spaceship.zsh
 !/.config/swaync/
 !/.config/systemd/
 !/.config/ticker/

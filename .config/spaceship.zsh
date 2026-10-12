@@ -1,0 +1,7 @@
+spaceship remove git
+spaceship add git
+SPACESHIP_TIME_SHOW=true
+SPACESHIP_DOCKER_COMPOSE_SHOW=false
+SPACESHIP_USER_SHOW=needed
+SPACESHIP_HOST_SHOW=false
+SPACESHIP_CHAR_SYMBOL='> '
