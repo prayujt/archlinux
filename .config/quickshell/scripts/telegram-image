@@ -13,7 +13,7 @@ IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp",
 
 
 def pick_image():
-    result = subprocess.run(["zenity", "--file-selection", "--title=Attach an image to ray",
+    result = subprocess.run(["zenity", "--file-selection", "--title=Attach an image",
                              "--file-filter=Images | *.png *.jpg *.jpeg *.webp *.gif *.bmp"],
                             capture_output=True)
     if result.returncode == 1:
@@ -54,6 +54,11 @@ def paste_image():
                 path = Path(unquote(url.path))
                 if path.is_file() and path.suffix.lower() in set(IMAGE_TYPES.values()) | {".jpeg"}:
                     return {"image": path.as_uri()}
+    if any(mime.startswith("text/") for mime in offered):
+        result = subprocess.run(["wl-paste", "--no-newline", "--type", "text"],
+                                capture_output=True, timeout=3)
+        if result.returncode == 0:
+            return {"image": "", "text": result.stdout.decode()}
     return {"image": ""}
 
 

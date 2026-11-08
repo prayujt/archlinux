@@ -1,41 +1,151 @@
 #!/usr/bin/env python3
 import time
 import json
-from soco import SoCo
+import hashlib
+import os
+import subprocess
+import tempfile
+import urllib.request
+import xml.etree.ElementTree as ET
+from pathlib import Path
+from urllib.parse import urljoin, urlsplit
 
 SONOS_IP = '192.168.1.50'
-speaker = SoCo(SONOS_IP)
 
 
 def to_secs(t):
     if not t:
         return 0
     try:
-        parts = [int(p) for p in t.split(':')]
-    except ValueError:
+        parts = [float(p) for p in t.split(':')]
+    except (ValueError, AttributeError):
         return 0
     s = 0
     for p in parts:
         s = s * 60 + p
-    return s
+    return max(0, int(s))
 
 
-while True:
+def track_metadata(info):
+    """Recover standard UPnP fields that SoCo can omit for direct audio URLs."""
     try:
-        info = speaker.get_current_track_info()
-        state = speaker.get_current_transport_info()['current_transport_state']
-        out = {
-            'title': info.get('title', ''),
-            'artist': info.get('artist', ''),
-            'album': info.get('album', ''),
-            'albumArt': info.get('album_art', ''),
-            'position': to_secs(info.get('position', '')),
-            'duration': to_secs(info.get('duration', '')),
-            'state': state,
-            'volume': speaker.volume,
-            'muted': speaker.mute,
-        }
-        print(json.dumps(out), flush=True)
-    except Exception as e:
-        print(json.dumps({'title': '', 'state': 'STOPPED', 'error': str(e)}), flush=True)
-    time.sleep(1)
+        root = ET.fromstring(info.get('metadata') or '')
+    except ET.ParseError:
+        return {}
+    dc = 'http://purl.org/dc/elements/1.1/'
+    upnp = 'urn:schemas-upnp-org:metadata-1-0/upnp/'
+    resource = root.find('.//{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}res')
+    return {
+        'title': root.findtext('.//{' + dc + '}title') or '',
+        'artist': root.findtext('.//{' + dc + '}creator')
+                  or root.findtext('.//{' + upnp + '}artist') or '',
+        'album': root.findtext('.//{' + upnp + '}album') or '',
+        'albumArt': root.findtext('.//{' + upnp + '}albumArtURI') or '',
+        'duration': to_secs(resource.get('duration', '')) if resource is not None else 0,
+    }
+
+
+def snapshot(info, state, volume, muted, embedded=None):
+    fields = track_metadata(info)
+    embedded = embedded or {}
+    out = {key: info.get(key) or fields.get(key) or embedded.get(key, '')
+           for key in ('title', 'artist', 'album')}
+    artwork = embedded.get('albumArt') or info.get('album_art') or fields.get('albumArt', '')
+    out.update(albumArt=urljoin('http://' + SONOS_IP + ':1400/', artwork) if artwork else '',
+               position=to_secs(info.get('position', '')),
+               duration=to_secs(info.get('duration', '')) or fields.get('duration') or embedded.get('duration', 0),
+               state=state, volume=volume, muted=muted)
+    return out
+
+
+def stream_header(uri):
+    """Read embedded tags and the audio header without downloading the whole song."""
+    def read_range(end):
+        request = urllib.request.Request(uri, headers={'Range': 'bytes=0-' + str(end - 1)})
+        with urllib.request.urlopen(request, timeout=4) as response:
+            total = response.headers.get('Content-Range', '').rsplit('/', 1)[-1]
+            if not total.isdigit():
+                total = response.headers.get('Content-Length', '0')
+            if not total.isdigit() or int(total) <= 0:
+                raise ValueError('No finite track length')
+            return response.read(end), int(total)
+
+    data, total = read_range(1024 * 1024)
+    if data.startswith(b'ID3') and len(data) >= 10:
+        tag_size = 10
+        tag_size += sum((byte & 127) << shift for byte, shift in zip(data[6:10], (21, 14, 7, 0)))
+        if tag_size + 65536 > len(data) and len(data) < total:
+            data, total = read_range(min(tag_size + 65536, 9 * 1024 * 1024))
+    return data, total
+
+
+def probe_stream(uri, cache):
+    data, total = stream_header(uri)
+    with tempfile.TemporaryDirectory(prefix='.probe-', dir=cache) as directory:
+        audio = Path(directory) / 'header'
+        audio.write_bytes(data)
+        probe = subprocess.run(
+            ['/usr/bin/ffprobe', '-v', 'warning', '-show_entries',
+             'format=duration:format_tags=title,artist,album', '-of', 'json', str(audio)],
+            capture_output=True, check=True, timeout=8)
+        media = json.loads(probe.stdout).get('format', {})
+        result = {key: media.get('tags', {}).get(key, '') for key in ('title', 'artist', 'album')}
+        duration = float(media.get('duration', 0))
+        # A partial file's bitrate estimate is not the full song's duration.
+        if b'Estimating duration from bitrate' in probe.stderr and total > len(data):
+            duration = 0
+        result['duration'] = int(duration)
+        artwork = cache / (hashlib.sha256(uri.encode()).hexdigest() + '.jpg')
+        if not artwork.is_file():
+            image = Path(directory) / 'cover.jpg'
+            extract = subprocess.run(
+                ['/usr/bin/ffmpeg', '-v', 'error', '-i', str(audio), '-map', '0:v:0',
+                 '-frames:v', '1', str(image)],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=8)
+            if extract.returncode == 0:
+                image.replace(artwork)
+        if artwork.is_file():
+            result['albumArt'] = artwork.as_uri()
+        return result
+
+
+class StreamMetadata:
+    def __init__(self):
+        self.cache = Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache')) / 'quickshell/sonos'
+        self.cache.mkdir(parents=True, exist_ok=True, mode=0o700)
+        self.uri = None
+        self.fields = {}
+        self.retry_at = 0
+
+    def get(self, uri):
+        if uri != self.uri:
+            self.uri, self.fields, self.retry_at = uri, {}, 0
+        if urlsplit(uri).scheme not in ('http', 'https'):
+            return {}
+        if not self.fields and time.monotonic() >= self.retry_at:
+            self.retry_at = time.monotonic() + 30
+            try:
+                self.fields = probe_stream(uri, self.cache)
+            except Exception:
+                # Playback URLs can carry credentials: never emit them or exception details.
+                pass
+        return self.fields
+
+
+def main():
+    from soco import SoCo
+    speaker = SoCo(SONOS_IP)
+    metadata = StreamMetadata()
+    while True:
+        try:
+            info = speaker.get_current_track_info()
+            state = speaker.get_current_transport_info()['current_transport_state']
+            out = snapshot(info, state, speaker.volume, speaker.mute, metadata.get(info.get('uri', '')))
+            print(json.dumps(out), flush=True)
+        except Exception:
+            print(json.dumps({'title': '', 'state': 'STOPPED', 'error': 'Speaker unavailable'}), flush=True)
+        time.sleep(1)
+
+
+if __name__ == '__main__':
+    main()

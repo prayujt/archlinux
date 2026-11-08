@@ -29,6 +29,81 @@ def message(photo=True):
 
 
 class TelegramImages(unittest.IsolatedAsyncioTestCase):
+    async def test_send_routes_to_selected_bot_and_tags_all_results(self):
+        client = SimpleNamespace(send_message=AsyncMock(return_value=message(False)))
+        entities = {"ray": "ray-peer", "ray-code": "code-peer"}
+        for chat, peer in entities.items():
+            with self.subTest(chat=chat), patch.object(bridge, "emit") as emit:
+                await bridge.dispatch_send(client, entities, json.dumps({"type": "send", "chat": chat, "text": "draft"}))
+                self.assertEqual(client.send_message.call_args.args, (peer, "draft"))
+                self.assertEqual([call.args[0]["chat"] for call in emit.call_args_list], [chat, chat])
+                self.assertTrue(emit.call_args.args[0]["ok"])
+
+    async def test_missing_chat_never_falls_back_to_other_bot(self):
+        client = SimpleNamespace(send_message=AsyncMock())
+        with patch.object(bridge, "emit") as emit:
+            await bridge.dispatch_send(client, {"ray": "ray-peer"}, json.dumps({"type": "send", "chat": "ray-code", "text": "private"}))
+        client.send_message.assert_not_awaited()
+        self.assertEqual(emit.call_args.args[0]["chat"], "ray-code")
+        self.assertFalse(emit.call_args.args[0]["ok"])
+
+    async def test_background_send_failure_keeps_original_chat(self):
+        client = SimpleNamespace(send_message=AsyncMock(side_effect=RuntimeError("offline")))
+        with patch.object(bridge, "emit") as emit:
+            await bridge.dispatch_send(client, {"ray-code": "code-peer"}, json.dumps({"type": "send", "chat": "ray-code", "text": "draft"}))
+        self.assertEqual(emit.call_args.args[0]["chat"], "ray-code")
+        self.assertIn("offline", emit.call_args.args[0]["error"])
+
+    async def test_image_result_keeps_chat_identity(self):
+        async def download(m, file):
+            file.write(b"image")
+        client = SimpleNamespace(download_media=AsyncMock(side_effect=download))
+        with tempfile.TemporaryDirectory() as directory, patch.object(bridge, "MEDIA_DIR", Path(directory)), patch.object(bridge, "emit") as emit:
+            await bridge.load_image(client, message(), "ray-code")
+        self.assertEqual(emit.call_args.args[0]["chat"], "ray-code")
+
+    async def test_shared_connection_routes_history_live_edits_and_typing(self):
+        peers = {"ray": SimpleNamespace(id=101), "code": SimpleNamespace(id=202)}
+        handlers = []
+
+        def register(event):
+            def decorate(handler):
+                handlers.append((event, handler))
+                return handler
+            return decorate
+
+        async def history(peer, limit):
+            m = message(False)
+            m.chat_id = peer.id
+            yield m
+
+        async def connected():
+            await asyncio.sleep(0)
+            for event, handler in handlers:
+                if event is bridge.events.UserUpdate:
+                    await handler(SimpleNamespace(user_id=202, typing=True))
+                    await handler(SimpleNamespace(user_id=999, typing=True))
+                else:
+                    m = message(False)
+                    m.chat_id = 202
+                    await handler(SimpleNamespace(chat_id=202, message=m))
+
+        client = SimpleNamespace(connect=AsyncMock(), disconnect=AsyncMock(),
+                                 is_user_authorized=AsyncMock(return_value=True),
+                                 get_entity=AsyncMock(side_effect=lambda key: peers[key]),
+                                 iter_messages=history, on=register,
+                                 run_until_disconnected=connected)
+        with patch.object(bridge, "load_env", return_value={"API_ID": "1", "API_HASH": "test", "TG_RAY": "ray", "TG_RAY_CODE": "code"}), \
+             patch.object(bridge, "TelegramClient", return_value=client) as factory, \
+             patch.object(bridge.threading, "Thread"), patch.object(bridge, "emit") as emit:
+            await bridge.run()
+        factory.assert_called_once()
+        client.disconnect.assert_awaited_once()
+        events = [call.args[0] for call in emit.call_args_list]
+        self.assertEqual({e["chat"] for e in events if e["type"] == "history"}, {"ray", "ray-code"})
+        self.assertEqual({e["chat"] for e in events if e["type"] in {"msg", "edit", "typing"}}, {"ray-code"})
+        self.assertEqual(sum(e["type"] == "typing" and e.get("on") is True for e in events), 1)
+
     async def test_stalled_connection_times_out_and_disconnects(self):
         async def stalled_connect():
             await asyncio.Event().wait()
@@ -157,11 +232,15 @@ class ClipboardImages(unittest.TestCase):
             with patch.object(clipboard.subprocess, "run", side_effect=responses):
                 self.assertEqual(clipboard.paste_image(), {"image": path.as_uri()})
 
-    def test_text_and_empty_clipboard_use_native_paste(self):
-        for result in [subprocess.CompletedProcess([], 0, b"text/plain\n"),
-                       subprocess.CompletedProcess([], 1, b"")]:
-            with patch.object(clipboard.subprocess, "run", return_value=result):
-                self.assertEqual(clipboard.paste_image(), {"image": ""})
+    def test_text_is_captured_for_paste_after_switching_chats(self):
+        responses = [subprocess.CompletedProcess([], 0, b"text/plain\n"),
+                     subprocess.CompletedProcess([], 0, b"pasted text\nsecond line")]
+        with patch.object(clipboard.subprocess, "run", side_effect=responses):
+            self.assertEqual(clipboard.paste_image(), {"image": "", "text": "pasted text\nsecond line"})
+
+    def test_empty_clipboard_uses_native_paste(self):
+        with patch.object(clipboard.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, b"")):
+            self.assertEqual(clipboard.paste_image(), {"image": ""})
 
 
 if __name__ == "__main__":

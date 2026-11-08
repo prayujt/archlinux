@@ -31,12 +31,26 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("~/.scripts/startup")
 end)
 
+-- Alacritty vertical padding: min(1% of window height, 14px).
+local terminalPadding = {}
+hl.timer(function()
+    for _, window in ipairs(hl.get_windows({ class = "Alacritty" })) do
+        local padding = math.min(14, math.floor(window.size.y * 0.01 + 0.5))
+        if terminalPadding[window.pid] ~= padding then
+            local socket = os.getenv("XDG_RUNTIME_DIR") .. "/Alacritty-*-" .. window.pid .. ".sock"
+            hl.exec_cmd("alacritty msg --socket " .. socket .. " config --window-id -1 window.padding.y=" .. padding)
+            terminalPadding[window.pid] = padding
+        end
+    end
+end, { timeout = 250, type = "repeat" })
+
 
 -------------------------------
 ---- ENVIRONMENT VARIABLES ----
 -------------------------------
 
 hl.env("XCURSOR_SIZE", "24")
+hl.env("BROWSER", "helium-browser")
 
 
 -----------------------
@@ -44,6 +58,10 @@ hl.env("XCURSOR_SIZE", "24")
 -----------------------
 
 hl.config({
+    cursor = {
+        default_monitor = "DP-3",
+    },
+
     input = {
         kb_layout  = "us",
         kb_variant = "",
@@ -66,30 +84,37 @@ hl.config({
     general = {
         gaps_in     = 3,
         gaps_out    = 15,
-        border_size = 2,
+        border_size = 1,
 
         col = {
-            active_border   = { colors = {"rgba(4ee6e8ff)", "rgba(7b9effff)", "rgba(b0e86fff)"}, angle = 45 },
-            inactive_border = "rgba(355578aa)",
+            active_border   = "rgba(e9e7e088)",
+            inactive_border = "rgba(4b4f4c44)",
         },
 
         layout = "dwindle",
     },
 
     decoration = {
-        rounding = 5,
+        rounding = 12,
 
         blur = {
             enabled           = true,
-            size              = 6,
+            size              = 8,
             passes            = 3,
             new_optimizations = true,
             ignore_opacity    = true,
             xray              = false,
         },
 
-        inactive_opacity = 0.92,
-        active_opacity   = 0.98,
+        shadow = {
+            enabled = true,
+            range = 22,
+            render_power = 3,
+            color = "rgba(00000055)",
+        },
+
+        inactive_opacity = 0.95,
+        active_opacity   = 1.0,
     },
 
     animations = {
@@ -120,16 +145,33 @@ hl.curve("fluent_decel",  { type = "bezier", points = { {0.1, 1},   {0, 1}      
 hl.curve("easeInOutCirc", { type = "bezier", points = { {0.05, 0},  {0.15, 1}   } })
 hl.curve("easeOutCirc",   { type = "bezier", points = { {0, 0.55},  {0.45, 1}   } })
 
-hl.animation({ leaf = "windows",          enabled = true, speed = 5, bezier = "overshot", style = "popin 80%" })
-hl.animation({ leaf = "border",           enabled = true, speed = 5, bezier = "default" })
-hl.animation({ leaf = "fade",             enabled = true, speed = 2, bezier = "default" })
-hl.animation({ leaf = "workspaces",       enabled = true, speed = 2, bezier = "default" })
+hl.animation({ leaf = "windows",          enabled = true, speed = 4, bezier = "md3_decel", style = "popin 96%" })
+hl.animation({ leaf = "border",           enabled = true, speed = 3, bezier = "md3_standard" })
+hl.animation({ leaf = "fade",             enabled = true, speed = 3, bezier = "md3_standard" })
+hl.animation({ leaf = "workspaces",       enabled = true, speed = 3, bezier = "md3_standard", style = "fade" })
 hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 3, bezier = "md3_decel", style = "fade" })
+
+
+-- Blur the visible shell panels without blurring their transparent margins.
+hl.layer_rule({
+    name = "shell_glass",
+    match = { namespace = "quickshell" },
+    blur = true,
+    ignore_alpha = 0.05,
+})
 
 
 ----------------------
 ---- WINDOW RULES ----
 ----------------------
+
+-- Helium
+hl.window_rule({
+    name        = "helium",
+    match       = { class = "helium" },
+    opacity     = "0.88 override 0.82 override 1.0 override",
+    no_auto_hdr = true,
+})
 
 -- Discord
 hl.window_rule({
@@ -186,12 +228,11 @@ local panelIpc = "quickshell ipc -p ~/.config/quickshell/shell.qml call panels "
 ---- Essential Bindings
 hl.bind(mainMod .. " + RETURN",         hl.dsp.exec_cmd("alacritty"))
 hl.bind(mainMod .. " + S",              hl.dsp.exec_cmd("slack"))
-hl.bind(mainMod .. " + SHIFT + RETURN", hl.dsp.exec_cmd("firefox-developer-edition"))
+hl.bind(mainMod .. " + SHIFT + RETURN", hl.dsp.exec_cmd("~/.config/startpage/open"))
 hl.bind(mainMod .. " + Q",              hl.dsp.window.close())
 hl.bind(mainMod .. " + SHIFT + Q",      hl.dsp.exit())
 -- hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("rofi -show drun"))
 hl.bind(mainMod .. " + D",              hl.dsp.exec_cmd(panelIpc .. "launcher"))
-hl.bind(mainMod .. " + SHIFT + O",      hl.dsp.exec_cmd("~/.config/quickshell/scripts/workspace-world"))
 hl.bind(mainMod .. " + SHIFT + W",      hl.dsp.exec_cmd("~/.config/quickshell/scripts/dashboard"))
 
 ---- Resolution Bindings
@@ -274,3 +315,6 @@ hl.bind("ALT + Tab", function()
     hl.dispatch(hl.dsp.window.cycle_next({ next = false }))
     hl.dispatch(hl.dsp.window.alter_zorder({ mode = "top" }))
 end)
+
+-- Restore the saved glass / forest desktop.
+hl.bind("SUPER + ALT + BACKSPACE", hl.dsp.exec_cmd("/home/prayuj/.local/bin/desktop-style original"))

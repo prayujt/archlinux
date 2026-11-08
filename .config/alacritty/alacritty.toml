@@ -1,27 +1,33 @@
+[window]
+opacity = 0.86
+blur = true
+padding = { x = 12, y = 10 }
+dynamic_padding = false
+
 #dynamic_title = false
 [colors.primary]
-background = "#101a2b"
-foreground = "#e7f2ff"
+background = "#101112"
+foreground = "#e9e7e0"
 
 [colors.normal]
-black = "#202e43"
-red = "#f28b68"
-green = "#b0e86f"
-yellow = "#f3c969"
-blue = "#7b9eff"
-magenta = "#aa9ce8"
-cyan = "#4ee6e8"
-white = "#c9dbee"
+black = "#242628"
+red = "#e36a70"
+green = "#b4c9b1"
+yellow = "#d8c895"
+blue = "#adbccb"
+magenta = "#c1b2c5"
+cyan = "#b8c9c4"
+white = "#c9c9c2"
 
 [colors.bright]
-black = "#7b91aa"
-red = "#ffae89"
-green = "#d1fa98"
-yellow = "#ffe19b"
-blue = "#a6c1ff"
-magenta = "#c9bffc"
-cyan = "#96f9fa"
-white = "#f3faff"
+black = "#777d7c"
+red = "#f09a9e"
+green = "#cfddc8"
+yellow = "#e8dbb3"
+blue = "#c7d1db"
+magenta = "#ddd1df"
+cyan = "#d1e0db"
+white = "#faf8ef"
 
 
 #[colors.bright]

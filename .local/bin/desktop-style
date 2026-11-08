@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Switch between the saved original desktop and Nothing / Orbit."""
+from pathlib import Path
+import json, os, shutil, subprocess, sys, tempfile, time
+
+home = Path.home()
+state = home / '.local/state/desktop-styles'
+original = state / 'original'
+style = home / '.local/share/desktop-styles/nothing-orbit'
+original_source = original if (original / 'config').is_dir() else style.parent / 'original'
+files = ['alacritty/alacritty.toml', 'hypr/hyprpaper.conf', 'hypr/hyprland.lua', 'quickshell/shell.qml']
+metadata = json.loads((original / 'state.json').read_text()) if (original / 'state.json').exists() else {}
+unit = 'nature-wallpaper-preview.service'
+
+def run(args, **kwargs):
+    return subprocess.run(args, text=True, capture_output=True, **kwargs)
+
+def install(source):
+    for name in files:
+        src = source / 'config' / name
+        dest = home / '.config' / name
+        fd, tmp = tempfile.mkstemp(prefix='.desktop-style-', dir=dest.parent)
+        os.close(fd)
+        shutil.copy2(src, tmp)
+        os.replace(tmp, dest)
+
+def reload(profile):
+    result = run(['hyprctl', 'reload', 'config-only'])
+    if result.returncode:
+        raise RuntimeError(result.stderr or result.stdout)
+    errors = run(['hyprctl', 'configerrors']).stdout.strip()
+    if errors:
+        raise RuntimeError(errors)
+    # Wait until Quickshell has actually accepted the requested configuration.
+    expected = 'nothing-orbit' if profile == 'nothing' else 'original'
+    for attempt in range(30):
+        result = run(['quickshell', 'ipc', '-p', str(home / '.config/quickshell/shell.qml'), 'call', 'panels', 'status'])
+        try:
+            actual = json.loads(result.stdout).get('desktopStyle', 'original')
+            if actual == expected:
+                return
+        except (json.JSONDecodeError, AttributeError):
+            pass
+        time.sleep(0.2)
+    raise RuntimeError('Quickshell did not finish loading ' + expected)
+
+def wallpaper():
+    if not metadata.get('wallpaper_active'):
+        return
+    run(['systemctl', '--user', 'stop', unit])
+    command = ['systemd-run', '--user', '--collect', '--unit=nature-wallpaper-preview']
+    for key in ['WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR']:
+        if key in os.environ:
+            command.append('--setenv=' + key + '=' + os.environ[key])
+    result = run(command + metadata['wallpaper_command'])
+    if result.returncode:
+        raise RuntimeError(result.stderr or result.stdout)
+    time.sleep(0.3)
+    if run(['systemctl', '--user', 'is-active', '--quiet', unit]).returncode:
+        raise RuntimeError('Saved wallpaper player failed to start.')
+
+if len(sys.argv) != 2 or sys.argv[1] not in ['nothing', 'original', 'status']:
+    sys.exit('Usage: desktop-style nothing | original | status')
+profile = sys.argv[1]
+if profile == 'status':
+    print((state / 'current').read_text().strip() if (state / 'current').exists() else 'original')
+    sys.exit()
+
+try:
+    if profile == 'nothing':
+        run(['systemctl', '--user', 'stop', unit])
+        install(style)
+        reload(profile)
+    else:
+        install(original_source)
+        reload(profile)
+        wallpaper()
+    (state / 'current').write_text(profile + '\n')
+    print('Desktop style: ' + profile)
+    if profile == 'nothing':
+        print('Revert: desktop-style original  (or Super+Alt+Backspace)')
+except Exception as error:
+    print('Style switch failed: ' + str(error), file=sys.stderr)
+    if profile == 'nothing':
+        try:
+            install(original_source)
+            reload('original')
+            wallpaper()
+            (state / 'current').write_text('original\n')
+            print('Restored the original desktop.', file=sys.stderr)
+        except Exception as recovery:
+            print('Restore command: desktop-style original\n' + str(recovery), file=sys.stderr)
+    sys.exit(1)

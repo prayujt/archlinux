@@ -1,0 +1,112 @@
+[window]
+opacity = 0.86
+blur = true
+padding = { x = 12, y = 10 }
+dynamic_padding = false
+
+#dynamic_title = false
+[colors.primary]
+background = "#101112"
+foreground = "#e9e7e0"
+
+[colors.normal]
+black = "#242628"
+red = "#e36a70"
+green = "#b4c9b1"
+yellow = "#d8c895"
+blue = "#adbccb"
+magenta = "#c1b2c5"
+cyan = "#b8c9c4"
+white = "#c9c9c2"
+
+[colors.bright]
+black = "#777d7c"
+red = "#f09a9e"
+green = "#cfddc8"
+yellow = "#e8dbb3"
+blue = "#c7d1db"
+magenta = "#ddd1df"
+cyan = "#d1e0db"
+white = "#faf8ef"
+
+
+#[colors.bright]
+#black = "#928374"
+#blue = "#83a598"
+#cyan = "#8ec07c"
+#green = "#b8bb26"
+#magenta = "#d3869b"
+#red = "#fb4934"
+#white = "#ebdbb2"
+#yellow = "#fabd2f"
+
+#[colors.normal]
+#black = "#282828"
+#blue = "#458588"
+#cyan = "#689d6a"
+#green = "#98971a"
+#magenta = "#b16286"
+#red = "#cc241d"
+#white = "#a89984"
+#yellow = "#d79921"
+
+#[colors.primary]
+#background = "#282828"
+#foreground = "#ebdbb2"
+
+[cursor.style]
+shape = "Beam"
+
+[cursor.vi_mode_style]
+shape = "Block"
+
+[font]
+size = 11
+
+[font.bold]
+family = "JetBrains Mono"
+style = "Regular"
+
+[font.bold_italic]
+family = "JetBrains Mono"
+style = "Bold Italic"
+
+[font.italic]
+family = "JetBrains Mono"
+style = "Italic"
+
+[font.normal]
+family = "JetBrains Mono"
+style = "Regular"
+
+[[keyboard.bindings]]
+action = "ScrollLineUp"
+key = "K"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "ScrollLineDown"
+key = "J"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "SearchBackward"
+key = "F"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "SearchFocusPrevious"
+key = "N"
+mode = "Search"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "SearchFocusNext"
+key = "N"
+mode = "Search"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "SearchConfirm"
+key = "Escape"
+mode = "Search"

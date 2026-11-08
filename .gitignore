@@ -5,11 +5,28 @@
 !/.emacs.d/
 !/.gitignore
 !/.icons/
+!/.local/
 !/.screenshots/
 !/.scripts/
 !/.zshrc
 !/README.md
 !/nix/
+
+# Desktop style source; keep other local applications and runtime state private.
+/.local/*
+!/.local/bin/
+!/.local/share/
+/.local/bin/*
+!/.local/bin/desktop-style
+/.local/share/*
+!/.local/share/desktop-styles/
+/.local/share/desktop-styles/*
+!/.local/share/desktop-styles/nothing-orbit/
+!/.local/share/desktop-styles/original/
+/.local/share/desktop-styles/nothing-orbit/*.png
+/.local/share/desktop-styles/nothing-orbit/qmllint.txt
+/.local/share/desktop-styles/nothing-orbit/references/
+/.local/share/desktop-styles/nothing-orbit/revisions/
 
 # Include desktop configuration source rather than application data.
 /.config/*

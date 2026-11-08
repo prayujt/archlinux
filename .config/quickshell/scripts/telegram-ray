@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Headless Telegram <-> ray bridge for the quickshell chat widget.
+Headless Telegram bridge for the Ray and Ray Code quickshell chats.
 
 - Emits JSON lines on stdout:
     {"type":"history","messages":[{"out":bool,"text":str,"id":int}, ...]}
     {"type":"msg","out":bool,"text":str,"id":int}
     {"type":"status","ok":bool,"error":str}
 - Image messages include hasImage; a later image event supplies a local image URI.
-- Reads JSON {type: "send", text, image} commands (or legacy plain text) from
+- Every event includes a chat key (ray or ray-code); both share one connection.
+- Reads JSON {type: "send", chat, text, image} commands (or legacy plain text) from
   /tmp/qs-tg-send. Emits send-result after Telegram accepts or rejects a message.
 
 Requires a session created by telegram-auth. Read/normal messaging only.
@@ -69,6 +70,10 @@ def emit(obj):
     print(json.dumps(obj), flush=True)
 
 
+def emit_chat(chat, obj):
+    emit({**obj, "chat": chat})
+
+
 def image_media(message):
     if message.photo:
         return message.photo
@@ -83,7 +88,7 @@ def message_payload(message):
             "hasImage": image_media(message) is not None, "image": "", "imageError": ""}
 
 
-async def load_image(client, message):
+async def load_image(client, message, chat="ray"):
     media = image_media(message)
     if media is None:
         return
@@ -98,9 +103,9 @@ async def load_image(client, message):
                 if output.tell() == 0:
                     raise ValueError("Image download was empty")
             temporary.replace(path)
-        emit({"type": "image", "id": message.id, "image": path.as_uri(), "error": ""})
+        emit_chat(chat, {"type": "image", "id": message.id, "image": path.as_uri(), "error": ""})
     except Exception as e:
-        emit({"type": "image", "id": message.id, "image": "", "error": str(e)[:100]})
+        emit_chat(chat, {"type": "image", "id": message.id, "image": "", "error": str(e)[:100]})
     finally:
         if temporary:
             temporary.unlink(missing_ok=True)
@@ -116,7 +121,7 @@ def parse_send(line):
     return line, ""
 
 
-async def send_message(client, entity, line):
+async def send_message(client, entity, line, chat="ray"):
     try:
         text, image = parse_send(line)
         if image:
@@ -133,10 +138,22 @@ async def send_message(client, entity, line):
         payload = message_payload(message)
         if image:
             payload.update(hasImage=True, image=image)
-        emit({"type": "msg", **payload})
-        emit({"type": "send-result", "ok": True, "error": ""})
+        emit_chat(chat, {"type": "msg", **payload})
+        emit_chat(chat, {"type": "send-result", "ok": True, "error": ""})
     except Exception as e:
-        emit({"type": "send-result", "ok": False, "error": "Send failed: " + str(e)[:100]})
+        emit_chat(chat, {"type": "send-result", "ok": False, "error": "Send failed: " + str(e)[:100]})
+
+
+async def dispatch_send(client, entities, line):
+    try:
+        command = json.loads(line)
+    except ValueError:
+        command = None
+    chat = command.get("chat", "ray") if isinstance(command, dict) else "ray"
+    if chat not in entities:
+        emit_chat(chat, {"type": "send-result", "ok": False, "error": "This chat is not connected. Try again shortly."})
+        return
+    await send_message(client, entities[chat], line, chat)
 
 
 async def run():
@@ -160,43 +177,43 @@ async def run():
     except Exception:
         await client.disconnect()
         raise
-    emit({"type": "status", "ok": True, "error": ""})
-
-    # recent history (oldest first)
-    hist = []
-    async for m in client.iter_messages(entity, limit=25):
-        hist.append(m)
-    hist.reverse()
-    emit({"type": "history", "messages": [message_payload(m) for m in hist]})
-
-    async def load_history_images():
-        for m in hist:
-            await load_image(client, m)
-
-    history_images = asyncio.create_task(load_history_images())
+    entities = {"ray": entity}
+    code = env.get("TG_RAY_CODE")
+    if code:
+        try:
+            async with asyncio.timeout(30):
+                entities["ray-code"] = await client.get_entity(code)
+        except Exception as e:
+            emit_chat("ray-code", {"type": "status", "ok": False, "error": str(e)[:100]})
+    else:
+        emit_chat("ray-code", {"type": "status", "ok": False, "error": "missing TG_RAY_CODE"})
+    chats_by_id = {peer.id: chat for chat, peer in entities.items()}
 
     # Include images sent from another Telegram client as well as ray's replies.
-    @client.on(events.NewMessage(chats=entity))
+    @client.on(events.NewMessage(chats=list(entities.values())))
     async def on_msg(ev):
-        emit({"type": "typing", "on": False})
-        emit({"type": "msg", **message_payload(ev.message)})
-        await load_image(client, ev.message)
+        chat = chats_by_id[ev.chat_id]
+        emit_chat(chat, {"type": "typing", "on": False})
+        emit_chat(chat, {"type": "msg", **message_payload(ev.message)})
+        await load_image(client, ev.message, chat)
 
     # ray streams its answer by editing the message -> update the same bubble in place
-    @client.on(events.MessageEdited(chats=entity))
+    @client.on(events.MessageEdited(chats=list(entities.values())))
     async def on_edit(ev):
-        emit({"type": "edit", **message_payload(ev.message)})
-        await load_image(client, ev.message)
+        chat = chats_by_id[ev.chat_id]
+        emit_chat(chat, {"type": "edit", **message_payload(ev.message)})
+        await load_image(client, ev.message, chat)
 
     # typing indicator (ray composing a reply)
     @client.on(events.UserUpdate)
     async def on_typing(ev):
-        if getattr(ev, "user_id", None) != entity.id and getattr(ev, "chat_id", None) != entity.id:
+        chat = chats_by_id.get(getattr(ev, "user_id", None)) or chats_by_id.get(getattr(ev, "chat_id", None))
+        if chat is None:
             return
         if getattr(ev, "typing", False):
-            emit({"type": "typing", "on": True})
+            emit_chat(chat, {"type": "typing", "on": True})
         elif getattr(ev, "cancel", False):
-            emit({"type": "typing", "on": False})
+            emit_chat(chat, {"type": "typing", "on": False})
 
     loop = asyncio.get_event_loop()
 
@@ -223,10 +240,30 @@ async def run():
         for line in f:
             text = line.rstrip("\n")
             if text:
-                asyncio.run_coroutine_threadsafe(send_message(client, entity, text), loop)
+                asyncio.run_coroutine_threadsafe(dispatch_send(client, entities, text), loop)
 
     threading.Thread(target=fifo_reader, daemon=True).start()
-    await client.run_until_disconnected()
+
+    async def load_history(chat, peer):
+        try:
+            async with asyncio.timeout(30):
+                hist = [m async for m in client.iter_messages(peer, limit=25)]
+            hist.reverse()
+            emit_chat(chat, {"type": "history", "messages": [message_payload(m) for m in hist]})
+            emit_chat(chat, {"type": "status", "ok": True, "error": ""})
+            for m in hist:
+                await load_image(client, m, chat)
+        except Exception as e:
+            emit_chat(chat, {"type": "status", "ok": False, "error": "History unavailable: " + str(e)[:100]})
+
+    history_tasks = [asyncio.create_task(load_history(chat, peer)) for chat, peer in entities.items()]
+    try:
+        await client.run_until_disconnected()
+    finally:
+        for task in history_tasks:
+            task.cancel()
+        await asyncio.gather(*history_tasks, return_exceptions=True)
+        await client.disconnect()
 
 
 if __name__ == "__main__":

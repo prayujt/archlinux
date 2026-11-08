@@ -10,23 +10,29 @@ import QtQuick.Controls
 Scope {
     id: root
 
-    readonly property string fontFamily: "GeistMono Nerd Font Mono"
+    readonly property string fontFamily: "SpaceMono Nerd Font Mono"
     readonly property int barHeight: 40
     readonly property int pillHeight: 32
     readonly property int barInset: 4
 
-    // -- colors (neon current) --
-    readonly property color bgColor: "#101a2b"     // midnight blue (panel fill)
-    readonly property color textColor: "#e7f2ff"   // ice white
-    readonly property color subtext: "#99adc5"     // muted steel blue
-    readonly property color accent: "#7b9eff"      // electric blue (focus, selection)
-    readonly property color clockColor: "#4ee6e8"  // neon cyan (clock, media, sonos)
-    readonly property color volumeColor: "#f3c969" // amber (device volume)
-    readonly property color mutedColor: "#f28b68"  // copper (losses)
-    readonly property color gainColor: "#b0e86f"   // acid green (gains)
-    readonly property color surface: "#202e43"     // raised blue (tracks, hover)
-    readonly property color inkColor: "#10182b"    // text on bright gradients
-    readonly property color outline: "#355578"
+    // -- Nothing / Orbit palette --
+    readonly property color bgColor: "#ec111214"
+    readonly property color textColor: "#ebe9e2"
+    readonly property color subtext: "#969998"
+    readonly property color accent: "#e6393f"
+    readonly property color clockColor: "#e9e7e0"
+    readonly property color volumeColor: "#d8d8d0"
+    readonly property color mutedColor: "#ed5d62"
+    readonly property color gainColor: "#d9dfd4"
+    readonly property color surface: "#242628"
+    readonly property color inkColor: "#101112"
+    readonly property color outline: "#343638"
+
+    FontLoader {
+        id: styleDotFont
+        source: "file:///home/prayuj/.local/share/desktop-styles/nothing-orbit/assets/Doto.ttf"
+    }
+    OrbitalDesktop { shellState: root }
 
     component NeonGradient: Gradient {
         id: neon
@@ -35,15 +41,15 @@ Scope {
         orientation: Gradient.Horizontal
         GradientStop {
             position: 0
-            color: Qt.tint(root.bgColor, Qt.rgba(root.clockColor.r, root.clockColor.g, root.clockColor.b, neon.tintOpacity))
+            color: Qt.tint(root.bgColor, Qt.rgba(root.textColor.r, root.textColor.g, root.textColor.b, neon.tintOpacity))
         }
         GradientStop {
             position: 0.5
-            color: Qt.tint(root.bgColor, Qt.rgba(root.accent.r, root.accent.g, root.accent.b, neon.tintOpacity))
+            color: Qt.tint(root.bgColor, Qt.rgba(root.textColor.r, root.textColor.g, root.textColor.b, neon.tintOpacity))
         }
         GradientStop {
             position: 1
-            color: Qt.tint(root.bgColor, Qt.rgba(root.gainColor.r, root.gainColor.g, root.gainColor.b, neon.tintOpacity))
+            color: Qt.tint(root.bgColor, Qt.rgba(root.textColor.r, root.textColor.g, root.textColor.b, neon.tintOpacity))
         }
     }
 
@@ -113,27 +119,92 @@ Scope {
     property bool newsExpanded: false
     property int newsSelected: 0
 
-    // -- telegram (ray) chat state --
+    // -- shared Telegram panel, with independent state for each bot --
     property bool telegramOpen: false
     property bool telegramFullscreen: false
-    property bool telegramReady: false
-    property string telegramError: ""
-    property string telegramAttachment: ""
-    property string telegramSendError: ""
-    property bool telegramSending: false
+    property string telegramChat: "ray"
+    readonly property var telegramState: telegramChat === "ray-code" ? tgRayCode : tgRay
+    readonly property bool telegramReady: telegramState.ready
+    readonly property string telegramError: telegramState.error
+    readonly property string telegramAttachment: telegramState.attachment
+    readonly property string telegramSendError: telegramState.sendError
+    readonly property bool telegramSending: telegramState.sending
+    readonly property bool tgTyping: telegramState.typing
     property bool telegramPicking: false
-    signal telegramSent()
-    property bool tgTyping: false
-    property var tgSeen: ({})
+    signal telegramChatChanging()
+    signal telegramLatestRequested()
+    TelegramChatState { id: tgRay; key: "ray"; name: "Ray" }
+    TelegramChatState { id: tgRayCode; key: "ray-code"; name: "Ray Code" }
+
+    function chatState(key) {
+        return key === "ray" ? tgRay : key === "ray-code" ? tgRayCode : null
+    }
+    function selectTelegramChat(key) {
+        if (!chatState(key) || telegramChat === key) return
+        telegramChatChanging()
+        telegramChat = key
+        if (telegramOpen) notifToast.resolveChat(key)
+    }
+    function cycleTelegramChat() {
+        if (telegramOpen && !telegramPicking)
+            selectTelegramChat(telegramChat === "ray" ? "ray-code" : "ray")
+    }
+    function openTelegramLatest(key) {
+        let state = chatState(key)
+        if (!state) return
+        state.followTail = true
+        selectTelegramChat(key)
+        telegramOpen = true
+        telegramLatestRequested()
+    }
     // -- unified notification center (desktop notifications + ray messages) --
     property bool notifOpen: false
     property int notifSelected: 0
     // newest first: { kind, app, summary, body, time, ref } — see notifModel below
     // transient toast (latest notification) shown under the pill
-    property string notifToastApp: ""
-    property string notifToastText: ""
-    property bool notifToastShow: false
-    Timer { id: notifToastTimer; interval: 10000; onTriggered: root.notifToastShow = false }
+    NotificationToastState {
+        id: notifToast
+        onClassify: notification => notifImportance.classify(notification)
+    }
+    Process {
+        id: notifImportance
+        running: true
+        stdinEnabled: true
+        command: ["/usr/bin/python3", "/home/prayuj/.config/quickshell/scripts/notification-importance"]
+        property bool busy: false
+        property var pending: []
+        function classify(notification) {
+            if (!running) return
+            // Coalesce edits per source, preserving approval requests from other agents.
+            if (busy) {
+                let queue = pending.filter(entry => entry.source !== notification.source)
+                queue.push(notification)
+                pending = queue
+                return
+            }
+            busy = true
+            write(JSON.stringify(notification) + "\n")
+        }
+        onExited: { busy = false; pending = [] }
+        stdout: SplitParser {
+            onRead: data => {
+                notifImportance.busy = false
+                try { notifToast.applyClassification(JSON.parse(data)) } catch (error) {}
+                while (notifImportance.pending.length) {
+                    let next = notifImportance.pending.shift()
+                    let current = notifToast.notifications[next.source]
+                    if (current && !current.dismissed && current.id === next.id) {
+                        notifImportance.classify(next)
+                        break
+                    }
+                }
+            }
+        }
+    }
+    Timer {
+        interval: 15000; running: true; repeat: true
+        onTriggered: if (!notifImportance.running) notifImportance.running = true
+    }
 
     ListModel { id: notifModel }
 
@@ -143,11 +214,8 @@ Scope {
         notifModel.insert(0, entry)
         while (notifModel.count > 50) notifModel.remove(notifModel.count - 1)
     }
-    function showToast(app, text) {
-        root.notifToastApp = app
-        root.notifToastText = root.oneLine(text)
-        root.notifToastShow = true
-        notifToastTimer.restart()
+    function showToast(app, text, body, source) {
+        notifToast.show(app, root.oneLine(text), body, source)
     }
     function removeNotifAt(i) {
         if (i < 0 || i >= notifModel.count) return
@@ -170,8 +238,8 @@ Scope {
         if (i < 0 || i >= notifModel.count) return
         var e = notifModel.get(i)
         if (!e) return
-        if (e.kind === "ray") {
-            root.telegramOpen = true       // open the chat, consume the entry
+        if (e.kind === "ray" || e.kind === "ray-code") {
+            root.openTelegramLatest(e.kind)
             removeNotifAt(i)
             return
         }
@@ -214,7 +282,8 @@ Scope {
             n.tracked = true
             root.addNotifItem({ kind: "app", app: n.appName || "app",
                                 summary: root.oneLine(n.summary), body: root.oneLine(n.body), ref: n })
-            root.showToast(n.appName || "notification", n.summary || n.body || "")
+            root.showToast(n.appName || "notification", n.summary || n.body || "",
+                n.summary ? n.body : "", "app:" + n.id)
         }
     }
 
@@ -239,14 +308,11 @@ Scope {
     onNewsExpandedChanged: if (newsExpanded) portfolioExpanded = false
     // telegram takes over the center pill; close the launcher when it opens
     onTelegramOpenChanged: {
-        if (telegramOpen) { networkOpen = false; launcherOpen = false; notifOpen = false; notifToastShow = false }
+        if (telegramOpen) { networkOpen = false; launcherOpen = false; notifOpen = false; notifToast.resolveChat(telegramChat) }
         else telegramFullscreen = false
     }
     onNotifOpenChanged: if (notifOpen) { networkOpen = false; launcherOpen = false; telegramOpen = false; mediaExpanded = false }
     onLauncherOpenChanged: if (launcherOpen) { networkOpen = false; telegramOpen = false }
-
-    // telegram message history (out=true is us, out=false is ray)
-    ListModel { id: tgModel }
 
     // workspace state
     property string activeWsStr: ""
@@ -481,11 +547,16 @@ Scope {
         function telegram(): void { root.toggleTelegram(false); }
         function telegramFullscreen(): void { root.toggleTelegram(true); }
         function status(): string {
-            return JSON.stringify({launcher: root.launcherOpen, news: root.newsExpanded,
+            return JSON.stringify({desktopStyle: "nothing-orbit", launcher: root.launcherOpen, news: root.newsExpanded,
                 newsEnabled: root.newsPanelOpen, network: root.networkOpen,
                 notifications: root.notifOpen, media: root.mediaExpanded,
                 hasTrack: root.sonosHasTrack, telegram: root.telegramOpen,
-                telegramFullscreen: root.telegramFullscreen});
+                telegramFullscreen: root.telegramFullscreen, telegramChat: root.telegramChat,
+                telegramReady: root.telegramReady, rayReady: tgRay.ready, rayCodeReady: tgRayCode.ready,
+                notificationToastShown: notifToast.shown, notificationToastImportant: notifToast.important,
+                notificationAgentAttention: notifToast.agentAttention,
+                notificationWaitingCount: notifToast.waiting.length,
+                notificationClassifierError: notifToast.error});
         }
     }
 
@@ -515,109 +586,44 @@ Scope {
     }
     */
 
-    function telegramMessage(message) {
-        return { mid: message.id === undefined ? -1 : message.id, out: message.out,
-            text: message.text || "", hasImage: message.hasImage === true,
-            image: message.image || "", imageError: message.imageError || "" }
-    }
-
-    // -- telegram (ray) daemon: streams history + live messages, reads /tmp/qs-tg-send --
+    // Both chats share a Telegram session; every event is routed to its own state.
     Process {
         id: telegramProc
         running: true
         command: ["/home/prayuj/.config/quickshell/.venv-tg/bin/python",
                   "/home/prayuj/.config/quickshell/scripts/telegram-ray"]
-        onExited: {
-            root.telegramReady = false
-            if (root.telegramSending) {
-                root.telegramSending = false
-                root.telegramSendError = "Connection closed. Your draft is saved; try again."
-            }
-        }
+        onExited: { tgRay.disconnected(); tgRayCode.disconnected() }
         stderr: SplitParser {
             onRead: data => console.warn("Telegram bridge:", data)
         }
         stdout: SplitParser {
-            splitMarker: "\n"
             onRead: data => {
                 try {
-                    let o = JSON.parse(data.trim())
-                    if (o.type === "history") {
-                        tgModel.clear()
-                        root.tgSeen = ({})
-                        for (let i = 0; i < o.messages.length; i++) {
-                            let m = o.messages[i]
-                            if (m.id !== undefined) root.tgSeen[m.id] = true
-                            tgModel.append(root.telegramMessage(m))
-                        }
-                        root.telegramReady = true
-                    } else if (o.type === "msg") {
-                        root.tgTyping = false
-                        // dedupe by message id so duplicates never spam the view
-                        if (o.id === undefined || !root.tgSeen[o.id]) {
-                            if (o.id !== undefined) root.tgSeen[o.id] = true
-                            tgModel.append(root.telegramMessage(o))
-                        }
-                        // add ray replies to the notification center; toast when chat is closed
-                        if (!o.out && (o.text || o.hasImage)) {
-                            let summary = o.text || "Image"
-                            root.addNotifItem({ kind: "ray", app: "ray", summary: root.oneLine(summary), body: "" })
-                            if (!root.telegramOpen) root.showToast("ray", summary)
-                        }
-                    } else if (o.type === "edit") {
-                        // ray is streaming: update the existing bubble in place
-                        root.tgTyping = false
-                        let found = false
-                        for (let j = tgModel.count - 1; j >= 0; j--) {
-                            if (tgModel.get(j).mid === o.id) {
-                                tgModel.setProperty(j, "text", o.text)
-                                tgModel.setProperty(j, "hasImage", o.hasImage === true)
-                                found = true
-                                break
-                            }
-                        }
-                        if (!found) {
-                            if (o.id !== undefined) root.tgSeen[o.id] = true
-                            tgModel.append(root.telegramMessage(o))
-                        }
-                        // keep the toast in sync while ray streams, if it's showing
-                        if (!o.out && !root.telegramOpen && root.notifToastShow && o.text) {
-                            root.notifToastText = root.oneLine(o.text)
-                            notifToastTimer.restart()
-                        }
-                    } else if (o.type === "image") {
-                        for (let j = tgModel.count - 1; j >= 0; j--) {
-                            if (tgModel.get(j).mid === o.id) {
-                                tgModel.setProperty(j, "image", o.image || "")
-                                tgModel.setProperty(j, "imageError", o.error || "")
-                                break
-                            }
-                        }
-                    } else if (o.type === "send-result") {
-                        root.telegramSending = false
-                        root.telegramSendError = o.error || ""
-                        if (o.ok) {
-                            root.telegramAttachment = ""
-                            root.telegramSent()
-                        }
-                    } else if (o.type === "typing") {
-                        root.tgTyping = o.on === true
-                        // Telegram typing statuses expire server-side (~6s) and the
-                        // cancel event is often not delivered, so auto-clear on a timer
-                        // that refreshes with each new typing:true.
-                        if (o.on === true) tgTypingTimeout.restart()
-                        else tgTypingTimeout.stop()
-                    } else if (o.type === "status") {
-                        root.telegramReady = o.ok === true
-                        root.telegramError = o.error || ""
+                    let event = JSON.parse(data)
+                    if (!event.chat && event.type === "status") {
+                        tgRay.applyEvent(event)
+                        tgRayCode.applyEvent(event)
+                        return
                     }
-                } catch(e) {}
+                    let state = root.chatState(event.chat)
+                    if (!state) return
+                    let incoming = state.applyEvent(event)
+                    let active = root.telegramOpen && root.telegramChat === state.key
+                    if ((event.type === "msg" && event.out) || (event.type === "send-result" && event.ok))
+                        notifToast.resolveChat(state.key)
+                    if (incoming) {
+                        let summary = event.text || "Image"
+                        root.addNotifItem({ kind: state.key, app: state.name,
+                            summary: root.oneLine(summary), body: "" })
+                        if (!active) root.showToast(state.name, summary, "", state.key + ":" + event.id)
+                    } else if (event.type === "edit" && !event.out && !active
+                            && event.text) {
+                        notifToast.update(state.key + ":" + event.id, root.oneLine(event.text))
+                    }
+                } catch (error) { console.warn("Telegram event:", error) }
             }
         }
     }
-
-    // clear a stale typing indicator if ray stops without a cancel event arriving
-    Timer { id: tgTypingTimeout; interval: 7000; onTriggered: root.tgTyping = false }
 
     // restart the daemon if it dies
     Timer {
@@ -625,32 +631,36 @@ Scope {
         onTriggered: if (!telegramProc.running) telegramProc.running = true
     }
 
-    function toggleTelegram(fullscreen) {
-        if (telegramOpen && telegramFullscreen === fullscreen) {
+    function toggleTelegram(fullscreen, chat) {
+        let key = chat || "ray"
+        if (telegramOpen && telegramChat === key && telegramFullscreen === fullscreen) {
             telegramOpen = false
         } else {
+            selectTelegramChat(key)
             telegramFullscreen = fullscreen
             telegramOpen = true
         }
     }
 
-    // -- send a message to ray (writes one line to the daemon's FIFO) --
+    // -- send a message to the selected bot (writes one line to the daemon's FIFO) --
     // `timeout` guarantees the write can never block/pile up if the daemon is down
     Process {
         id: telegramSendProc
+        property var sendingChat: null
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
-                root.telegramSending = false
-                root.telegramSendError = "Could not reach Telegram. Your draft is saved; try again."
+                sendingChat.sending = false
+                sendingChat.sendError = "Could not reach Telegram. Your draft is saved; try again."
             }
         }
     }
     function telegramSend(text) {
-        if (telegramSending || (!text.trim() && !telegramAttachment)) return
-        if (!telegramReady) { telegramSendError = "Telegram is connecting. Try again in a moment."; return }
-        telegramSendError = ""
-        telegramSending = true
-        let message = JSON.stringify({ type: "send", text: text, image: telegramAttachment })
+        if (telegramSending || telegramSendProc.running || (!text.trim() && !telegramAttachment)) return
+        if (!telegramReady) { telegramState.sendError = "Telegram is connecting. Try again in a moment."; return }
+        telegramState.sendError = ""
+        telegramState.sending = true
+        telegramSendProc.sendingChat = telegramState
+        let message = JSON.stringify({ type: "send", chat: telegramChat, text: text, image: telegramAttachment })
         telegramSendProc.command = ["timeout", "2", "sh", "-c", "printf '%s\\n' \"$1\" > /tmp/qs-tg-send", "sh", message]
         telegramSendProc.running = true
     }
@@ -857,7 +867,7 @@ Scope {
                 Region { item: pillBg }
                 // Region { item: portfolioCard }  // portfolio widget temporarily hidden
                 Region { item: root.newsPanelOpen ? newsCard : null }
-                Region { item: tgNotif }
+                Region { item: tgNotif.canShow ? tgNotif : null }
             }
 
             Item {
@@ -925,9 +935,7 @@ Scope {
                                         id: workspaceButton
                                         anchors.fill: parent
                                         radius: 8
-                                        color: parent.isFocused ? root.surface : "transparent"
-                                        gradient: workspaceButton.parent.isFocused ? workspaceGradient : null
-                                        NeonGradient { id: workspaceGradient }
+                                        color: parent.isFocused ? root.accent : "transparent"
 
                                         Behavior on color {
                                             ColorAnimation { duration: 150 }
@@ -936,7 +944,7 @@ Scope {
                                         Text {
                                             anchors.centerIn: parent
                                             text: parent.parent.displayNum.toString()
-                                            color: parent.parent.isFocused ? root.inkColor : root.subtext
+                                            color: parent.parent.isFocused ? root.textColor : root.subtext
                                             font.family: root.fontFamily
                                             font.pixelSize: 12
                                             font.bold: parent.parent.isFocused
@@ -1095,8 +1103,10 @@ Scope {
                     anchors.centerIn: parent
                     text: Qt.formatDateTime(new Date(), "HH:mm")
                     color: pillBg.foregroundColor
-                    font.family: root.fontFamily
-                    font.pixelSize: 12
+                    font.family: styleDotFont.name
+                    font.pixelSize: 15
+                    font.weight: Font.Bold
+                    font.variableAxes: ({"ROND": 100})
                     opacity: (root.pillMode === "clock" && !pillBg.compactMedia) ? pillBg.morphCloseness : 0
                     visible: opacity > 0.01
 
@@ -1504,7 +1514,7 @@ Scope {
                                 id: durLabel
                                 anchors.right: parent.right
                                 anchors.verticalCenter: mediaTrack.verticalCenter
-                                text: root.fmtTime(root.sonosDur)
+                                text: root.sonosDur > 0 ? root.fmtTime(root.sonosDur) : "--:--"
                                 color: root.subtext
                                 font.family: root.fontFamily
                                 font.pixelSize: 9
@@ -1807,7 +1817,7 @@ Scope {
                     }
                 }
 
-                // -- telegram (ray) chat face --
+                // -- Telegram chat face (shared compact/fullscreen layout) --
                 Item {
                     id: tgFace
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -1821,15 +1831,54 @@ Scope {
                     enabled: root.pillMode === "telegram"
 
                     Keys.onEscapePressed: root.telegramOpen = false
+                    Keys.priority: Keys.BeforeItem
+                    Keys.onPressed: event => {
+                        if ((event.modifiers & Qt.ControlModifier)
+                                && (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)) {
+                            root.cycleTelegramChat()
+                            event.accepted = true
+                        }
+                    }
 
-                    readonly property bool canSend: !root.telegramSending && !tgPaste.running
+                    readonly property bool canSend: root.telegramReady && !root.telegramSending
+                        && !telegramSendProc.running && !tgPaste.running
                         && (!root.telegramAttachment || tgAttachmentImage.status === Image.Ready)
+                    property var selectedMessage: null
+                    function clearMessageSelection() {
+                        let selected = selectedMessage
+                        selectedMessage = null
+                        if (selected) selected.deselect()
+                    }
+                    PointHandler {
+                        acceptedButtons: Qt.LeftButton
+                        onActiveChanged: {
+                            let selected = tgFace.selectedMessage
+                            if (!active || !selected) return
+                            let position = selected.mapFromItem(tgFace, point.position.x, point.position.y)
+                            if (position.x < 0 || position.y < 0
+                                    || position.x >= selected.width || position.y >= selected.height)
+                                tgFace.clearMessageSelection()
+                        }
+                    }
                     function sendMessage() {
                         if (canSend) root.telegramSend(tgInput.text)
+                    }
+                    function pickImage() {
+                        if (tgImagePicker.running) return
+                        tgImagePicker.requestChat = root.telegramState
+                        tgImagePicker.running = true
+                    }
+                    function pasteClipboard() {
+                        if (root.telegramSending || tgPaste.running) return
+                        tgPaste.requestChat = root.telegramState
+                        tgPaste.requestStart = tgInput.selectionStart
+                        tgPaste.requestEnd = tgInput.selectionEnd
+                        tgPaste.running = true
                     }
 
                     Process {
                         id: tgImagePicker
+                        property var requestChat: null
                         command: ["/home/prayuj/.config/quickshell/.venv-tg/bin/python",
                                   "/home/prayuj/.config/quickshell/scripts/telegram-image", "--pick"]
                         onRunningChanged: {
@@ -1840,10 +1889,10 @@ Scope {
                         stdout: SplitParser {
                             onRead: data => {
                                 let result = JSON.parse(data)
-                                if (result.error) root.telegramSendError = result.error
+                                if (result.error) tgImagePicker.requestChat.sendError = result.error
                                 else if (result.image) {
-                                    root.telegramAttachment = result.image
-                                    root.telegramSendError = ""
+                                    tgImagePicker.requestChat.attachment = result.image
+                                    tgImagePicker.requestChat.sendError = ""
                                 }
                             }
                         }
@@ -1851,87 +1900,170 @@ Scope {
 
                     Process {
                         id: tgPaste
+                        property var requestChat: null
+                        property int requestStart: 0
+                        property int requestEnd: 0
                         command: ["/home/prayuj/.config/quickshell/.venv-tg/bin/python",
                                   "/home/prayuj/.config/quickshell/scripts/telegram-image"]
                         stdout: SplitParser {
                             onRead: data => {
                                 let result = JSON.parse(data)
-                                if (result.error) root.telegramSendError = result.error
+                                if (result.error) tgPaste.requestChat.sendError = result.error
                                 else if (result.image) {
-                                    root.telegramAttachment = result.image
-                                    root.telegramSendError = ""
-                                } else tgInput.paste()
+                                    tgPaste.requestChat.attachment = result.image
+                                    tgPaste.requestChat.sendError = ""
+                                } else if (tgPaste.requestChat === root.telegramState) tgInput.paste()
+                                else if (result.text !== undefined) {
+                                    let state = tgPaste.requestChat
+                                    state.draft = state.draft.slice(0, tgPaste.requestStart) + result.text
+                                        + state.draft.slice(tgPaste.requestEnd)
+                                    state.cursorPosition = tgPaste.requestStart + result.text.length
+                                }
                             }
                         }
                         onExited: tgFocusTimer.restart()
                     }
 
-                    // header: status dot + "ray"
+                    // The same tabs remain available when fullscreen covers the bar.
                     Item {
                         id: tgHeader
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        height: root.telegramFullscreen ? 36 : 20
+                        height: root.telegramFullscreen ? 36 : 28
 
-                        Rectangle {
-                            id: tgDot
+                        Row {
+                            id: tgTabs
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 7; height: 7; radius: 3.5
-                            color: root.telegramReady ? root.gainColor : root.mutedColor
+                            spacing: 4
+                            Repeater {
+                                model: ["ray", "ray-code"]
+                                Item {
+                                    id: chatTab
+                                    required property string modelData
+                                    readonly property var chatState: root.chatState(modelData)
+                                    readonly property bool selected: root.telegramChat === modelData
+                                    width: chatTabContent.width + 14
+                                    height: root.telegramFullscreen ? 36 : 22
+                                    Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        anchors.leftMargin: 7
+                                        anchors.rightMargin: 7
+                                        height: 2
+                                        radius: 1
+                                        color: root.clockColor
+                                        opacity: chatTab.selected ? 1 : 0
+                                        Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                    }
+                                    Row {
+                                        id: chatTabContent
+                                        anchors.centerIn: parent
+                                        spacing: 6
+                                        Rectangle {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 6; height: 6; radius: 3
+                                            color: chatTab.chatState.ready ? root.gainColor : root.mutedColor
+                                        }
+                                        Text {
+                                            text: chatTab.chatState.name
+                                            color: chatTab.selected ? root.clockColor
+                                                : chatTabMouse.containsMouse ? root.textColor : root.subtext
+                                            font.family: root.fontFamily
+                                            font.pixelSize: root.telegramFullscreen ? 18 : 12
+                                            font.bold: true
+                                            Behavior on color { ColorAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                        }
+                                    }
+                                    MouseArea {
+                                        id: chatTabMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.selectTelegramChat(chatTab.modelData)
+                                    }
+                                    ToolTip.visible: chatTabMouse.containsMouse
+                                    ToolTip.delay: 550
+                                    ToolTip.text: "Switch chat · Ctrl+Tab / Ctrl+Shift+Tab"
+                                }
+                            }
                         }
                         Text {
-                            anchors.left: tgDot.right
+                            anchors.left: tgTabs.right
                             anchors.leftMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "ray"
-                            color: root.textColor
-                            font.family: root.fontFamily
-                            font.pixelSize: root.telegramFullscreen ? 20 : 13
-                            font.bold: true
-                        }
-                        Text {
                             anchors.right: tgActions.left
-                            anchors.rightMargin: 16
+                            anchors.rightMargin: 8
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.telegramReady ? "" : (root.telegramError.length ? root.telegramError : "connecting\u2026")
                             color: root.subtext
                             font.family: root.fontFamily
                             font.pixelSize: root.telegramFullscreen ? 12 : 9
                             elide: Text.ElideLeft
-                            width: 180
                             horizontalAlignment: Text.AlignRight
                         }
                         Row {
                             id: tgActions
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 18
+                            height: parent.height
+                            spacing: 6
 
-                            Text {
-                                text: root.telegramFullscreen ? "compact" : "expand"
-                                color: tgExpandMouse.containsMouse ? root.textColor : root.subtext
-                                font.family: root.fontFamily
-                                font.pixelSize: root.telegramFullscreen ? 12 : 10
+                            Rectangle {
+                                width: 92
+                                height: tgActions.height
+                                radius: 7
+                                color: tgExpandMouse.containsMouse ? root.surface : "transparent"
+                                border.width: 1
+                                border.color: tgExpandMouse.containsMouse ? root.accent : root.outline
+                                Behavior on color { ColorAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                Behavior on border.color { ColorAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: 7
+                                    Text {
+                                        width: 14; height: 18
+                                        text: root.telegramFullscreen ? "\uf066" : "\uf065"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        color: tgExpandMouse.containsMouse ? root.textColor : root.subtext
+                                        font.family: root.fontFamily
+                                        font.pixelSize: 14
+                                    }
+                                    Text {
+                                        height: 18
+                                        text: root.telegramFullscreen ? "compact" : "expand"
+                                        verticalAlignment: Text.AlignVCenter
+                                        color: tgExpandMouse.containsMouse ? root.textColor : root.subtext
+                                        font.family: root.fontFamily
+                                        font.pixelSize: 12
+                                    }
+                                }
                                 MouseArea {
                                     id: tgExpandMouse
                                     anchors.fill: parent
-                                    anchors.margins: -6
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: root.telegramFullscreen = !root.telegramFullscreen
                                 }
                             }
-                            Text {
-                                text: "\u00d7"
-                                color: tgCloseMouse.containsMouse ? root.textColor : root.subtext
-                                font.family: root.fontFamily
-                                font.pixelSize: root.telegramFullscreen ? 16 : 13
+                            Rectangle {
+                                width: height
+                                height: tgActions.height
+                                radius: 7
+                                color: tgCloseMouse.containsMouse ? root.surface : "transparent"
+                                Behavior on color { ColorAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "\u00d7"
+                                    color: tgCloseMouse.containsMouse ? root.textColor : root.subtext
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 18
+                                }
                                 MouseArea {
                                     id: tgCloseMouse
                                     anchors.fill: parent
-                                    anchors.margins: -6
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: root.telegramOpen = false
@@ -1991,8 +2123,8 @@ Scope {
                                 enabled: !root.telegramSending
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    root.telegramAttachment = ""
-                                    root.telegramSendError = ""
+                                    root.telegramState.attachment = ""
+                                    root.telegramState.sendError = ""
                                     tgInput.forceActiveFocus()
                                 }
                             }
@@ -2039,7 +2171,7 @@ Scope {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: tgImagePicker.running = true
+                                onClicked: tgFace.pickImage()
                             }
                         }
                         Text {
@@ -2076,14 +2208,21 @@ Scope {
                             font.pixelSize: root.telegramFullscreen ? 16 : 13
                             clip: true
                             readOnly: root.telegramSending
+                            text: root.telegramState.draft
+                            onTextEdited: root.telegramState.draft = text
+                            onActiveFocusChanged: if (activeFocus) tgFace.clearMessageSelection()
 
+                            Keys.priority: Keys.BeforeItem
                             Keys.onEscapePressed: root.telegramOpen = false
                             Keys.onReturnPressed: tgFace.sendMessage()
                             Keys.onEnterPressed: tgFace.sendMessage()
                             Keys.onPressed: event => {
                                 if (event.modifiers & Qt.ControlModifier) {
-                                    if (event.key === Qt.Key_V) {
-                                        if (!root.telegramSending && !tgPaste.running) tgPaste.running = true
+                                    if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                                        root.cycleTelegramChat()
+                                        event.accepted = true
+                                    } else if (event.key === Qt.Key_V) {
+                                        tgFace.pasteClipboard()
                                         event.accepted = true
                                     } else if (event.key === Qt.Key_J) { tgList.flick(0, -700); event.accepted = true }
                                     else if (event.key === Qt.Key_K) { tgList.flick(0, 700); event.accepted = true }
@@ -2093,7 +2232,7 @@ Scope {
                         Text {
                             anchors.left: tgInput.left
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root.telegramAttachment ? "add a caption\u2026" : "message ray\u2026"
+                            text: root.telegramAttachment ? "add a caption\u2026" : "message " + root.telegramState.name + "\u2026"
                             color: root.subtext
                             font.family: root.fontFamily
                             font.pixelSize: root.telegramFullscreen ? 16 : 13
@@ -2112,21 +2251,55 @@ Scope {
                         anchors.bottomMargin: root.telegramFullscreen ? 20 : 8
                         clip: true
                         spacing: root.telegramFullscreen ? 12 : 5
-                        model: tgModel
+                        model: root.telegramState.messages
                         boundsBehavior: Flickable.StopAtBounds
                         cacheBuffer: 800
 
                         property bool followTail: true
                         onMovementStarted: followTail = false
-                        onMovementEnded: followTail = atYEnd
-                        function scrollToEnd() {
-                            followTail = true
+                        onMovementEnded: { followTail = atYEnd; saveScroll() }
+                        function saveScroll() {
+                            if (!bar.isDp) return
+                            let state = root.telegramState
+                            state.followTail = followTail
+                            state.scrollY = contentY
+                            let index = indexAt(1, contentY + 1)
+                            if (index < 0) index = indexAt(1, contentY + spacing + 1)
+                            let item = index >= 0 ? itemAtIndex(index) : null
+                            state.scrollMessage = item ? state.messages.get(index).mid : -1
+                            state.scrollOffset = item ? contentY - item.y : 0
+                        }
+                        function followNewContent() {
+                            if (!followTail) return
                             forceLayout()
                             positionViewAtEnd()
                         }
-                        onCountChanged: Qt.callLater(scrollToEnd)
-                        onWidthChanged: if (root.telegramOpen) Qt.callLater(scrollToEnd)
-                        onHeightChanged: if (root.telegramOpen) Qt.callLater(scrollToEnd)
+                        function restoreScroll() {
+                            forceLayout()
+                            let state = root.telegramState
+                            followTail = state.followTail
+                            if (followTail) positionViewAtEnd()
+                            else {
+                                // Variable-height bubbles are estimated again when a model
+                                // is selected. Anchor to a message, not that estimated height.
+                                let target = state.scrollY
+                                for (let i = 0; i < count; i++) {
+                                    if (state.messages.get(i).mid !== state.scrollMessage) continue
+                                    positionViewAtIndex(i, ListView.Beginning)
+                                    forceLayout()
+                                    let item = itemAtIndex(i)
+                                    if (item) target = item.y + state.scrollOffset
+                                    break
+                                }
+                                contentY = Math.max(originY, Math.min(target,
+                                    originY + Math.max(0, contentHeight - height)))
+                            }
+                        }
+                        onModelChanged: followTail = root.telegramState.followTail
+                        onCountChanged: Qt.callLater(followNewContent)
+                        onContentHeightChanged: Qt.callLater(followNewContent)
+                        onWidthChanged: if (root.telegramOpen) Qt.callLater(restoreScroll)
+                        onHeightChanged: if (root.telegramOpen) Qt.callLater(restoreScroll)
 
                         // Move 160px per wheel notch in either chat size, with a short glide.
                         NumberAnimation {
@@ -2135,8 +2308,8 @@ Scope {
                             property: "contentY"
                             duration: 120
                             easing.type: Easing.OutCubic
-                            onStarted: tgList.followTail = false
-                            onFinished: tgList.followTail = tgList.atYEnd
+                            onStarted: { tgList.followTail = false; tgList.saveScroll() }
+                            onFinished: { tgList.followTail = tgList.atYEnd; tgList.saveScroll() }
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -2161,7 +2334,7 @@ Scope {
                             width: tgList.width
                             height: root.tgTyping ? 26 : 0
                             visible: root.tgTyping
-                            onVisibleChanged: if (visible) Qt.callLater(tgList.positionViewAtEnd)
+                            onVisibleChanged: if (visible) Qt.callLater(tgList.followNewContent)
 
                             Rectangle {
                                 anchors.left: parent.left
@@ -2228,7 +2401,7 @@ Scope {
                                         sourceSize.height: 720
                                         fillMode: Image.PreserveAspectFit
                                         asynchronous: true
-                                        onStatusChanged: if (tgList.followTail) Qt.callLater(tgList.scrollToEnd)
+                                        onStatusChanged: Qt.callLater(tgList.followNewContent)
                                     }
                                     Text {
                                         anchors.centerIn: parent
@@ -2242,17 +2415,41 @@ Scope {
                                         font.pixelSize: 12
                                     }
                                 }
-                                Text {
+                                TextEdit {
                                     id: msgText
+                                    objectName: "telegramMessageText"
                                     x: 11
                                     y: imageFrame.y + imageFrame.height + (model.hasImage ? 8 : 0)
                                     width: parent.width - 22
                                     text: model.text
-                                    textFormat: Text.PlainText
-                                    wrapMode: Text.Wrap
+                                    textFormat: TextEdit.PlainText
+                                    wrapMode: TextEdit.Wrap
+                                    readOnly: true
+                                    selectByMouse: true
+                                    persistentSelection: true
+                                    onSelectedTextChanged: {
+                                        if (selectedText.length && tgFace.selectedMessage !== msgText) {
+                                            tgFace.clearMessageSelection()
+                                            tgFace.selectedMessage = msgText
+                                        }
+                                    }
+                                    onActiveFocusChanged: {
+                                        if (activeFocus && tgFace.selectedMessage !== msgText)
+                                            tgFace.clearMessageSelection()
+                                    }
+                                    Component.onDestruction: {
+                                        if (tgFace.selectedMessage === msgText) tgFace.selectedMessage = null
+                                    }
+                                    selectionColor: model.out ? root.bgColor : root.accent
+                                    selectedTextColor: model.out ? root.textColor : root.bgColor
                                     color: model.out ? root.bgColor : root.textColor
                                     font.family: root.fontFamily
                                     font.pixelSize: root.telegramFullscreen ? 16 : 12
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.RightButton
+                                        onClicked: if (msgText.selectedText.length) msgText.copy()
+                                    }
                                 }
                             }
                         }
@@ -2276,14 +2473,38 @@ Scope {
                         function onTelegramOpenChanged() {
                             if (bar.isDp && root.telegramOpen) {
                                 tgFocusTimer.start()
-                                Qt.callLater(tgList.positionViewAtEnd)
+                                Qt.callLater(tgList.restoreScroll)
+                            } else if (bar.isDp) {
+                                tgList.saveScroll()
+                                tgFace.clearMessageSelection()
                             }
                         }
                         function onTelegramFullscreenChanged() {
                             if (bar.isDp && root.telegramOpen) tgFocusTimer.restart()
                         }
-                        function onTelegramSent() {
-                            if (bar.isDp) tgInput.text = ""
+                        function onTelegramChatChanging() {
+                            if (!bar.isDp) return
+                            tgFace.clearMessageSelection()
+                            tgWheelScroll.stop()
+                            tgList.cancelFlick()
+                            root.telegramState.cursorPosition = tgInput.cursorPosition
+                            tgList.saveScroll()
+                        }
+                        function onTelegramChatChanged() {
+                            if (!bar.isDp) return
+                            Qt.callLater(() => {
+                                tgList.restoreScroll()
+                                tgInput.cursorPosition = Math.min(root.telegramState.cursorPosition, tgInput.length)
+                            })
+                            if (root.telegramOpen) tgFocusTimer.restart()
+                        }
+                        function onTelegramLatestRequested() {
+                            if (!bar.isDp) return
+                            tgWheelScroll.stop()
+                            tgList.cancelFlick()
+                            root.telegramState.followTail = true
+                            tgList.followTail = true
+                            Qt.callLater(tgList.followNewContent)
                         }
                     }
                 }
@@ -2401,7 +2622,7 @@ Scope {
                                     Rectangle {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: 6; height: 6; radius: 3
-                                        color: model.kind === "ray" ? root.clockColor : root.accent
+                                        color: (model.kind === "ray" || model.kind === "ray-code") ? root.clockColor : root.accent
                                     }
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
@@ -2558,31 +2779,63 @@ Scope {
             Rectangle {
                 id: tgNotif
                 // hide only when a center-pill panel would overlap; news/portfolio (right side) are fine
-                readonly property bool canShow: root.notifToastShow
+                readonly property bool canShow: notifToast.shown
                     && !(root.launcherOpen || root.telegramOpen || root.notifOpen
                          || (root.mediaExpanded && root.sonosHasTrack))
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: pillBg.y + pillBg.height + 8
-                width: Math.min(400, notifRow.implicitWidth + 28)
-                // morph down from the pill: grow height in/out
-                height: canShow ? 36 : 0
-                visible: bar.isDp && height > 0.5
-                radius: Math.min(18, height / 2)
+                // Hold the exit position if clicking the toast expands the center pill.
+                Binding {
+                    target: tgNotif; property: "y"
+                    value: pillBg.y + pillBg.height + 8
+                    when: tgNotif.canShow
+                    restoreMode: Binding.RestoreNone
+                }
+                width: Math.min(parent.width - 32, notifToast.important ? 520
+                    : Math.min(400, notifApp.implicitWidth + notifPreview.implicitWidth + 52))
+                height: notifToast.important ? prominentContent.implicitHeight + 32 : 36
+                visible: bar.isDp && opacity > 0
+                enabled: canShow
+                radius: Math.min(notifToast.important ? 16 : 18, height / 2)
                 color: notifMouse.containsMouse ? root.surface : root.bgColor
-                gradient: NeonGradient { intensity: notifMouse.containsMouse ? 0.12 : 0 }
+                gradient: NeonGradient { intensity: notifToast.important ? 0.07 : notifMouse.containsMouse ? 0.12 : 0 }
                 border.width: 1
-                border.color: root.outline
+                border.color: notifToast.important ? root.accent : root.outline
                 clip: true
 
+                Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
                 Behavior on height {
                     NumberAnimation { duration: 240; easing.bezierCurve: [0.16, 1, 0.3, 1, 1, 1] }
                 }
                 opacity: canShow ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on opacity {
+                    NumberAnimation { duration: tgNotif.canShow ? 180 : 260; easing.type: Easing.InOutSine }
+                }
+                transform: Translate {
+                    y: tgNotif.canShow ? 0 : -6
+                    Behavior on y { NumberAnimation { duration: 260; easing.type: Easing.InOutSine } }
+                }
                 Behavior on color { ColorAnimation { duration: 120 } }
+
+                MouseArea {
+                    id: notifMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onContainsMouseChanged: if (bar.isDp) notifToast.hovered = containsMouse
+                    onClicked: event => {
+                        let app = notifToast.app
+                        notifToast.dismiss()
+                        if (event.button === Qt.RightButton) return
+                        if (app === "Ray" || app === "Ray Code") {
+                            root.openTelegramLatest(app === "Ray Code" ? "ray-code" : "ray")
+                        } else root.notifOpen = true
+                    }
+                }
 
                 Row {
                     id: notifRow
+                    visible: !notifToast.important
                     anchors.left: parent.left
                     anchors.leftMargin: 13
                     anchors.right: parent.right
@@ -2602,17 +2855,23 @@ Scope {
                         }
                     }
                     Text {
+                        id: notifApp
                         anchors.verticalCenter: parent.verticalCenter
-                        text: root.notifToastApp
+                        width: Math.min(implicitWidth, 120)
+                        text: notifToast.app
+                        textFormat: Text.PlainText
+                        elide: Text.ElideRight
                         color: root.textColor
                         font.family: root.fontFamily
                         font.pixelSize: 12
                         font.bold: true
                     }
                     Text {
+                        id: notifPreview
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.min(implicitWidth, 300)
-                        text: root.notifToastText
+                        width: Math.max(0, notifRow.width - notifApp.width - 24)
+                        text: notifToast.text
+                        textFormat: Text.PlainText
                         color: root.subtext
                         font.family: root.fontFamily
                         font.pixelSize: 12
@@ -2621,15 +2880,91 @@ Scope {
                     }
                 }
 
-                MouseArea {
-                    id: notifMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.notifToastShow = false
-                        if (root.notifToastApp === "ray") root.telegramOpen = true
-                        else root.notifOpen = true
+                Column {
+                    id: prominentContent
+                    visible: notifToast.important
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: 16
+                    spacing: 10
+
+                    RowLayout {
+                        width: parent.width
+                        spacing: 8
+                        Rectangle { width: 7; height: 7; radius: 4; color: root.accent }
+                        Text {
+                            Layout.fillWidth: true
+                            text: notifToast.app
+                            textFormat: Text.PlainText
+                            elide: Text.ElideRight
+                            color: root.subtext
+                            font.family: root.fontFamily
+                            font.pixelSize: 11
+                        }
+                        Text {
+                            text: "Needs attention"
+                            color: root.accent
+                            font.family: root.fontFamily
+                            font.pixelSize: 10
+                        }
+                        Rectangle {
+                            implicitWidth: 24; implicitHeight: 24
+                            radius: 6
+                            color: closeNotifMouse.containsMouse ? root.surface : "transparent"
+                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Accessible.role: Accessible.Button
+                            Accessible.name: "Dismiss notification"
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 10; height: 1.2; rotation: 45; antialiasing: true
+                                color: closeNotifMouse.containsMouse ? root.textColor : root.subtext
+                            }
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 10; height: 1.2; rotation: -45; antialiasing: true
+                                color: closeNotifMouse.containsMouse ? root.textColor : root.subtext
+                            }
+                            MouseArea {
+                                id: closeNotifMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: notifToast.dismiss()
+                            }
+                        }
+                    }
+                    Text {
+                        width: parent.width
+                        text: notifToast.text
+                        textFormat: Text.PlainText
+                        color: root.textColor
+                        font.family: root.fontFamily
+                        font.pixelSize: 15
+                        font.bold: true
+                        wrapMode: Text.Wrap
+                        maximumLineCount: 3
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        width: parent.width
+                        visible: text.length > 0
+                        text: notifToast.body
+                        textFormat: Text.PlainText
+                        color: root.subtext
+                        font.family: root.fontFamily
+                        font.pixelSize: 13
+                        wrapMode: Text.Wrap
+                        maximumLineCount: 4
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        text: (notifToast.app === "Ray" || notifToast.app === "Ray Code")
+                            ? "Open chat \u2197" : "Open notification center \u2197"
+                        color: root.accent
+                        font.family: root.fontFamily
+                        font.pixelSize: 10
                     }
                 }
             }
@@ -2694,33 +3029,36 @@ Scope {
                     spacing: 4
 
                     Repeater {
-                        model: ["volume", "network", "notifications", "media", "ray"]
+                        model: ["volume", "network", "notifications", "media", "ray", "ray-code"]
 
                         Rectangle {
                             id: utilityAction
                             required property string modelData
+                            readonly property bool isChat: modelData === "ray" || modelData === "ray-code"
                             property bool selected: modelData === "notifications" ? root.notifOpen
                                 : modelData === "network" ? root.networkOpen
                                 : modelData === "media" ? root.mediaExpanded
-                                : modelData === "ray" ? root.telegramOpen : false
+                                : isChat ? root.telegramOpen && root.telegramChat === modelData : false
                             property string label: modelData === "volume" ? (root.muted ? "Muted" : root.volume || "—")
                                 : modelData === "notifications" && notifModel.count > 0 ? Math.min(notifModel.count, 99).toString()
-                                : modelData === "ray" ? "Ray" : ""
+                                : modelData === "ray" ? "Ray" : modelData === "ray-code" ? "Ray Code" : ""
                             property string icon: modelData === "volume" ? (root.muted ? "\uf026" : "\uf028")
                                 : modelData === "network" ? "\uf1eb"
                                 : modelData === "notifications" ? "\uf0f3"
-                                : modelData === "media" ? "\uf001" : "\uf1d8"
+                                : modelData === "media" ? "\uf001" : modelData === "ray-code" ? "\uf121" : "\uf1d8"
+                            readonly property int iconSize: modelData === "network" || modelData === "ray-code" ? 18
+                                : modelData === "volume" ? 17 : 14
                             property string hint: modelData === "volume" ? "Volume · click to mute · scroll to adjust"
                                 : modelData === "network" ? (root.networkStatus.wireless ? "Wi-Fi" : "Ethernet")
                                     + (root.networkStatus.connected ? " · Connected" + (root.networkStatus.speed ? " · " + root.networkStatus.speed : "") : " · Disconnected")
                                 : modelData === "notifications" ? "Notifications · Super + Shift + I"
                                 : modelData === "media" ? "Now playing · Super + Shift + Space"
-                                : "Ray · click to chat · Shift/right-click for fullscreen"
+                                : label + " · click to chat · right-click for fullscreen · Ctrl+Tab to switch"
                             visible: modelData !== "media" || root.sonosHasTrack
                             width: actionContents.width + 18
                             height: 24
                             radius: 7
-                            color: selected ? Qt.rgba(root.clockColor.r, root.clockColor.g, root.clockColor.b, 0.14) : "transparent"
+                            color: selected && !isChat ? Qt.rgba(root.clockColor.r, root.clockColor.g, root.clockColor.b, 0.14) : "transparent"
 
                             Row {
                                 id: actionContents
@@ -2728,10 +3066,14 @@ Scope {
                                 spacing: 8
                                 Text {
                                     text: utilityAction.icon
+                                    width: 18
+                                    height: 18
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
                                     color: utilityAction.modelData === "volume" && root.muted ? root.mutedColor
                                         : utilityAction.selected ? root.clockColor : root.textColor
                                     font.family: root.fontFamily
-                                    font.pixelSize: 14
+                                    font.pixelSize: utilityAction.iconSize
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 Text {
@@ -2749,7 +3091,7 @@ Scope {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                acceptedButtons: utilityAction.modelData === "ray" ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
+                                acceptedButtons: utilityAction.isChat ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
                                 onEntered: {
                                     utilityHoverExit.stop()
                                     var freshHover = !utilityBar.hoverActive
@@ -2764,7 +3106,7 @@ Scope {
                                     else if (utilityAction.modelData === "network") root.networkOpen = !root.networkOpen
                                     else if (utilityAction.modelData === "notifications") panelActions.notifications()
                                     else if (utilityAction.modelData === "media") panelActions.media()
-                                    else root.toggleTelegram(mouse.button === Qt.RightButton || !!(mouse.modifiers & Qt.ShiftModifier))
+                                    else root.toggleTelegram(mouse.button === Qt.RightButton || !!(mouse.modifiers & Qt.ShiftModifier), utilityAction.modelData)
                                 }
                                 onWheel: wheel => {
                                     if (utilityAction.modelData !== "volume") { wheel.accepted = false; return }
