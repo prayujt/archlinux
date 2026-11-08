@@ -1,0 +1,13 @@
+{
+  "wallpaper_active": true,
+  "wallpaper_command": [
+    "/home/prayuj/.local/state/desktop-styles/original/wallpaper/bin/mpvpaper",
+    "-l",
+    "bottom",
+    "-p",
+    "-o",
+    "no-audio terminal=no msg-level=all=warn loop-file=inf hwdec=auto-safe panscan=1 keepaspect=yes video-sync=display-resample",
+    "*",
+    "/home/prayuj/.local/share/desktop-styles/meadow/assets/midnight-meadow.mp4"
+  ]
+}

@@ -1,7 +1,0 @@
-Casual human model and Idle_Neutral, Walk, and Run animations by Quaternius.
-Ultimate Modular Men Pack, CC0 1.0 Universal.
-Original pack: https://quaternius.com/packs/ultimatemodularcharacters.html
-Model mirror: https://github.com/CODE-MEDI-2026-1TEAM/CODE-MEDI-2026-1TEAM/blob/main/frontend/public/models/patients/Man4.glb
-Converted using Qt Balsam; retained locomotion clips, adjusted clothing materials,
-and added animation blending. No network access is required at runtime.
-License: https://creativecommons.org/publicdomain/zero/1.0/

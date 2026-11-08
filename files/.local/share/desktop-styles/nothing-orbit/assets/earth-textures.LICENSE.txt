@@ -1,0 +1,10 @@
+Earth coastlines, clouds and city-light maps: Solar System Scope
+https://www.solarsystemscope.com/textures/
+Based on NASA imagery; CC BY 4.0.
+https://creativecommons.org/licenses/by/4.0/
+Original files: 8k_earth_daymap.jpg, 2k_earth_clouds.jpg, 8k_earth_nightmap.jpg.
+Solar position algorithm: NOAA Global Monitoring Laboratory
+https://gml.noaa.gov/grad/solcalc/solareqns.PDF
+
+Sparse daytime city locations: Natural Earth populated places, public domain.
+https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_populated_places.geojson

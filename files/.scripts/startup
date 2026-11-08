@@ -1,0 +1,14 @@
+#!/bin/bash
+# Selects DP-3 as primary monitor
+xrandr --output "DP-3" --primary
+
+hyprpaper &
+~/.local/bin/desktop-style startup &
+mediapipe &
+eww daemon
+discord --start-minimized --enable-features=UseOzonePlatform --ozone-platform=wayland /opt/discord/resources/app.asar & > /dev/null
+slack --startup &
+/usr/bin/python ~/.config/quickshell/dashboard/data.py init
+quickshell -d -n -p ~/.config/quickshell/dashboard/shell.qml
+~/.config/hypr/setbrightness 2 50
+~/.config/hypr/setbrightness 1 50

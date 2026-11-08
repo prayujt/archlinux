@@ -1,0 +1,122 @@
+{
+  "dark": {
+    "background": "#08090b",
+    "panel": "#ec111214",
+    "card": "#101113",
+    "surface": "#242628",
+    "paper": "#ebe9e2",
+    "quiet": "#969998",
+    "muted": "#4b4f4c",
+    "outline": "#343638",
+    "accent": "#e6393f",
+    "ink": "#101112",
+    "activeBorder": "e9e7e088",
+    "inactiveBorder": "4b4f4c44",
+    "terminal": {
+      "primary": {
+        "background": "#101112",
+        "foreground": "#e9e7e0"
+      },
+      "normal": {
+        "black": "#242628",
+        "red": "#e36a70",
+        "green": "#b4c9b1",
+        "yellow": "#d8c895",
+        "blue": "#adbccb",
+        "magenta": "#c1b2c5",
+        "cyan": "#b8c9c4",
+        "white": "#c9c9c2"
+      },
+      "bright": {
+        "black": "#777d7c",
+        "red": "#f09a9e",
+        "green": "#cfddc8",
+        "yellow": "#e8dbb3",
+        "blue": "#c7d1db",
+        "magenta": "#ddd1df",
+        "cyan": "#d1e0db",
+        "white": "#faf8ef"
+      }
+    }
+  },
+  "black": {
+    "background": "#000000",
+    "panel": "#f2080808",
+    "card": "#080808",
+    "surface": "#171717",
+    "paper": "#efefe9",
+    "quiet": "#91958f",
+    "muted": "#373a36",
+    "outline": "#252825",
+    "accent": "#e6393f",
+    "ink": "#080808",
+    "activeBorder": "efefe988",
+    "inactiveBorder": "373a3644",
+    "terminal": {
+      "primary": {
+        "background": "#080808",
+        "foreground": "#e9e7e0"
+      },
+      "normal": {
+        "black": "#242628",
+        "red": "#e36a70",
+        "green": "#b4c9b1",
+        "yellow": "#d8c895",
+        "blue": "#adbccb",
+        "magenta": "#c1b2c5",
+        "cyan": "#b8c9c4",
+        "white": "#c9c9c2"
+      },
+      "bright": {
+        "black": "#777d7c",
+        "red": "#f09a9e",
+        "green": "#cfddc8",
+        "yellow": "#e8dbb3",
+        "blue": "#c7d1db",
+        "magenta": "#ddd1df",
+        "cyan": "#d1e0db",
+        "white": "#faf8ef"
+      }
+    }
+  },
+  "light": {
+    "background": "#eae9e4",
+    "panel": "#f2f1ed",
+    "card": "#f7f6f2",
+    "surface": "#deded7",
+    "paper": "#202321",
+    "quiet": "#666b65",
+    "muted": "#bfc3b9",
+    "outline": "#c8cac3",
+    "accent": "#ad2938",
+    "ink": "#faf8f1",
+    "activeBorder": "4b4f4c99",
+    "inactiveBorder": "989b9566",
+    "terminal": {
+      "primary": {
+        "background": "#f2f1ed",
+        "foreground": "#202321"
+      },
+      "normal": {
+        "black": "#252824",
+        "red": "#ac3442",
+        "green": "#52754d",
+        "yellow": "#866b29",
+        "blue": "#496577",
+        "magenta": "#765a7e",
+        "cyan": "#3e7468",
+        "white": "#6b7068"
+      },
+      "bright": {
+        "black": "#656c62",
+        "red": "#b72e40",
+        "green": "#436b3e",
+        "yellow": "#826018",
+        "blue": "#3e6179",
+        "magenta": "#72527d",
+        "cyan": "#2d7162",
+        "white": "#32382f"
+      }
+    }
+  }
+}

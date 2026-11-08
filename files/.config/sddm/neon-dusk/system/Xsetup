@@ -1,0 +1,41 @@
+#!/usr/bin/python
+"""Make the Samsung the left, primary login display using its physical EDID."""
+import re
+import subprocess
+
+
+def descriptors(data):
+    result = []
+    for offset in range(54, min(len(data), 126), 18):
+        if data[offset:offset + 3] == b"\0\0\0":
+            result.append(data[offset + 5:offset + 18].decode("ascii", "replace").strip())
+    return result
+
+
+def main():
+    # Keep the login display awake while it waits for authentication.
+    subprocess.run(["/usr/bin/xset", "s", "off", "-dpms"], check=True)
+    query = subprocess.check_output(["/usr/bin/xrandr", "--prop"], text=True)
+    outputs = []
+    for match in re.finditer(r"(?m)^(\S+) connected[^\n]*\n((?:[ \t].*(?:\n|$))*)", query):
+        name, properties = match.groups()
+        edid = re.search(r"EDID:\s*\n((?:\s+[0-9a-fA-F]{32}\s*\n)+)", properties)
+        identity = descriptors(bytes.fromhex(edid.group(1))) if edid else []
+        outputs.append((name, identity))
+    samsung = next((name for name, identity in outputs
+                    if "HCJWA03310" in identity or "Odyssey G40B" in identity), None)
+    if not samsung:
+        print("Neon Dusk: Samsung EDID unavailable; retaining the primary display.")
+        return
+    command = ["/usr/bin/xrandr", "--output", samsung, "--auto", "--primary", "--pos", "0x0"]
+    previous = samsung
+    for name, identity in outputs:
+        if name != samsung:
+            command += ["--output", name, "--auto", "--right-of", previous]
+            previous = name
+    subprocess.run(command, check=True)
+    print("Neon Dusk: Samsung login display:", samsung, "; outputs:", outputs)
+
+
+if __name__ == "__main__":
+    main()
